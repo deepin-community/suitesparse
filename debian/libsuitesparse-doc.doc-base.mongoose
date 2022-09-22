@@ -1,0 +1,12 @@
+Document: mongoose-ug
+Title: Mongoose User Guide
+Author: Nuri Yeralan, Scott Kolodziej, Timothy A. Davis, William Hager
+Abstract: Mongoose is a graph partitioning library that can quickly compute
+ edge cuts in arbitrary graph. Given a graph with a vertex set and edge set, an
+ edge cut is a partitioning of the graph into two subgraphs that are balanced
+ (contain the same number of vertices) and the connectivity between the
+ subgraphs is minimized (few edges are in the cut).
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/Mongoose_UserGuide.pdf

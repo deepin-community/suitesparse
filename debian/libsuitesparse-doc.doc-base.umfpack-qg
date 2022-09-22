@@ -1,0 +1,8 @@
+Document: umfpack-qg
+Title: SuiteSparse/UMFPACK Quickstart Guide
+Author: Timothy A. Davis, University of Florida, davis@cise.ufl.edu.
+Abstract: UMFPACK is a set of routines for solving unsymmetric sparse linear systems, Ax=b, using the Unsymmetric MultiFrontal method. It is part of the SuiteSparse package.
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/UMFPACK_QuickStart.pdf

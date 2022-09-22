@@ -1,0 +1,16 @@
+Document: ldl-ug
+Title: SuiteSparse/User Guide for LDL, a concise sparse Cholesky package
+Author: Timothy A. Davis
+Abstract: The LDL software package is a set of short, concise routines for
+ factorizing symmetric positive-definite sparse matrices, with some
+ applicability to symmetric indefinite matrices. Its primary purpose is to
+ illustrate much of the basic theory of sparse matrix algorithms in as concise
+ a code as possible, including an elegant method of sparse symmetric
+ factorization that computes the factorization row-by-row but stores it
+ column-by-column. The entire symbolic and numeric factorization consists of
+ less than 50 lines of code. The package is written in C, and includes a MATLAB
+ interface.
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/ldl_userguide.pdf

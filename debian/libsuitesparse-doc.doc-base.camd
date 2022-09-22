@@ -1,0 +1,11 @@
+Document: camd-ug
+Title: SuiteSparse/CAMD User Guide
+Author: Patrick R. Amestoy, Yanqing (Morris) Chen, Timothy A. Davis, Iain S. Duff
+Abstract: CAMD is a set of ANSI C routines that implements the approximate
+ minimum degree ordering algorithm to permute sparse matrices prior to numerical
+ factorization. Ordering constraints can be optionally provided. A MATLAB
+ interface is included.
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/CAMD_UserGuide.pdf

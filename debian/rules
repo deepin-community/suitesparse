@@ -1,0 +1,54 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/default.mk
+
+# Flags for traditional Makefiles (all libs except GraphBLAS and Mongoose)
+COMMON_FLAGS := BLAS=-lblas LAPACK=-llapack MY_METIS_LIB=-lmetis
+PIC_FLAGS := $(COMMON_FLAGS) OPTIMIZATION=-fPIC
+NOPIC_FLAGS := $(COMMON_FLAGS) OPTIMIZATION=
+
+# Flags for cmake (only GraphBLAS and Mongoose)
+export CMAKE_OPTIONS := -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_C_FLAGS_RELEASE="$(CFLAGS) $(CPPFLAGS)" -DCMAKE_CXX_FLAGS_RELEASE="$(CXXFLAGS) $(CPPFLAGS)" -DCMAKE_SKIP_RPATH=TRUE -DCMAKE_BUILD_TYPE=Release
+
+# All static libs (except GraphBLAS and Mongoose static which are handled by cmake)
+STATIC_LIBS := CAMD/Lib/libcamd.a BTF/Lib/libbtf.a CHOLMOD/Lib/libcholmod.a AMD/Lib/libamd.a RBio/Lib/librbio.a LDL/Lib/libldl.a SuiteSparse_config/libsuitesparseconfig.a KLU/Lib/libklu.a SPQR/Lib/libspqr.a UMFPACK/Lib/libumfpack.a COLAMD/Lib/libcolamd.a CXSparse/Lib/libcxsparse.a CCOLAMD/Lib/libccolamd.a SLIP_LU/Lib/libsliplu.a
+
+PDF_DOCS := AMD/Doc/AMD_UserGuide.pdf CAMD/Doc/CAMD_UserGuide.pdf CHOLMOD/Doc/CHOLMOD_UserGuide.pdf GraphBLAS/Doc/GraphBLAS_UserGuide.pdf KLU/Doc/KLU_UserGuide.pdf Mongoose/Doc/Mongoose_UserGuide.pdf UMFPACK/Doc/UMFPACK_QuickStart.pdf UMFPACK/Doc/UMFPACK_UserGuide.pdf LDL/Doc/ldl_userguide.pdf SPQR/Doc/spqr_user_guide.pdf SLIP_LU/Doc/SLIP_LU_UserGuide.pdf
+
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+JOBS := $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+else
+JOBS := 1
+endif
+
+
+%:
+	dh $@
+
+# LD_LIBRARY_PATH needed to make tests work (since buildflags.patch removes the -rpath)
+override_dh_auto_build:
+	# Docs must be rebuilt first, because the build system expect them for some libs
+	rm -f $(PDF_DOCS)
+	make docs
+
+	# Build static libraries (except GraphBLAS and Mongoose, see {graphblas,mongoose}-build.patch)
+	make static $(NOPIC_FLAGS) JOBS=$(JOBS)
+	mkdir static_lib && cp $(STATIC_LIBS) static_lib/
+	make purge
+
+	# Build dynamic libraries (and GraphBLAS and Mongoose static)
+	LD_LIBRARY_PATH=$$(pwd)/lib make $(PIC_FLAGS) JOBS=$(JOBS)
+
+override_dh_auto_install:
+	# DESTDIR is used by cmake (for GraphBLAS and Mongoose), the INSTALL* vars are used by other libs
+	make install $(PIC_FLAGS) INSTALL=$$(pwd)/debian/tmp/usr INSTALL_LIB=$$(pwd)/debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/ INSTALL_INCLUDE=$$(pwd)/debian/tmp/usr/include/suitesparse INSTALL_DOC=$$(pwd)/debian/tmp/usr/share/doc/suitesparse DESTDIR=$$(pwd)/debian/tmp
+	# Install static libraries (except GraphBLAS and Mongoose)
+	cp static_lib/* debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/
+
+override_dh_auto_clean:
+	make purge
+	rm -rf static_lib
+	rm -f $(PDF_DOCS)
+
+override_dh_compress:
+	dh_compress -X.pdf

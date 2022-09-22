@@ -1,0 +1,49 @@
+Description: Clean up build flags
+ - remove rpath
+ - remove optimization flags because we want to support noopt option
+ - remove -fPIC because we don't want to use it for static libraries (and debian/rules
+   re-adds it for dynamic libraries)
+Author: Sébastien Villemot <sebastien@debian.org>
+Forwarded: not-needed
+Last-Update: 2017-12-01
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/CSparse/Demo/Makefile
++++ b/CSparse/Demo/Makefile
+@@ -1,4 +1,4 @@
+-CF = $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -O
++CF = $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH)
+ I = -I../Include
+ 
+ LDLIBS += -lm
+--- a/CSparse/Lib/Makefile
++++ b/CSparse/Lib/Makefile
+@@ -15,7 +15,7 @@
+ # CSparse/Lib.  It does not install it for system-wide usage.
+ 
+ LIBRARY = libcsparse
+-CF = $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -O
++CF = $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH)
+ 
+ I = -I../Include
+ RANLIB = ranlib
+--- a/SuiteSparse_config/SuiteSparse_config.mk
++++ b/SuiteSparse_config/SuiteSparse_config.mk
+@@ -154,7 +154,7 @@ SUITESPARSE_VERSION = 5.8.1
+ 
+     # The CF macro is used by SuiteSparse Makefiles as a combination of
+     # CFLAGS, CPPFLAGS, TARGET_ARCH, and system-dependent settings.
+-    CF ?= $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) $(OPTIMIZATION) -fexceptions -fPIC
++    CF ?= $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) $(OPTIMIZATION) -fexceptions
+ 
+     #---------------------------------------------------------------------------
+     # code formatting (for Tcov on Linux only)
+@@ -358,7 +358,7 @@ SUITESPARSE_VERSION = 5.8.1
+ 
+     ifeq ($(UNAME),Linux)
+         # add the realtime library, librt, and SuiteSparse/lib
+-        LDLIBS += -lrt -Wl,-rpath=$(INSTALL_LIB)
++        LDLIBS += -lrt
+     endif
+ 
+     #---------------------------------------------------------------------------

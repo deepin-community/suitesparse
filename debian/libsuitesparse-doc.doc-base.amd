@@ -1,0 +1,9 @@
+Document: amd-ug
+Title: SuiteSparse/AMD User Guide
+Author: Timothy A. Davis, University of Florida, davis@cise.ufl.edu.
+Abstract: AMD is a set of routines for permuting sparse matrices prior to
+ factorization. It is part of the Suitesparse package.
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/AMD_UserGuide.pdf

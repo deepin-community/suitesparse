@@ -1,0 +1,751 @@
+suitesparse (1:5.10.1+dfsg-2) unstable; urgency=medium
+
+  * Re-upload as source-only, since previous upload was source+binary
+    because it had to pass NEW
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sun, 05 Sep 2021 09:57:49 +0200
+
+suitesparse (1:5.10.1+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 5.10.1+dfsg
+  * SOVERSION bump for GraphBLAS (4 → 5)
+  * Bump to S-V 4.6.0
+
+ -- Sébastien Villemot <sebastien@debian.org>  Wed, 01 Sep 2021 18:15:19 +0200
+
+suitesparse (1:5.9.0+dfsg-1) experimental; urgency=medium
+
+  * New upstream version 5.9.0+dfsg
+  * d/copyright: reflect upstream changes
+  * sliplu-doc.patch: drop patch, no longer needed
+  * SOVERSION bump for GraphBLAS (3 → 4)
+  * Bump to S-V 4.5.1
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sat, 01 May 2021 20:48:20 +0200
+
+suitesparse (1:5.8.1+dfsg-2) unstable; urgency=medium
+
+  * Re-upload as source-only, since previous upload was source+binary
+    because it had to pass NEW
+
+ -- Sébastien Villemot <sebastien@debian.org>  Thu, 30 Jul 2020 10:04:45 +0200
+
+suitesparse (1:5.8.1+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 5.8.1+dfsg
+  * d/copyright: reflect upstream changes
+  * New SLIP LU library
+    - ship shared library in package libsliplu1
+    - add Build-Depends on libgmp-dev and libmpfr-dev
+    - sliplu-doc.patch: new patch, needed to rebuild the userguide
+    - d/libsuitesparse-doc.doc-base.sliplu: register the userguide in doc-base
+  * Switch Homepage to http://suitesparse.com (without “www”) (Closes: #962587)
+  * Add new d/upstream/metadata file
+  * Bump to debhelper 13
+
+ -- Sébastien Villemot <sebastien@debian.org>  Wed, 15 Jul 2020 12:26:35 +0200
+
+suitesparse (1:5.7.2+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 5.7.2+dfsg
+  * hurd-i386.patch: drop patch, applied upstream
+  * d/rules: set LAPACK in COMMON_FLAGS, since build system no longer does it
+
+ -- Sébastien Villemot <sebastien@debian.org>  Tue, 14 Apr 2020 10:27:08 +0200
+
+suitesparse (1:5.7.1+dfsg-2) unstable; urgency=medium
+
+  * libatomic.patch: new patch, should fix FTBFS on armel, mipsel, m68k
+    and powerpc
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sat, 29 Feb 2020 14:16:34 +0100
+
+suitesparse (1:5.7.1+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 5.7.1+dfsg
+  * d/copyright:
+    + add GraphBLAS_API_C_v13.pdf to Files-Excluded
+    + reflect upstream changes
+  * libsuitesparse-doc: README.txt replaced by SuiteSparse_README.md
+  * Bump S-V to 4.5.0
+
+ -- Sébastien Villemot <sebastien@debian.org>  Wed, 26 Feb 2020 16:00:43 +0100
+
+suitesparse (1:5.6.0+dfsg-2) unstable; urgency=medium
+
+  * Upload to unstable
+  * Add lintian overrides for libamd2, libbtf1, libldl2
+  * d/copyright: drop unused entry for Mongoose/SuiteSparse_config/*
+  * d/mongoose.install: change the source path to make dh_missing happy
+
+ -- Sébastien Villemot <sebastien@debian.org>  Fri, 15 Nov 2019 14:31:59 +0100
+
+suitesparse (1:5.6.0+dfsg-1) experimental; urgency=medium
+
+  * New upstream version 5.6.0+dfsg
+  * d/watch: now fetch from Github
+  * d/copyright:
+    + exclude more PDFs without source code
+    + reflect upstream changes
+  * Bump to debhelper 12
+  * graphblas-build.patch: new patch, ensures that static GraphBLAS is compiled
+  * SOVERSION bump for GraphBLAS (2 → 3)
+  * Bump S-V to 4.4.1
+  * hurd-i386.patch: new patch, fixes FTBFS on hurd-i386.
+    Thanks to Paul Sonnenschein (Closes: #926347)
+
+ -- Sébastien Villemot <sebastien@debian.org>  Wed, 13 Nov 2019 17:23:20 +0100
+
+suitesparse (1:5.4.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 5.4.0+dfsg
+  * d/rules: use new JOBS Makefile variable for parallel build
+  * Add Build-Depends-Package field in symbols files
+  * Migrate to new way of specifying debhelper compat level
+  * Bump to S-V 4.3.0
+
+ -- Sébastien Villemot <sebastien@debian.org>  Thu, 27 Dec 2018 09:52:31 +0100
+
+suitesparse (1:5.3.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 5.3.0+dfsg
+  * d/copyright: reflect upstream changes
+  * Package Mongoose
+    + new binary packages: mongoose, libmongoose2
+    + mongoose-build.patch: new patch
+    + add texlive-fonts-extra, ghostscript, texlive-science and
+      texlive-xetex to Build-Depends
+  * d/rules: remove get-orig-source rule
+  * Add Rules-Requires-Root: no
+  * Bump S-V to 4.1.5
+
+ -- Sébastien Villemot <sebastien@debian.org>  Wed, 18 Jul 2018 12:52:42 +0200
+
+suitesparse (1:5.2.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 5.2.0+dfsg
+  * d/copyright:
+    + add GraphBLAS_API_C.pdf to Files-Excluded, since the source
+      is not provided.
+    + reflect upstream changes.
+  * d/watch: handle +dfsg suffix.
+  * SOVERSION bump for libgraphblas (1->2).
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sat, 17 Mar 2018 22:25:58 +0100
+
+suitesparse (1:5.1.2-2) unstable; urgency=medium
+
+  * Add missing Depends of libsuitesparse-dev on libgraphblas1.
+    (Closes: #887570)
+
+ -- Sébastien Villemot <sebastien@debian.org>  Fri, 19 Jan 2018 18:09:10 +0100
+
+suitesparse (1:5.1.2-1) unstable; urgency=medium
+
+  * New upstream version 5.1.2
+  * Update Vcs-* fields for move to salsa.debian.org.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sun, 07 Jan 2018 11:46:33 +0100
+
+suitesparse (1:5.1.2~beta2-1) unstable; urgency=medium
+
+  * New upstream version 5.1.2~beta2
+    + libgraphblasdemo now linked against libm. (Closes: #885569)
+  * Bump Standards-Version to 4.1.3.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Tue, 02 Jan 2018 14:04:44 +0100
+
+suitesparse (1:5.1.2~beta-2) unstable; urgency=medium
+
+  * Upload to unstable.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Wed, 27 Dec 2017 10:12:05 +0100
+
+suitesparse (1:5.1.2~beta-1) experimental; urgency=medium
+
+  * New upstream version 5.1.2~beta
+  * graphblas-build.patch: drop patch, applied upstream.
+  * d/watch: support -beta suffix (treating it as ~beta).
+  * d/rules: remove kludge for renaming static GraphBLAS lib.
+  * Bump to debhelper compat level 11:
+    - documentation now installed under /u/s/doc/libsuitesparse-dev
+    - directly call make instead of dh_auto_build (the latter messes up with the
+      INSTALL parameter)
+
+ -- Sébastien Villemot <sebastien@debian.org>  Mon, 25 Dec 2017 22:14:41 +0100
+
+suitesparse (1:5.1.1-beta-1) experimental; urgency=medium
+
+  * New upstream version 5.1.1-beta
+    - fixes FTBFS on some 32-bit platforms (Closes: #884564)
+    - static GraphBLAS library is now shipped in -dev package.
+  * Drop patches applied upstream: cmake.patch, pdf-docs.patch.
+  * graphblas-build.patch: new patch for GraphBLAS build system.
+  * Update symbols file for libgraphblas1.
+  * Add missing epoch in symbols files.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Thu, 21 Dec 2017 21:36:15 +0100
+
+suitesparse (1:5.1.0-1) experimental; urgency=medium
+
+  * New upstream version 5.1.0
+  * d/copyright: reflect upstream changes.
+  * SOVERSION bump for libsuitesparseconfig (4 -> 5).
+  * Package new GraphBLAS library:
+    + new libgraphblas1 package.
+    + add Build-Depends on cmake.
+    + cmake.patch: new patch, fixes installation paths of the library.
+    + install GraphBLAS.h include in libsuitesparse-dev.
+    + install GraphBLAS_Userguide.pdf, and register it into doc-base.
+  * Rebuild PDF doc.
+    + add some texlive build-depedencies.
+    + new pdf-docs.patch
+  * d/rules: drop obsolete override for dbgsym migration.
+  * Bump to Standards-Version 4.1.2.
+  * Install README.txt in libsuitesparse-doc (instead of libamd2).
+  * Drop useless README.Debian.
+  * Add source lintian override for insecure URL in d/watch.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sat, 09 Dec 2017 22:21:24 +0100
+
+suitesparse (1:4.5.6-1) unstable; urgency=medium
+
+  * New upstream version 4.5.6
+  * The AMD, CAMD, CCOLAMD and COLAMD modules are now under BSD-3-clause
+    license.
+  * d/control: drop Suggests on liblapack-doc-man, superseded by liblapack-doc.
+  * d/rules: add option -V to dh_makeshlibs.
+  * Bump to Standards-Version 4.1.1.
+  * Mark libsuitesparse-doc as M-A foreign.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Fri, 06 Oct 2017 11:13:48 +0200
+
+suitesparse (1:4.5.5-1) unstable; urgency=medium
+
+  * New upstream version 4.5.5
+  * d/copyright: use secure URL for format.
+  * d/watch: bump to format version 4.
+  * d/control:
+    + Use canonical URL for Vcs-Browser.
+    + Bump Standards-Version to 4.0.0, no changes needed.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Mon, 19 Jun 2017 11:28:17 +0200
+
+suitesparse (1:4.5.4-1) unstable; urgency=medium
+
+  * New upstream version 4.5.4
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sat, 17 Dec 2016 10:37:55 +0100
+
+suitesparse (1:4.5.3-2) unstable; urgency=medium
+
+  * Remove Christophe Prud'homme from Uploaders (per MIA team request).
+    Thanks Christophe for your contributions to that package! (Closes: #835011)
+  * Bump to debhelper compat level 10.
+  * Stop using dh-exec.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sun, 30 Oct 2016 14:27:47 +0100
+
+suitesparse (1:4.5.3-1) unstable; urgency=low
+
+  * Release to unstable.
+  * Imported Upstream version 4.5.3.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Tue, 17 May 2016 16:11:44 +0200
+
+suitesparse (1:4.5.3~beta-1) experimental; urgency=low
+
+  * Imported Upstream version 4.5.3~beta
+  * d/copyright: reflect upstream changes.
+  * Switch to dh (instead of cdbs).
+  * Upstream committed to ABI tracking, so drop older system for
+    generating SONAMES.
+  * Use new upstream build system for compiling shared libraries.
+  * Drop all patches (except buildflags.patch), no longer needed.
+  * Enable METIS support (through Debian package, not embedded copy).
+  * Add package for RBio (librbio).
+  * Drop package for CSparse (libcsparse), superseded by libcxsparse.
+  * Add symbols files (except for SPQR lib which has C++ code).
+  * Bump Standards-Version to 3.9.8, no changes needed.
+  * Use secure URLs for Vcs-* fields.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Wed, 04 May 2016 15:18:26 +0200
+
+suitesparse (1:4.4.6-1) unstable; urgency=medium
+
+  * Imported Upstream version 4.4.6
+  * Bump SOVERSION for libspqr and libsuitesparseconfig.
+  * Drop libsuitesparse-dbg package, migrate to automatic debug packages.
+  * libsuitesparse-doc: suggest instead of recommending BLAS and ATLAS doc.
+    Also replace transitional libblas-doc package by liblapack-doc and
+    liblapack-doc-man.
+  * Remove old Conflicts/Replaces against old ufsparse/umfpack4 packages.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Tue, 19 Jan 2016 16:59:48 +0100
+
+suitesparse (1:4.4.5-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Fri, 20 Nov 2015 11:12:28 +0100
+
+suitesparse (1:4.4.5-1) experimental; urgency=low
+
+  * Imported Upstream version 4.4.5
+  * debian/copyright: reflect upstream changes.
+  * Bump SOVERSION for libcholmod, libklu and libsuitesparseconfig.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Fri, 25 Sep 2015 23:37:44 +0200
+
+suitesparse (1:4.4.4-1) experimental; urgency=low
+
+  * Imported Upstream version 4.4.4
+  * Bump SOVERSION for libspqr and libsuitesparseconfig.
+  * Fix typo in description of libccolamd. (Closes: #768365)
+  * Overhaul long package descriptions. (Closes: #633042)
+
+ -- Sébastien Villemot <sebastien@debian.org>  Fri, 10 Apr 2015 18:00:39 +0200
+
+suitesparse (1:4.4.3-1) experimental; urgency=low
+
+  * Imported Upstream version 4.4.3
+  * debian/copyright: update, rewrite using machine-readable format 1.0.
+  * Bump library SONAMEs.
+  * Update patches.
+    + Merge all patches related to shared libraries building in
+      shared_libraries.patch.
+    + Separate patch for BLAS library (use-generic-blas.patch) from the one
+      disabling METIS (disable-metis.patch).
+    + Give more explicit names to remaining patches, and use the .patch
+      extension.
+  * Ship libsuitesparseconfig in a separate package.
+    This is now necessary because the library contains a global symbol, shared
+    between several SuiteSparse libraries.
+  * Bump Standards-Version to 3.9.6, no changes needed.
+  * Update debian/watch for new tarball location.
+  * debian/control: update homepage URL.
+  * Ship cs.h from both CSparse and CXSparse.
+    CSparse and CXSparse both provide a header named cs.h. Previously, only the
+    CXSparse version was provided. Both versions are now provided in separate
+    subdirectories of /usr/include/suitesparse. A toplevel symlink pointing to
+    the CXSparse version is left for backward compatibility.
+  * Add missing SuiteSparse_config in long description of libsuitesparse-dev.
+  * Regenerate debian/control from the clean rule (instead of using a
+    dedicated target). This seems acceptable, since it's done in
+    gnome-pkg-tools.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sun, 08 Feb 2015 18:54:17 +0100
+
+suitesparse (1:4.2.1-3) unstable; urgency=low
+
+  * Upload to unstable.
+  * Register user guides for KLU, CAMD, SPQR and LDL in doc-base.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sun, 01 Dec 2013 22:09:21 +0100
+
+suitesparse (1:4.2.1-2) experimental; urgency=low
+
+  * Really fix BLAS/LAPACK dependencies of libsuitesparse-dev
+    - remove obsolete ATLAS specialized libraries (Closes: #645846)
+    - add virtual package libblas.so as a BLAS alternative (Closes: #645844)
+  * Remove Daniel Rus Morales from Uploaders, with his consent. Thanks
+    Daniel for your work!
+  * d/rules: do not regenerate d/control automatically, this is
+    forbidden
+  * d/rules: fix get-orig-source rule
+  * d/control: use canonical URLs for Vcs-* fields
+  * Mark debug package as Multi-Arch: same
+  * Ship libsuitesparseconfig.a in the -dev package.
+  * Bump Standards-Version to 3.9.5, no changes needed.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Wed, 13 Nov 2013 18:26:35 +0100
+
+suitesparse (1:4.2.1-1) experimental; urgency=low
+
+  * New upstream release (Closes: #706709)
+    - debian/library-soname.pl: update soversion numbers
+  * debian/rules: recreate d/control when d/library-sonames.pl is
+    modified
+
+ -- Sébastien Villemot <sebastien@debian.org>  Fri, 03 May 2013 18:36:14 +0200
+
+suitesparse (1:4.2.0-1) experimental; urgency=low
+
+  [ Christophe Trophime ]
+  * New upstream release (Closes: #653660, #687282)
+    - Renamed UFconfig to SuiteSparse_config
+    - Update patches to new release
+    - debian/library-soname.pl: update soversion numbers
+      
+  [ Sébastien Villemot ]
+  * debian/control.in:
+    - fix Maintainer field (Closes: #674266, #674268, #674270, #674271, #674272,
+      #674273, #674274, #674275, #674276, #674277, #674278, #674279, #674280,
+      #674281)
+    - add myself to Uploaders
+    - remove obsolete DM-Upload-Allowed flag
+  * Remove obsolete README.source
+  * debian/rules: clean *.oo files
+  * Bump to debhelper compat level 9
+  * Update debian/copyright
+  * Remove symbols files: they are useless since we bump the soversion
+    at every new upstream release
+  * Clean up build flags
+    - make sure to inject flags from dpkg-buildflags
+    - buildflags.diff: new patch to remove spurious flags in upstream build
+      system
+    - remove -m64 flag on amd64 CPUs (Closes: #701654)
+  * Fix version in NEWS.Debian, to make lintian happy
+  * parallel-build.diff: new patch, fixes parallel build
+  * Multiarchify the package
+  * Fix BLAS/LAPACK dependencies of libsuitesparse-dev:
+    - remove obsolete ATLAS specialized libraries (Closes: #645846)
+    - add libopenblas-dev as a BLAS alternative (Closes: #645844)
+  * Bump to Standards-Version 3.9.4, no changes needed
+  * Suitesparse_config_Makefile.diff: new patch, creates a PIC version
+    of the (small) config code, for embedding in other shared libs
+  * KLU_Demo_Makefile.diff: new patch, needed for creating the right
+    dependencies between shared libraries
+  * Create a new shared library package for SPQR (Closes: #589296)
+  * Update README.Debian
+
+ -- Sébastien Villemot <sebastien@debian.org>  Mon, 29 Apr 2013 16:14:58 +0200
+
+suitesparse (1:3.4.0-3) unstable; urgency=low
+
+  * Team upload.
+
+  [ Sylvestre Ledru ]
+  * Standard-Version updated to 3.9.3 (no changes requiered)
+
+  [ Evgeni Golov ]
+  * [f782819] Add -g to CFLAGS. (Closes: #682177)
+  * [d43b31b] Honour CFLAGS in debian/patches/09-CSparse_Lib_Makefile.diff
+
+  [ Anton Gladky ]
+  * [3a0e1c1] Move repository into debian-science.
+
+ -- Evgeni Golov <evgeni@debian.org>  Sat, 04 Aug 2012 22:40:53 +0200
+
+suitesparse (1:3.4.0-2) unstable; urgency=low
+
+  * Maintainer changed to Debian Science
+  * Updated list of Uploaders (Closes: #571884, #550417)
+  * Standards-Version updated to version 3.8.4
+  * Link against -llapackgf-3 changed to -llapack (Closes: #577879)
+  * Removed doc-central recommends (Closes: #566361)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 15 Apr 2010 10:36:16 +0200
+
+suitesparse (1:3.4.0-1) unstable; urgency=low
+
+  [ Rafael Laboissiere ]
+  * New upstream release
+  * debian/patches/14-SPQR_Include_spqr_hpp.dpatch: Removed patch (applied
+    upstream)
+
+  * Split the libraries into individual packages
+    + The new binary packages are (the soversion numbers are the ones
+      provided by the upstream authors in the UFconfig/UFconfig.h file):
+      - libamd2.2.0
+      - libbtf1.1.0
+      - libcamd2.2.0
+      - libcolamd2.7.1
+      - libccolamd2.7.1
+      - libcholmod1.7.1
+      - libcsparse2.2.3
+      - libcxsparse2.2.3
+      - libklu1.1.0
+      - libldl2.0.1
+      - libumfpack5.4.0
+    + The libsuitesparse-dev and libsuitesparse-dbg packages remain as
+      before.  They depend on all the binary packages above.
+    + debian/library-soname.pl: New Perl script that is used everywhere to
+      obtain the name of the package for each library.  This is the
+      centralized place where this information should be provided.
+    + The debian/control file has been moved into debian/control.in and is
+      automatically generated by debian/rules with the appropriate names
+      of the packages being replaced.
+    + debian/patches/*.diff: All the patches have been adapted for
+      obtaining the library soversion using the debian/library-soname.pl
+      script.
+    + debian/symbols/*, debian/install/*: These are the source files for
+      the debian/lib*.symbols and debian/lib*.install.  The later are
+      obtained from the former in debian/rules by using the appropriate
+      package names.  For now, this is acomplished with $(foreach) in
+      debian/rules and amounts to simply copying files, like
+      "cp debian/symbols/AMD debian/libamd2.2.symbols"
+    + debian/NEWS: Document the changes above
+
+  * Switch from dpatch to quilt as patch system
+
+  * debian/control.in:
+    + The Debian packaging files are now maintained through a Git
+      repository at alioth.debian.org.  Switch the Vcs-* URLs to Git,
+      accordingly.
+    + Bump Standards-Version to 3.8.1 (add debian/README.source explaining
+      mentioning the quilt patch system, as mandated by the Policy)
+
+  * debian/rules: Prevent removal of debian/README.source in clean rule
+
+  [ Thomas Viehmann ]
+  * Sprinkle some linking to KLU, UMFPACK shared libraries
+    to not have unresolved symbols. Remove some from CHOLMOD.
+    Now dpkg-shlibdeps does not warn anymore.
+    (changing debian/patches/*Makefile.dpatch)
+    Closes: #526422
+
+ -- Rafael Laboissiere <rafael@debian.org>  Sat, 06 Jun 2009 14:00:01 +0200
+
+suitesparse (1:3.2.0-4) unstable; urgency=low
+
+  * debian/control: Add an epoch to the version number of
+    libsuitesparse-3.0.2 in replaces/conflicts for libcolamd-3.2.0
+    (really, closes: #516725)
+
+ -- Rafael Laboissiere <rafael@debian.org>  Tue, 24 Feb 2009 11:08:12 +0100
+
+suitesparse (1:3.2.0-3) unstable; urgency=low
+
+  * debian/control: Make libcolamd-3.2.0 replace and conflict with
+    libsuitesparse-3.2.0 <= 3.2.0-1 (closes: #516725)
+
+ -- Rafael Laboissiere <rafael@debian.org>  Mon, 23 Feb 2009 16:59:48 +0100
+
+suitesparse (1:3.2.0-2) unstable; urgency=low
+
+  * Merge from Ubuntu: Split out colamd, in order to reduce the footsprint
+    of openoffice.org.  Thanks to Chris Cheney for the patch.
+    Closes: #513415.
+  * Adjust the Lintian overrides after the colamd split:
+    + debian/compat, debian/control: Bump the build-dependency on
+       debhelper to >= 6.0.7 and cdbs to >= 0.4.52, such that dh_lintian
+       is used
+    + debian/libsuitesparse-3.2.0.lintian-overrides,
+      debian/libcolamd-3.2.0.lintian-overrides,
+      debian/source.lintian-overrides: Add files
+    + debian/libsuitesparse.overrides: Drop file
+    + debian/rules (binary-post-install/libsuitesparse-$(VERSION)): Drop
+      this rule, since installation of Lintian overrides is done now by
+      dh_lintian
+  * debian/copyright:
+    + Refer to versioned files in /usr/share/common-licenses (Lintian
+      warning copyright-refers-to-versionless-license-file)
+    + Add copyright information for the Debian packaging files
+  * debian/control: Change the short descriptions of all packages,
+    avoiding the Lintian warning duplicate-short-description
+  * debian/source.lintian-overrides: Dropped file, which contained the
+    override for the Lintian warning above
+
+ -- Rafael Laboissiere <rafael@debian.org>  Sat, 14 Feb 2009 11:56:05 +0100
+
+suitesparse (1:3.2.0-1) experimental; urgency=low
+
+  * New upstream release uploaded to experimental
+  * debian/libsuitesparse.overrides: Fix version numbers for new upstream
+    release
+  * debian/libsuitesparse-3.2.0.symbols: Add library symbols file
+
+ -- Rafael Laboissiere <rafael@debian.org>  Mon, 05 Jan 2009 15:40:23 +0100
+
+suitesparse (1:3.1.0-3.1) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * re-upload with epoch. You should not upload a
+    name-changing new upstream to unstable (which breaks many r-deps)
+    during a freeze
+
+ -- Rene Engelhard <rene@debian.org>  Tue, 09 Dec 2008 01:07:41 +0100
+
+suitesparse (3.2.0-1) unstable; urgency=low
+
+  [ Daniel Leidert (dale) ]
+  * debian/control (Vcs-Svn): Fixed.
+  * debian/libsuitesparse-doc.doc-base.amd (Section): Fixed.
+  * debian/libsuitesparse-doc.doc-base.cholmod (Section): Ditto.
+  * debian/libsuitesparse-doc.doc-base.umfpack-qg (Section): Ditto.
+  * debian/libsuitesparse-doc.doc-base.umfpack-ug (Section): Ditto.
+  * debian/watch: Test for version numbers, not strings.
+
+  [ Christophe Prud'homme ]
+  * New upstream release
+    - Added SuiteSparseQR (multithreaded multifrontal sparse QR
+      factorization).
+    - Minor update to CHOLMOD.
+  * debian/control: updated Standards-Version to 3.8.0 (no changes)
+  * debian/control: added ${misc:Depends} and fixed associated lintian
+    warnings
+  * debian/{rules,patches}: added support for spqr
+
+ -- Christophe Prud'homme <prudhomm@debian.org>  Sun, 07 Dec 2008 18:08:34 +0100
+
+suitesparse (3.1.0-3) unstable; urgency=low
+
+  [ Rafael Laboissiere ]
+  * Upload to unstable
+
+  [ Ondrej Certik ]
+  * XS-DM-Upload-Allowed: yes field added
+  * Ondrej Certik added to uploaders
+
+ -- Rafael Laboissiere <rafael@debian.org>  Thu, 21 Feb 2008 14:46:50 +0100
+
+suitesparse (3.1.0-2) experimental; urgency=low
+
+  * debian/*-*_Lib_{GNUm,M}akefile.dpatch: Changed all dpatches to set the
+    soname of the shared libraries to lib*.so.3.1.0.  This will avoid
+    problems with the future releases of the package.  Thanks to Adam
+    C. Powell IV for the suggestion.
+  * debian/libsuitesparse.overrides: Adjusted according to the above
+
+ -- Rafael Laboissiere <rafael@debian.org>  Mon, 11 Feb 2008 07:37:24 +0100
+
+suitesparse (3.1.0-1) experimental; urgency=low
+
+  [ Daniel Rus Morales ]
+  * New upstream release.
+  * Install every provided library ChangeLog as LIB_ChangeLog to be able to
+    keep track of every change explained there by mainstream developers.
+  * Remove 'Homepage' field from debian/control file due to the warning
+    messages it produces.
+
+  [ Rafael Laboissiere ]
+  * This version of suitesparse introduces a new name for the library
+    binary package (libsuitesparse-3.1.0).  This is needed in order to avoid
+    soversion problems and clashes with the previous version of
+    libsuitesparse.  A debian/NEWS file is added, which explains the
+    changes.
+  * debian/control:
+    + Switch from g77 to gfortran, adjusting all dependencies on the
+      appropriate versions of the blas, atlas and lapack packages.  Thanks
+      to Kumar Appaiah for the patch (closes: #463820).
+    + Drop the Conflicts/Replaces/Provides relationships for the
+      libsuitesparse-3.0.1 package.  This was needed for the
+      previous libsuitesparse package and is not necessary anymore.
+    + Changed the deprecated Source-Version substvar by the recommended
+      binary:Version, which has to be used instead of source:Version,
+      otherwise the package will not be binNMUable
+    + Use the Vcs-* headers instead of the deprecated XS-Vcs-* ones
+    + Bumped Standards-Version to 3.7.3
+    + Added myself to Uploaders
+  * debian/patches/13-UFconfig_UFconfig.mk.dpatch: Adjusted for the
+    version of the lapack package compiled with gfortran
+  * debian/libsuitesparse-doc.doc-base.amd: Removed extra leading spaces
+    at the continuation line of the Abstract section
+
+ -- Rafael Laboissiere <rafael@debian.org>  Tue, 05 Feb 2008 18:12:02 +0100
+
+suitesparse (3.0.0-7) unstable; urgency=low
+
+  * Bug fix: "trying to overwrite `/usr/lib/libamd.a&#39;, which is also
+    in package libumfpack4-dev", thanks to Soeren Sonnenburg (Closes:
+    #447555).
+  * debian/control:
+    + added Homepage field
+    + removed duplicate field Replaces
+
+ -- Christophe Prud'homme <prudhomm@debian.org>  Mon, 22 Oct 2007 11:10:41 +0200
+
+suitesparse (3.0.0-6.1) unstable; urgency=high
+
+  * NMU
+  * really conflict/replace/provide libufsparse-dbg (closes: #422644)
+
+ -- Rene Engelhard <rene@debian.org>  Sat, 28 Jul 2007 14:19:50 +0200
+
+suitesparse (3.0.0-6) unstable; urgency=low
+
+  [Ondrej Certik]
+  * Bug fix: "FTBFS: Not using -fPIC to make shared library" (Closes: #434792)
+
+ -- Christophe Prud'homme <prudhomm@debian.org>  Thu, 26 Jul 2007 22:24:48 +0200
+
+suitesparse (3.0.0-5) unstable; urgency=low
+
+  [Daniel Rus Morales]
+  * Bug fix: "FTBFS: ld: cannot find -lmetis" (Closes: #434410)
+
+  [ Christophe Prud'homme ]
+  * Bug fix: "tries to overwrite /usr/lib/libamd.so.1", thanks to Soeren
+    Sonnenburg (Closes: #428175).
+
+ -- Christophe Prud'homme <prudhomm@debian.org>  Mon, 23 Jul 2007 10:11:32 +0200
+
+suitesparse (3.0.0-4) unstable; urgency=low
+
+  [Daniel Rus Morales]
+  * Turn the repository to mergeWithUpstream mode.
+  * debian/patches/: Create a bunch of patches to build the shared version
+    of all suitesparse libraries.
+  * debian/rules: updated.
+  * debian/control: Mention CAMD and CCOLAMD in the package description,
+    thanks to Thomas Weber <weber@num.uni-sb.de>.
+  * Overrides lintian warning: binary-or-shlib-defines-rpath
+
+ -- Christophe Prud'homme <prudhomm@debian.org>  Tue, 17 Jul 2007 12:15:41 +0200
+
+suitesparse (3.0.0-3) unstable; urgency=low
+
+  [ Christophe Prud'homme ]
+  * debian/control: removed libsuitesparse-metis and
+    libsuitesparse-metis-dev, this will be provided by a suitesparse-metis
+    package
+  * Bug fix: "suitesparse: Build-Depends on non-free package
+    libparmetis-dev", thanks to Daniel Schepler (Closes: #426814).
+
+ -- Christophe Prud'homme <prudhomm@debian.org>  Thu, 31 May 2007 08:45:21 +0200
+
+suitesparse (3.0.0-2) unstable; urgency=low
+
+  * suitesparse builds properly twice in a row
+  * Bug fix: "suitesparse - FTBFS: Broken build depens: libgfortran1-dev",
+    thanks to Bastian Blank (Closes: #426349).
+  * Bug fix: "suitesparse_3.0.0-1: FTBFS: build-depends on
+    libgfortran1-dev", thanks to Steve Langasek (Closes: #426354).
+
+ -- Christophe Prud'homme <prudhomm@debian.org>  Tue, 29 May 2007 09:36:29 +0200
+
+suitesparse (3.0.0-1) unstable; urgency=low
+
+  [ Christophe Prud'homme ]
+  * New upstream release
+  * debian/libsuitesparse-doc.install: added LDL, KLU and CAMD documentation.
+  * Bug fix: "libsuitesparse: New upstream version", thanks to Thomas
+    Weber (Closes: #425665).
+  * debian/libsuitesparse-metis.install: update libs location.
+  * debian/libsuitesparse-metis-dev.install: update libs and headers location.
+  * debian/libsuitesparse.install: update libs location.
+  * debian/libsuitesparse-dev.install: update libs and headers location.
+  * debian/rules: update libs location.
+
+  [ Daniel Rus Morales ]
+  * debian/control: New entries for the libsuitesparse-metis pakacke and for
+    its corresponding -dev package. Both substitute CHOLMOD library with one
+    linked with MeTiS (libparmetis-dev added to Build-Depends field).
+  * debian/rules: New rules to build content for the libsuitesparse-metis pkg
+    and for its corresponding -dev package.
+    Added entries to include libcamd in libsuitesparse package and in its
+    corresponding -dev package.
+    Added binary-post-install rules for installing libsuitesparse and
+    libsuitesparse-metis overrides files.
+    Added an entry to clean CHOLMOD/LibMetis directory.
+  * debian/libsuitesparse-metis.install: new install file.
+  * debian/libsuitesparse-metis-dev.install: new install file.
+  * debian/watch: URL for SuiteSparse-(.*).tar.gz package.
+  * CHOLMOD/LibMetis: New CHOLMOD/LibMetis directory where to build libcholmod
+    with libmetis support.
+  * CHOLMOD/LibMetis/Makefile: Just a copy of CHOLMOD/Lib/Makefile used to
+    build the suitesparse-metis package.
+
+  [ Rafael Laboissiere ]
+  * debian/control: Added XS-Vcs-Svn and XS-Vcs-Browser fields to the Source
+    section
+
+ -- Christophe Prud'homme <prudhomm@debian.org>  Wed, 23 May 2007 12:38:25 +0200
+
+suitesparse (2.3.1-1) unstable; urgency=low
+
+  * Initial Release
+
+ -- Christophe Prud'homme <prudhomm@debian.org>  Fri, 22 Dec 2006 10:16:15 +0100
+

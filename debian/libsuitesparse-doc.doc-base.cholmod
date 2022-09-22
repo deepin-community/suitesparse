@@ -1,0 +1,8 @@
+Document: cholmod-ug
+Title: SuiteSparse/CHOLMOD User Guide
+Author: Timothy A. Davis, University of Florida, davis@cise.ufl.edu.
+Abstract: Cholmod is a set of routines for sparse Cholesky factorization. It is part of the SuiteSparse package
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/CHOLMOD_UserGuide.pdf

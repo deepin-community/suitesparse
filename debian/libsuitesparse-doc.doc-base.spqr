@@ -1,0 +1,14 @@
+Document: spqr-ug
+Title: SuiteSparse/User’s Guide for SuiteSparseQR
+Author: Timothy A. Davis
+Abstract: SuiteSparseQR is an implementation of the multifrontal sparse QR
+ factorization method. Parallelism is exploited both in the BLAS and across
+ different frontal matrices using Intel’s Threading Building Blocks, a
+ shared-memory programming model for modern multicore architectures. It can
+ obtain a substantial fraction of the theoretical peak performance of a
+ multicore computer. The package is written in C++ with user interfaces for
+ MATLAB, C, and C++. Both real and complex sparse matrices are supported.
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/spqr_user_guide.pdf

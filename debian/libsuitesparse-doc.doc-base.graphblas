@@ -1,0 +1,14 @@
+Document: graphblas-ug
+Title: SuiteSparse:GraphBLAS User Guide
+Author: Timothy A. Davis, University of Florida, davis@cise.ufl.edu.
+Abstract: SuiteSparse:GraphBLAS is an full implementation of the GraphBLAS standard,
+ which defines a set of sparse matrix operations on an extended algebra of
+ semirings using an almost unlimited variety of operators and types. When
+ applied to sparse adjacency matrices, these algebraic operations are
+ equivalent to computations on graphs. GraphBLAS provides a powerful and
+ expressive framework for creating graph algorithms based on the elegant
+ mathematics of sparse matrix operations on a semiring.
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/GraphBLAS_UserGuide.pdf

@@ -1,0 +1,40 @@
+Description: Fix GraphBLAS build system
+ - top-level Makefile: do not try to build GraphBLAS dynamic library before
+   dynamic suitesparse_config has been compiled
+ - ensure that static library is compiled at the same time as the dynamic one
+ All this mess comes from the fact that upstream build system compiles
+ libsuitesparse_config.a with PIC by default (this is changed in Debian by
+ buildflags.patch).
+ - Also mark the “docs” target as PHONY, since there is a directory with the
+   same name in the source tarball.
+Author: Sébastien Villemot <sebastien@debian.org>
+Forwarded: no
+Last-Update: 2021-09-01
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/GraphBLAS/Makefile
++++ b/GraphBLAS/Makefile
+@@ -16,7 +16,7 @@ default: library
+ 
+ # just build the dynamic library, not the demos
+ library:
+-	( cd build ; cmake $(CMAKE_OPTIONS) .. ; $(MAKE) --jobs=$(JOBS) )
++	( cd build ; cmake $(CMAKE_OPTIONS) -DBUILD_GRB_STATIC_LIBRARY=1 .. ; $(MAKE) --jobs=$(JOBS) )
+ 
+ # build the dynamic library and the demos
+ all:
+@@ -70,3 +70,4 @@ distclean:
+ 	( cd Doc  ; $(MAKE) distclean )
+ 	( cd alternative  ; $(MAKE) distclean )
+ 
++.PHONY: docs
+--- a/Makefile
++++ b/Makefile
+@@ -171,7 +171,6 @@ ifneq (,$(GPU_CONFIG))
+ 	( cd GPUQREngine && $(MAKE) static )
+ endif
+ 	( cd SPQR && $(MAKE) static )
+-	( cd GraphBLAS && $(MAKE) JOBS=$(JOBS) CMAKE_OPTIONS='$(CMAKE_OPTIONS)' static )
+ 	( cd SLIP_LU && $(MAKE) static )
+ #	( cd PIRO_BAND && $(MAKE) static )
+ #	( cd SKYLINE_SVD && $(MAKE) static )
