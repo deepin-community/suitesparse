@@ -2,17 +2,22 @@
 // GB_convert_bitmap_worker: construct triplets or CSC/CSR from bitmap
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
-// TODO allow this function to do typecasting.  Create 169 different versions
-// for all 13x13 versions.  Use this as part of Method 24, C=A assignment.
-// Can also use typecasting for GB_Matrix_diag.
+// JIT: needed.
+
+// If A is iso and Ax_new is not NULL, the iso scalar is expanded into the
+// non-iso array Ax_new.  Otherwise, if Ax_new and Ax are NULL then no values
+// are extracted.
+
+// TODO allow this function to do typecasting.
 
 #include "GB.h"
 #include "GB_partition.h"
+#include "GB_unused.h"
 
 GrB_Info GB_convert_bitmap_worker   // extract CSC/CSR or triplets from bitmap
 (
@@ -24,7 +29,7 @@ GrB_Info GB_convert_bitmap_worker   // extract CSC/CSR or triplets from bitmap
     int64_t *anvec_nonempty,        // # of non-empty vectors
     // inputs: not modified
     const GrB_Matrix A,             // matrix to extract; not modified
-    GB_Context Context
+    GB_Werk Werk
 )
 {
 
@@ -46,7 +51,8 @@ GrB_Info GB_convert_bitmap_worker   // extract CSC/CSR or triplets from bitmap
 
     const int8_t *restrict Ab = A->b ;
 
-    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
+    int nthreads_max = GB_Context_nthreads_max ( ) ;
+    double chunk = GB_Context_chunk ( ) ;
     int nthreads = GB_nthreads (avlen*avdim, chunk, nthreads_max) ;
     bool by_vector = (nthreads <= avdim) ;
 
@@ -83,7 +89,7 @@ GrB_Info GB_convert_bitmap_worker   // extract CSC/CSR or triplets from bitmap
         //----------------------------------------------------------------------
 
         // allocate one row of W per thread, each row of length avdim
-        W = GB_MALLOC_WERK (nthreads * avdim, int64_t, &W_size) ;
+        W = GB_MALLOC_WORK (nthreads * avdim, int64_t, &W_size) ;
         if (W == NULL)
         {
             // out of memory
@@ -135,9 +141,8 @@ GrB_Info GB_convert_bitmap_worker   // extract CSC/CSR or triplets from bitmap
     //--------------------------------------------------------------------------
 
     int nth = GB_nthreads (avdim, chunk, nthreads_max) ;
-    GB_cumsum (Ap, avdim, anvec_nonempty, nth, Context) ;
-    int64_t anz = Ap [avdim] ;
-    ASSERT (anz == A->nvals) ;
+    GB_cumsum (Ap, avdim, anvec_nonempty, nth, Werk) ;
+    ASSERT (Ap [avdim] == A->nvals) ;
 
     //--------------------------------------------------------------------------
     // gather the pattern and values from the bitmap
@@ -146,6 +151,8 @@ GrB_Info GB_convert_bitmap_worker   // extract CSC/CSR or triplets from bitmap
     // TODO: add type-specific versions for built-in types
 
     const GB_void *restrict Ax = (GB_void *) (A->x) ;
+    const bool A_iso = A->iso ;
+    const bool numeric = (Ax_new != NULL && Ax != NULL) ;
 
     if (by_vector)
     {
@@ -169,10 +176,11 @@ GrB_Info GB_convert_bitmap_worker   // extract CSC/CSR or triplets from bitmap
                     // A(i,j) is in the bitmap
                     if (Ai != NULL) Ai [pnew] = i ;
                     if (Aj != NULL) Aj [pnew] = j ;
-                    if (Ax_new != NULL)
+                    if (numeric)
                     { 
                         // Ax_new [pnew] = Ax [p])
-                        memcpy (Ax_new +(pnew)*asize, Ax +(p)*asize, asize) ;
+                        memcpy (Ax_new +(pnew)*asize,
+                            Ax +(A_iso ? 0:(p)*asize), asize) ;
                     }
                     pnew++ ;
                 }
@@ -209,10 +217,11 @@ GrB_Info GB_convert_bitmap_worker   // extract CSC/CSR or triplets from bitmap
                         // A(i,j) is in the bitmap
                         if (Ai != NULL) Ai [pnew] = i ;
                         if (Aj != NULL) Aj [pnew] = j ;
-                        if (Ax_new != NULL)
+                        if (numeric)
                         { 
                             // Ax_new [pnew] = Ax [p] ;
-                            memcpy (Ax_new +(pnew)*asize, Ax +(p)*asize, asize);
+                            memcpy (Ax_new +(pnew)*asize,
+                                Ax +(A_iso ? 0:(p)*asize), asize) ;
                         }
                         pnew++ ;
                     }
@@ -225,7 +234,7 @@ GrB_Info GB_convert_bitmap_worker   // extract CSC/CSR or triplets from bitmap
     // free workspace return result
     //--------------------------------------------------------------------------
 
-    GB_FREE_WERK (&W, W_size) ;
+    GB_FREE_WORK (&W, W_size) ;
     return (GrB_SUCCESS) ;
 }
 

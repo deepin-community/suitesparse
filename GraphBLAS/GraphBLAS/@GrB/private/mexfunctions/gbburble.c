@@ -2,8 +2,8 @@
 // gbburble: get/set the burble setting for diagnostic output
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@
 // b = gbburble ;
 // b = gbburble (b) ;
 
-#include "gb_matlab.h"
+#include "gb_interface.h"
 
 #define USAGE "usage: b = GrB.burble ; or GrB.burble (b)"
 

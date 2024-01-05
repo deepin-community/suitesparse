@@ -2,14 +2,14 @@
 // gb_string_and_type_to_unop: get a GraphBLAS operator from a string and type
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
-#include "gb_matlab.h"
+#include "gb_interface.h"
 
-// op_name: a MATLAB string defining the operator name.
+// op_name: a built-in string defining the operator name.
 
 // For all 13 types:
 //      identity, ainv, minv, one, abs
@@ -53,9 +53,9 @@
 //  lgamma      gammaln
 //  tgamma      gamma
 //  exp2        pow2
-//  i           i1  positioni   positioni1 (since MATLAB is 1-based)
+//  i           i1  positioni   positioni1 (since default is 1-based)
 //  i0          positioni0
-//  j           j1  positionj   positionj1 (since MATLAB is 1-based)
+//  j           j1  positionj   positionj1 (since default is 1-based)
 //  j0          positionj0
 
 GrB_UnaryOp gb_string_and_type_to_unop  // return op from string and type
@@ -426,6 +426,13 @@ GrB_UnaryOp gb_string_and_type_to_unop  // return op from string and type
 
         if (type == GrB_FP32  ) return (GxB_ERFC_FP32) ;
         if (type == GrB_FP64  ) return (GxB_ERFC_FP64) ;
+
+    }
+    else if (MATCH (op_name, "cbrt"))
+    { 
+
+        if (type == GrB_FP32  ) return (GxB_CBRT_FP32) ;
+        if (type == GrB_FP64  ) return (GxB_CBRT_FP64) ;
 
     }
     else if (MATCH (op_name, "conj"))

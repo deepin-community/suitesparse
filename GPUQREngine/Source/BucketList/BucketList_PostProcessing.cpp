@@ -1,23 +1,27 @@
 // =============================================================================
 // === GPUQREngine/Source/BucketList_PostProcessing.cpp ========================
 // =============================================================================
+
+// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
+// and Sanjay Ranka.  All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 //
 // PostProcess handles any cleanup operations following a kernel invocation
 // including merging delta tiles with the main bundle and other fixups.
 //
 // =============================================================================
-
 #include "GPUQREngine_BucketList.hpp"
-
-
-void BucketList::PostProcess
+template <typename Int>
+void BucketList<Int>::PostProcess
 (
     void
 )
 {
     for(int b=0; b<numBundles; b++)
     {
-        LLBundle& bundle = Bundles[b];
+        LLBundle <Int>& bundle = Bundles[b];
 
         /* Get details about the task type. */
         TaskType type = bundle.CurrentTask;
@@ -42,3 +46,12 @@ void BucketList::PostProcess
         }
     }
 }
+
+template void BucketList<int32_t>::PostProcess
+(
+    void
+) ;
+template void BucketList<int64_t>::PostProcess
+(
+    void
+) ;

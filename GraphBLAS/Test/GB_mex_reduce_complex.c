@@ -2,7 +2,7 @@
 // GB_mex_mxm: C<Mask> = accum(C,A*B)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include "GB_mex.h"
 
-#define USAGE "c = GB_mex_reduce_complex (A, hack)"
+#define USAGE "c = GB_mex_reduce_complex (A, mangle)"
 
 #define FREE_ALL                            \
 {                                           \
@@ -54,6 +54,12 @@ void mexFunction
         mexErrMsgTxt ("A must be complex") ;
     }
 
+    if (A->iso)
+    {
+        FREE_ALL ;
+        mexErrMsgTxt ("A must not be iso") ;
+    }
+
     GxB_FC64_t one  = GxB_CMPLX (1,0) ;
     GxB_FC64_t zero = GxB_CMPLX (0,0) ;
 
@@ -73,14 +79,14 @@ void mexFunction
         }
     }
 
-    int64_t GET_SCALAR (1, int64_t, hack, -1) ;
-    if (hack >= 0)
+    int64_t GET_SCALAR (1, int64_t, mangle, -1) ;
+    if (mangle >= 0)
     {
-        GxB_FC64_t *Ax = A->x ;
-        Ax [hack] = GxB_CMPLX (0,0) ;
+        GxB_FC64_t *Ax = A->x ;         // OK: A is non iso
+        Ax [mangle] = GxB_CMPLX (0,0) ;
     }
 
-    // allocate the MATLAB output scalar
+    // allocate the output scalar
     pargout [0] = GB_mx_create_full (1, 1, GxB_FC64) ;
     GxB_FC64_t *c = (GxB_FC64_t *) mxGetComplexDoubles (pargout [0]) ;
 

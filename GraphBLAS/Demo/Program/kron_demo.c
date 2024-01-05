@@ -2,7 +2,7 @@
 // GraphBLAS/Demo/Program/kron_demo.c: Kronkecker product
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -22,7 +22,18 @@
 // indices that appear in the files.  The file C.tsv is the filename of the
 // output file for C=kron(A,B), also with 1-based indices.
 
+#include "graphblas_demos.h"
+#include "simple_rand.c"
+#include "usercomplex.h"
+#include "usercomplex.c"
+#include "wathen.c"
+#include "get_matrix.c"
+#include "random_matrix.c"
+#include "import_test.c"
+#include "read_matrix.c"
+
 // macro used by OK(...) to free workspace if an error occurs
+#undef  FREE_ALL
 #define FREE_ALL                            \
     GrB_Matrix_free (&A) ;                  \
     GrB_Matrix_free (&B) ;                  \
@@ -35,8 +46,6 @@
     if (X != NULL) free (X) ;               \
     GrB_finalize ( ) ;
 
-#include "graphblas_demos.h"
-
 int main (int argc, char **argv)
 {
     //--------------------------------------------------------------------------
@@ -48,7 +57,6 @@ int main (int argc, char **argv)
     FILE *Afile = NULL, *Bfile = NULL, *Cfile = NULL ;
     double *X = NULL ;
     GrB_Info info ;
-    double tic [2], t ;
 
     OK (GrB_init (GrB_NONBLOCKING)) ;
     int nthreads ;
@@ -101,10 +109,8 @@ int main (int argc, char **argv)
 
     OK (GrB_Matrix_new (&C, GrB_FP64, anrows * bnrows, ancols * bncols)) ;
 
-    simple_tic (tic) ;
     OK (GrB_Matrix_kronecker_BinaryOp (C, NULL, NULL,
         GrB_TIMES_FP64, A, B, NULL)) ;
-    t = simple_toc (tic) ;
 
     OK (GrB_Matrix_free (&A)) ;
     OK (GrB_Matrix_free (&B)) ;
@@ -124,12 +130,10 @@ int main (int argc, char **argv)
     fprintf (stderr, "GraphBLAS GrB_kronecker:\n"
     "A: %" PRIu64 "-by-%" PRIu64 ", %" PRIu64 " entries.\n"
     "B: %" PRIu64 "-by-%" PRIu64 ", %" PRIu64 " entries.\n"
-    "C: %" PRIu64 "-by-%" PRIu64 ", %" PRIu64 " entries.\n"
-    "time: %g seconds, rate: nval(C)/t = %g million/sec\n",
+    "C: %" PRIu64 "-by-%" PRIu64 ", %" PRIu64 " entries.\n",
     anrows, ancols, anvals,
     bnrows, bncols, bnvals,
-    cnrows, cncols, cnvals,
-    t, 1e-6*((double) cnvals) / t) ;
+    cnrows, cncols, cnvals) ;
 
     //--------------------------------------------------------------------------
     // write C to the output file
@@ -152,7 +156,8 @@ int main (int argc, char **argv)
 
     for (int64_t k = 0 ; k < cnvals ; k++)
     {
-        fprintf (Cfile, "%" PRIu64 "\t%" PRIu64 "\t%.17g\n", 1 + I [k], 1 + J [k], X [k]) ;
+        fprintf (Cfile, "%" PRIu64 "\t%" PRIu64 "\t%.17g\n",
+            1 + I [k], 1 + J [k], X [k]) ;
     }
 
     FREE_ALL ;

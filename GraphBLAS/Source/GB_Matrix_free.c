@@ -2,7 +2,7 @@
 // GB_Matrix_free: free a GrB_Matrix or GrB_Vector
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -18,15 +18,14 @@ void GB_Matrix_free             // free a matrix
     GrB_Matrix *Ahandle         // handle of matrix to free
 )
 {
-
     if (Ahandle != NULL)
     {
         GrB_Matrix A = *Ahandle ;
         if (A != NULL && (A->magic == GB_MAGIC || A->magic == GB_MAGIC2))
-        { 
+        {
             // free all content of A
             size_t header_size = A->header_size ;
-            GB_phbix_free (A) ;
+            GB_phybix_free (A) ;
             if (!(A->static_header))
             { 
                 // free the header of A itself, unless it is static

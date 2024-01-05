@@ -1,11 +1,12 @@
-/* ========================================================================== */
-/* === Tcov/null ============================================================ */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/Tcov/null: test CHOLMOD with NULL and erroneous inputs
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/Tcov Module.  Copyright (C) 2005-2006, Timothy A. Davis
- * http://www.suitesparse.com
- * -------------------------------------------------------------------------- */
+// CHOLMOD/Tcov Module.  Copyright (C) 2005-2022, Timothy A. Davis.
+// All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /* Test CHOLMOD with NULL pointers, and other error cases. */
 
@@ -48,7 +49,7 @@ void null_test (cholmod_common *cn)
 	to_xtype = 0, to_ll = 0, to_super = 0, to_packed = 0, to_monotonic = 0,
 	scale = 0, transpose = 0, option = 0, ordering = 0, prefer = 0,
 	mtype = 0, asym = 0 ;
-    SuiteSparse_long lr = 0, k1 = 0, k2 = 0 ;
+    int64_t lr = 0, k1 = 0, k2 = 0 ;
     size_t j = 0, need = 0, n = 0, mr = 0, nrow = 0, ncol = 0, iworksize = 0,
 	newsize = 0, fsize = 0, d = 0, nzmax = 0, nnew = 0, size = 0,
 	nold = 0, xwork = 0, kstart = 0, kend = 0, nr = 0, nc = 0, len = 0,
@@ -65,7 +66,7 @@ void null_test (cholmod_common *cn)
 #endif
 
     /* ---------------------------------------------------------------------- */
-    /* Core */
+    /* Utility */
     /* ---------------------------------------------------------------------- */
 
     if (cn == NULL)
@@ -281,12 +282,12 @@ void null_test2 (void)
     int ok ;
 
     /* ---------------------------------------------------------------------- */
-    /* Test Core Common */
+    /* Test Common */
     /* ---------------------------------------------------------------------- */
 
-    ok = CHOLMOD(allocate_work)(Size_max, 1, 1, cm) ;		NOT (ok) ;
-    ok = CHOLMOD(allocate_work)(1, Size_max, 1, cm) ;		NOT (ok) ;
-    ok = CHOLMOD(allocate_work)(1, 1, Size_max, cm) ;		NOT (ok) ;
+    ok = CHOLMOD(allocate_work)(SIZE_MAX, 1, 1, cm) ;		NOT (ok) ;
+    ok = CHOLMOD(allocate_work)(1, SIZE_MAX, 1, cm) ;		NOT (ok) ;
+    ok = CHOLMOD(allocate_work)(1, 1, SIZE_MAX, cm) ;		NOT (ok) ;
 
     /* free a NULL pointer */
     CHOLMOD(free)(42, sizeof (char), NULL, cm) ;
@@ -307,9 +308,13 @@ void null_test2 (void)
     /* dense */
     /* ---------------------------------------------------------------------- */
 
-    X = CHOLMOD(allocate_dense)(5, 4, 1, CHOLMOD_REAL, cm) ;	    NOP (X) ;
+    X = CHOLMOD(allocate_dense)(5, 4, 1, CHOLMOD_REAL, cm) ;
+    OKP (X) ;
+    OK (X->d == 5) ;
+    CHOLMOD(free_dense)(&X, cm) ;
+
     X = CHOLMOD(allocate_dense)(1, Int_max, 1, CHOLMOD_REAL, cm) ;  NOP (X) ;
-    X = CHOLMOD(allocate_dense)(1, 1, 1, -1, cm) ;		    NOP (X) ;
+    X = CHOLMOD(allocate_dense)(1, 1, 1, CHOLMOD_PATTERN, cm) ;     NOP (X) ;
     CHOLMOD(free_dense)(&X, cm) ;
 
     /* free a NULL dense matrix */
@@ -317,9 +322,13 @@ void null_test2 (void)
     ok = CHOLMOD(free_dense)(NULL, cm) ;			    OK (ok) ;
 
     /* make an invalid sparse matrix */
-    Sbad = CHOLMOD(speye)(2, 3, CHOLMOD_REAL, cm) ;		    OKP (Sbad) ;
+    printf ("\nspeye:\n") ;
+    Sbad = CHOLMOD(speye)(2, 3, CHOLMOD_REAL, cm) ;
+    OKP (Sbad) ;
+
     Sbad->stype = 1 ;
     ok = CHOLMOD(check_sparse)(Sbad, cm) ;			    NOT (ok) ;
+    printf ("\nSparse to dense:\n") ;
     X = CHOLMOD(sparse_to_dense)(Sbad, cm) ;			    NOP (X) ;
     ok = CHOLMOD(free_sparse)(&Sbad, cm) ;			    OK (ok) ;
 
@@ -340,7 +349,7 @@ void null_test2 (void)
     /* free a NULL sparse matrix */
     ok = CHOLMOD(free_sparse)(&A, cm) ;				    OK (ok) ;
     ok = CHOLMOD(free_sparse)(NULL, cm) ;			    OK (ok) ;
-    A = CHOLMOD(copy_sparse)(NULL, cm) ;			    NOP (A) ;
+    A = CHOLMOD(copy_sparse)(NULL, cm) ;                            NOP (A) ;
 
     /* ---------------------------------------------------------------------- */
     /* error tests done */

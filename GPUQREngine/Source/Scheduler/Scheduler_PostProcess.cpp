@@ -1,6 +1,12 @@
 // =============================================================================
 // === GPUQREngine/Source/Scheduler_PostProcess.cpp ============================
 // =============================================================================
+
+// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
+// and Sanjay Ranka.  All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 //
 // This file contains logic to run through the factorization state machine.
 // At each stage, different operations are performed:
@@ -57,11 +63,9 @@
 //     When all fronts are in the DONE state then the QREngine's work is done.
 //
 // =============================================================================
-
 #include "GPUQREngine_Scheduler.hpp"
-
-
-bool Scheduler::postProcess
+template <typename Int>
+bool Scheduler <Int>::postProcess
 (
     void
 )
@@ -72,7 +76,7 @@ bool Scheduler::postProcess
         /* Get the front from the "active fronts" permutation. */
         Int f = afPerm[p];
 
-        Front *front = (&frontList[f]);
+        Front <Int> *front = (&frontList[f]);
         SparseMeta *meta = &(front->sparseMeta);
         bool isDense = front->isDense();
         bool isSparse = front->isSparse();
@@ -239,3 +243,12 @@ bool Scheduler::postProcess
     /* Return whether all the fronts are DONE. */
     return (numFronts == numFrontsCompleted);
 }
+
+template bool Scheduler <int32_t>::postProcess
+(
+    void
+) ;
+template bool Scheduler <int64_t>::postProcess
+(
+    void
+) ;

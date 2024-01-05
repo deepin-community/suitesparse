@@ -1,6 +1,12 @@
 // =============================================================================
 // === GPUQREngine/Include/GPUQREngine_TaskDescriptor.hpp ======================
 // =============================================================================
+
+// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
+// and Sanjay Ranka.  All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 //
 // The TaskType enum is used by the GPU UberKernel to determine which subkernel
 // functionality to invoke.
@@ -12,6 +18,7 @@
 
 #ifndef GPUQRENGINE_TASKDESCRIPTOR_HPP
 #define GPUQRENGINE_TASKDESCRIPTOR_HPP
+#include <stdint.h>
 
 enum TaskType
 {
@@ -49,6 +56,7 @@ enum TaskType
     TASKTYPE_PackAssembly               // Push assembly (child to parent)
 };
 
+template <typename Int>
 class Scheduler;
 
 struct TaskDescriptor
@@ -104,14 +112,14 @@ struct TaskDescriptor
 // These two methods are implemented in TaskDescriptor_flops.cpp.
 // They are used to rearrange tasks in the WorkQueue to promote a
 // uniform distribution of work items in the queue.
-Int getFlops
+int64_t getFlops
 (
-    TaskDescriptor *task                // Task for which to compute the flops
+    const TaskDescriptor *task          // Task for which to compute the flops
 );
 
-Int getWeightedFlops
+int64_t getWeightedFlops
 (
-    TaskDescriptor *task                // Task for which to compute the flops
+    const TaskDescriptor *task          // Task for which to compute the flops
 );
 
 #endif

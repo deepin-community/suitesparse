@@ -1,11 +1,12 @@
-/* ========================================================================== */
-/* === MatrixOps/cholmod_ssmult ============================================= */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/MatrixOps/cholmod_ssmult: sparse-times-sparse matrix
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2006, Timothy A. Davis
- * http://www.suitesparse.com
- * -------------------------------------------------------------------------- */
+// CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2022, Timothy A. Davis.
+// All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /* C = A*B.  Multiply two sparse matrices.
  *
@@ -31,12 +32,10 @@
  * is FALSE).
  */
 
+#include "cholmod_internal.h"
+
 #ifndef NGPL
 #ifndef NMATRIXOPS
-
-#include "cholmod_internal.h"
-#include "cholmod_matrixops.h"
-
 
 /* ========================================================================== */
 /* === cholmod_ssmult ======================================================= */
@@ -179,7 +178,7 @@ cholmod_sparse *CHOLMOD(ssmult)
     {
 	/* clear the Flag array */
 	/* mark = CHOLMOD(clear_flag) (Common) ; */
-	CHOLMOD_CLEAR_FLAG (Common) ;
+	CLEAR_FLAG (Common) ;
 	mark = Common->mark ;
 
 	/* for each nonzero B(t,j) in column j, do: */
@@ -210,7 +209,8 @@ cholmod_sparse *CHOLMOD(ssmult)
     }
 
     /* mark = CHOLMOD(clear_flag) (Common) ; */
-    CHOLMOD_CLEAR_FLAG (Common) ;
+    CLEAR_FLAG (Common) ;
+    ASSERT (check_flag (Common)) ;
     mark = Common->mark ;
 
     /* ---------------------------------------------------------------------- */
@@ -331,7 +331,7 @@ cholmod_sparse *CHOLMOD(ssmult)
 	{
 	    /* clear the Flag array */
 	    /* mark = CHOLMOD(clear_flag (Common)) ; */
-	    CHOLMOD_CLEAR_FLAG (Common) ;
+	    CLEAR_FLAG (Common) ;
 	    mark = Common->mark ;
 
 	    /* start column j of C */
@@ -380,7 +380,7 @@ cholmod_sparse *CHOLMOD(ssmult)
 	{
 	    /* clear the Flag array */
 	    /* mark = CHOLMOD(clear_flag) (Common) ; */
-	    CHOLMOD_CLEAR_FLAG (Common) ;
+	    CLEAR_FLAG (Common) ;
 	    mark = Common->mark ;
 
 	    /* start column j of C */
@@ -420,7 +420,8 @@ cholmod_sparse *CHOLMOD(ssmult)
     CHOLMOD(free_sparse) (&A2, Common) ;
     CHOLMOD(free_sparse) (&B2, Common) ;
     /* CHOLMOD(clear_flag) (Common) ; */
-    CHOLMOD_CLEAR_FLAG (Common) ;
+    CLEAR_FLAG (Common) ;
+    ASSERT (check_flag (Common)) ;
     ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, values ? n1:0, Common)) ;
 
     /* ---------------------------------------------------------------------- */
@@ -478,7 +479,7 @@ cholmod_sparse *CHOLMOD(ssmult)
     /* return result */
     /* ---------------------------------------------------------------------- */
 
-    DEBUG (CHOLMOD(dump_sparse) (C, "ssmult", Common) >= 0) ;
+    ASSERT (CHOLMOD(dump_sparse) (C, "ssmult", Common) >= 0) ;
     ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, values ? n1:0, Common)) ;
     return (C) ;
 }

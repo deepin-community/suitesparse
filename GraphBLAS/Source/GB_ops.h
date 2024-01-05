@@ -2,13 +2,24 @@
 // GB_ops.h: built-in unary and binary operators
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
 #ifndef GB_OPS_H
 #define GB_OPS_H
+
+//------------------------------------------------------------------------------
+// define all built-in unary and binary operators
+//------------------------------------------------------------------------------
+
+// nonzombie function for generic case
+inline void GB_nonzombie_func (bool *z, const void *x,
+    int64_t i, GrB_Index j, const void *y)
+{
+    (*z) = (i >= 0) ;    
+}
 
 #define GB_FUNC_T(op,xtype) GB (GB_EVAL4 (_func_, op, _, xtype))
 #define GB_FUNC(op) GB_FUNC_T (op, GB_XTYPE)
@@ -39,6 +50,7 @@
 #define GB_BITS             32
 #define GB_REAL
 #define GB_SIGNED_INT
+#define GB_SIGNED_INDEX
 #include "GB_ops_template.h"
 
 #define GB_TYPE             int64_t
@@ -46,6 +58,8 @@
 #define GB_BITS             64
 #define GB_REAL
 #define GB_SIGNED_INT
+#define GB_SIGNED_INDEX
+#define GB_SIGNED_INDEX64
 #include "GB_ops_template.h"
 
 #define GB_TYPE             uint8_t

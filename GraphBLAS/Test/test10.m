@@ -1,7 +1,7 @@
 function test10
 %TEST10 test GrB_apply
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 % SPDX-License-Identifier: Apache-2.0
 
 fprintf ('\ntest10: GrB_apply tests\n') ;
@@ -70,6 +70,18 @@ for k1 = 1:length(types)
     A_pos5_matrix (A_matrix > 5) = 5 ;
     B_pos5_matrix (B_matrix > 5) = 5 ;
 
+%{
+    % for minv: do not try 1/0 for the complex case
+    A_nonzero_matrix = A_matrix ;
+    B_nonzero_matrix = B_matrix ;
+    A_pattern = full (logical (spones (A_matrix))) ;
+    B_pattern = full (logical (spones (B_matrix))) ;
+    A_zero = full (abs (A_nonzero_matrix) < 1) ;
+    B_zero = full (abs (B_nonzero_matrix) < 1) ;
+    A_nonzero_matrix (A_pattern & A_zero) = 1 ;
+    B_nonzero_matrix (B_pattern & B_zero) = 1 ;
+%}
+
     % do longer tests for a few types
     longer_tests = isequal (atype, 'double') || isequal (atype, 'int64') ;
     if (longer_tests)
@@ -90,9 +102,18 @@ for k1 = 1:length(types)
         for k3 = 1:length(types)
             op.optype = types {k3} ;
 
-            if (ispc && contains (op.opname, 'asin') && contains (op.optype, 'complex'))
+            if (ispc && test_contains (op.opname, 'asin') && test_contains (op.optype, 'complex'))
                 % casin and casinf are broken on Windows
-                fprintf (' (skipped)') ;
+                fprintf ('#') ;
+                continue ;
+            end
+
+            if (ismac && test_contains (op.opname, 'log') ...
+                && test_contains (op.optype, 'complex') ...
+                && (test_contains (atype, 'int') || isequal (atype, 'logical')))
+                % complex log2 on the mac has a slight O(eps) roundoff that
+                % results in a different result when typecasted to integer
+                fprintf ('#') ;
                 continue ;
             end
 
@@ -121,7 +142,7 @@ for k1 = 1:length(types)
                     % no change
             end
 
-            if (~contains (optype, 'complex'))
+            if (~test_contains (optype, 'complex'))
 
                 % for real operators, avoiding complex results
                 switch (opname)
@@ -143,6 +164,22 @@ for k1 = 1:length(types)
                         % failures from O(eps) errors
                         A.matrix = A_5_matrix ;
                         B.matrix = B_5_matrix ;
+                    case { 'minv' }
+%                       A.matrix = A_nonzero_matrix ;
+%                       B.matrix = B_nonzero_matrix ;
+                    otherwise
+                        % no change
+                end
+
+            else
+
+                % operator is complex
+                switch (opname)
+                    % domain is ok, but limit it to avoid integer typecast
+                    % failures from O(eps) errors
+                    case { 'log2' }
+                        A.matrix = A_5_matrix ;
+                        B.matrix = B_5_matrix ;
                     otherwise
                         % no change
                 end
@@ -152,9 +189,9 @@ for k1 = 1:length(types)
             % op
 
             tol = 0 ;
-            if (contains (optype, 'single') || contains (atype, 'single'))
+            if (test_contains (optype, 'single') || test_contains (atype, 'single'))
                 tol = 1e-5 ;
-            elseif (contains (optype, 'double') || contains (atype, 'double'))
+            elseif (test_contains (optype, 'double') || test_contains (atype, 'double'))
                 tol = 1e-12 ;
             end
 
@@ -204,7 +241,7 @@ for k1 = 1:length(types)
 
             % with C == mask, and outp = replace
             C1 = GB_spec_apply (Cin, Cmask, [], op, A, dr) ;
-            C2 = GB_mex_apply_maskalias (Cin,        [], op, A, dr) ;
+            C2 = GB_mex_apply_maskalias (Cin, [], op, A, dr) ;
             test10_compare (op, C1, C2, tol) ;
 
             % no mask, transpose
@@ -237,7 +274,7 @@ for k1 = 1:length(types)
 
             % with C == mask and accum, and outp = replace
             C1 = GB_spec_apply (Cin, Cmask, 'plus', op, A, dr) ;
-            C2 = GB_mex_apply_maskalias (Cin,        'plus', op, A, dr) ;
+            C2 = GB_mex_apply_maskalias (Cin, 'plus', op, A, dr) ;
             test10_compare (op, C1, C2, tol) ;
 
             % no mask, with accum, transpose

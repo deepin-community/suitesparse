@@ -1,16 +1,21 @@
 // =============================================================================
 // === GPUQREngine/Source/LLBundle_GPUPack.cpp =================================
 // =============================================================================
+
+// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
+// and Sanjay Ranka.  All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 //
 // The GPUPack code converts the logical CPU representation of the Bundle and
 // its state into a packet of metadata information that the GPU can act on.
 //
 // =============================================================================
-
+#include "GPUQREngine_LLBundle.hpp"
 #include "GPUQREngine_BucketList.hpp"
-
-
-void LLBundle::gpuPack
+template <typename Int>
+void LLBundle <Int>::gpuPack
 (
     TaskDescriptor* cpuTask
 )
@@ -54,3 +59,12 @@ void LLBundle::gpuPack
     cpuTask->AuxAddress[0] = VT[0];
     cpuTask->AuxAddress[1] = VT[1];
 }
+
+template void LLBundle <int32_t>::gpuPack
+(
+    TaskDescriptor* cpuTask
+) ;
+template void LLBundle <int64_t>::gpuPack
+(
+    TaskDescriptor* cpuTask
+) ;

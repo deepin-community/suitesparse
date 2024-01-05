@@ -1,10 +1,12 @@
-/* ========================================================================== */
-/* === Cholesky/cholmod_rowcolcounts ======================================== */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/Cholesky/cholmod_rowcolcounts: compute row/col counts of L
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2006, Timothy A. Davis
- * -------------------------------------------------------------------------- */
+// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
+// All Rights Reserved.
+// SPDX-License-Identifier: LGPL-2.1+
+
+//------------------------------------------------------------------------------
 
 /* Compute the row and column counts of the Cholesky factor L of the matrix
  * A or A*A'.  The etree and its postordering must already be computed (see
@@ -45,10 +47,9 @@
  * Supports any xtype (pattern, real, complex, or zomplex).
  */
 
-#ifndef NCHOLESKY
-
 #include "cholmod_internal.h"
-#include "cholmod_cholesky.h"
+
+#ifndef NCHOLESKY
 
 /* ========================================================================== */
 /* === initialize_node ====================================================== */
@@ -506,8 +507,8 @@ int CHOLMOD(rowcolcounts)
 
     Common->mark = EMPTY ;
     /* CHOLMOD(clear_flag) (Common) ; */
-    CHOLMOD_CLEAR_FLAG (Common) ;
-
+    CLEAR_FLAG (Common) ;
+    ASSERT (check_flag (Common)) ;
     ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, 0, Common)) ;
 
     /* ---------------------------------------------------------------------- */
@@ -531,3 +532,4 @@ int CHOLMOD(rowcolcounts)
     return (TRUE) ;
 }
 #endif
+

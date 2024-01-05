@@ -1,11 +1,12 @@
-/* ========================================================================== */
-/* === MatrixOps/cholmod_drop =============================================== */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/MatrixOps/cholmod_drop: drop small entries from a sparse matrix
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2006, Timothy A. Davis
- * http://www.suitesparse.com
- * -------------------------------------------------------------------------- */
+// CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2022, Timothy A. Davis.
+// All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /* Drop small entries from A, and entries in the ignored part of A if A
  * is symmetric.  None of the matrix operations drop small numerical entries
@@ -16,12 +17,10 @@
  * Supports pattern and real matrices, complex and zomplex not supported.
  */
 
+#include "cholmod_internal.h"
+
 #ifndef NGPL
 #ifndef NMATRIXOPS
-
-#include "cholmod_internal.h"
-#include "cholmod_matrixops.h"
-
 
 /* ========================================================================== */
 /* === cholmod_drop ========================================================= */
@@ -89,7 +88,7 @@ int CHOLMOD(drop)
 		{
 		    i = Ai [p] ;
 		    aij = Ax [p] ;
-		    if (i <= j && (fabs (aij) > tol || IS_NAN (aij)))
+		    if (i <= j && (fabs (aij) > tol || isnan (aij)))
 		    {
 			Ai [nz] = i ;
 			Ax [nz] = aij ;
@@ -115,7 +114,7 @@ int CHOLMOD(drop)
 		{
 		    i = Ai [p] ;
 		    aij = Ax [p] ;
-		    if (i >= j && (fabs (aij) > tol || IS_NAN (aij)))
+		    if (i >= j && (fabs (aij) > tol || isnan (aij)))
 		    {
 			Ai [nz] = i ;
 			Ax [nz] = aij ;
@@ -140,7 +139,7 @@ int CHOLMOD(drop)
 		{
 		    i = Ai [p] ;
 		    aij = Ax [p] ;
-		    if (fabs (aij) > tol || IS_NAN (aij))
+		    if (fabs (aij) > tol || isnan (aij))
 		    {
 			Ai [nz] = i ;
 			Ax [nz] = aij ;

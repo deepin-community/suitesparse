@@ -1,10 +1,12 @@
-/* ========================================================================== */
-/* === Check/cholmod_check ================================================== */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/Check/cholmod_check: check and print each CHOLMOD object
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/Check Module.  Copyright (C) 2005-2013, Timothy A. Davis
- * -------------------------------------------------------------------------- */
+// CHOLMOD/Check Module.  Copyright (C) 2005-2022, Timothy A. Davis
+// All Rights Reserved.
+// SPDX-License-Identifier: LGPL-2.1+
+
+//------------------------------------------------------------------------------
 
 /* Routines to check and print the contents of the 5 CHOLMOD objects:
  *
@@ -51,7 +53,7 @@
  * Common->precise controls the # of digits printed for numerical entries
  * (5 if FALSE, 15 if TRUE).
  *
- * If SuiteSparse_config.printf_func is NULL, then no printing occurs.  The
+ * If the SuiteSparse_config printf_func is NULL, then no printing occurs.  The
  * cholmod_check_* and cholmod_print_* routines still check their inputs and
  * return TRUE/FALSE if the object is valid or not.
  *
@@ -62,13 +64,12 @@
 #ifndef NCHECK
 
 #include "cholmod_internal.h"
-#include "cholmod_check.h"
 
 /* ========================================================================== */
 /* === printing definitions ================================================= */
 /* ========================================================================== */
 
-#ifdef LONG
+#if defined ( CHOLMOD_INT64 )
 #define I8 "%8ld"
 #define I_8 "%-8ld"
 #else
@@ -76,12 +77,17 @@
 #define I_8 "%-8d"
 #endif
 
-#define PR(i,format,arg) \
-{ \
-    if (print >= i && SuiteSparse_config.printf_func != NULL) \
-    { \
-	SuiteSparse_config.printf_func (format, arg) ; \
-    } \
+#define PR(i,format,arg)                                        \
+{                                                               \
+    if ((print) >= (i))                                         \
+    {                                                           \
+        int (*printf_func) (const char *, ...) ;                \
+        printf_func = SuiteSparse_config_printf_func_get ( ) ;  \
+        if (printf_func != NULL)                                \
+        {                                                       \
+            (void) (printf_func) (format, arg) ;                \
+        }                                                       \
+    }                                                           \
 }
 
 #define P1(format,arg) PR(1,format,arg)
@@ -198,9 +204,9 @@ static int check_common
 )
 {
     double fl, lnz ;
-    double *Xwork ;
+    uint8_t *Xwork ;
     Int *Flag, *Head ;
-    SuiteSparse_long mark ;
+    int64_t mark ;
     Int i, nrow, nmethods, ordering, xworksize, amd_backup, init_print ;
     const char *type = "common" ;
 
@@ -263,12 +269,12 @@ static int check_common
 
     P2 ("  Architecture: %s\n", CHOLMOD_ARCHITECTURE) ;
     P3 ("    sizeof(int):      %d\n", (int) sizeof (int)) ;
-    P3 ("    sizeof(SuiteSparse_long):  %d\n", (int) sizeof (SuiteSparse_long));
+    P3 ("    sizeof(int64_t):  %d\n", (int) sizeof (int64_t));
     P3 ("    sizeof(void *):   %d\n", (int) sizeof (void *)) ;
     P3 ("    sizeof(double):   %d\n", (int) sizeof (double)) ;
     P3 ("    sizeof(Int):      %d (CHOLMOD's basic integer)\n", (int) sizeof (Int)) ;
-    P3 ("    sizeof(BLAS_INT): %d (integer used in the BLAS)\n",
-	    (int) sizeof (BLAS_INT)) ;
+    P3 ("    sizeof(SUITESPARSE_BLAS_INT): %d (integer used in the BLAS)\n",
+	    (int) sizeof (SUITESPARSE_BLAS_INT)) ;
 
     if (Common->fl != EMPTY)
     {
@@ -496,8 +502,14 @@ static int check_common
     }
 
     P4 ("  dbound:  LDL' diagonal threshold: % .5g\n    Entries with abs. value"
-	    " less than dbound are replaced with +/- dbound.\n",
+	    " less than dbound are replaced with +/- dbound.\n"
+            "    (for double precision case)\n",
 	    Common->dbound) ;
+
+    P4 ("  sbound:  LDL' diagonal threshold: % .5g\n    Entries with abs. value"
+	    " less than sbound are replaced with +/- sbound.\n"
+            "    (for single precision case)\n",
+	    Common->sbound) ;
 
     P4 ("  grow0: memory reallocation: % .5g\n", Common->grow0) ;
     P4 ("  grow1: memory reallocation: % .5g\n", Common->grow1) ;
@@ -546,7 +558,8 @@ static int check_common
 	    }
 	}
     }
-    xworksize = Common->xworksize ;
+
+    xworksize = Common->xworkbytes ;
     Xwork = Common->Xwork ;
     if (xworksize > 0)
     {
@@ -558,7 +571,7 @@ static int check_common
 	{
 	    if (Xwork [i] != 0.)
 	    {
-		PRINT0 (("Xwork ["ID"] = %g\n", i, Xwork [i])) ;
+		PRINT0 (("Xwork ["ID"] = %d\n", i, Xwork [i])) ;
 		ERR ("workspace corrupted (Xwork)") ;
 	    }
 	}
@@ -656,13 +669,13 @@ int CHOLMOD(gpu_stats)
  * workspace: Iwork (nrow)
  */
 
-static SuiteSparse_long check_sparse
+static int64_t check_sparse
 (
     Int *Wi,
     Int print,
     const char *name,
     cholmod_sparse *A,
-    SuiteSparse_long *nnzdiag,
+    int64_t *nnzdiag,
     cholmod_common *Common
 )
 {
@@ -736,8 +749,7 @@ static SuiteSparse_long check_sparse
     switch (A->itype)
     {
 	case CHOLMOD_INT:     P4 ("%s", "\n  scalar types: int, ") ; break ;
-	case CHOLMOD_INTLONG: ERR ("mixed int/long type unsupported") ;
-	case CHOLMOD_LONG:    P4 ("%s", "\n  scalar types: SuiteSparse_long, ");
+	case CHOLMOD_LONG:    P4 ("%s", "\n  scalar types: int64_t, ");
         break ;
 	default:	      ERR ("unknown itype") ;
     }
@@ -754,13 +766,13 @@ static SuiteSparse_long check_sparse
     switch (A->dtype)
     {
 	case CHOLMOD_DOUBLE:  P4 ("%s", ", double\n") ;	       break ;
-	case CHOLMOD_SINGLE:  ERR ("float unsupported") ;
+	case CHOLMOD_SINGLE:  P4 ("%s", ", single\n") ;	       break ;
 	default:	      ERR ("unknown dtype") ;
     }
 
-    if (A->itype != ITYPE || A->dtype != DTYPE)
+    if (A->itype != ITYPE)
     {
-	ERR ("integer and real type must match routine") ;
+	ERR ("integer type must match routine") ;
     }
 
     if (A->stype && nrow != ncol)
@@ -909,7 +921,7 @@ int CHOLMOD(check_sparse)
     cholmod_common *Common
 )
 {
-    SuiteSparse_long nnzdiag ;
+    int64_t nnzdiag ;
     RETURN_IF_NULL_COMMON (FALSE) ;
     Common->status = CHOLMOD_OK ;
     return (check_sparse (NULL, 0, NULL, A, &nnzdiag, Common)) ;
@@ -925,7 +937,7 @@ int CHOLMOD(print_sparse)
     cholmod_common *Common
 )
 {
-    SuiteSparse_long nnzdiag ;
+    int64_t nnzdiag ;
     RETURN_IF_NULL_COMMON (FALSE) ;
     Common->status = CHOLMOD_OK ;
     return (check_sparse (NULL, Common->print, name, A, &nnzdiag, Common)) ;
@@ -1003,7 +1015,7 @@ static int check_dense
     switch (X->dtype)
     {
 	case CHOLMOD_DOUBLE:  P4 ("%s", ", double\n") ;	       break ;
-	case CHOLMOD_SINGLE:  ERR ("single unsupported") ;
+	case CHOLMOD_SINGLE:  P4 ("%s", ", single\n") ;	       break ;
 	default:	      ERR ("unknown dtype") ;
     }
 
@@ -1087,7 +1099,7 @@ int CHOLMOD(print_dense)
 static int check_subset
 (
     Int *S,
-    SuiteSparse_long len,
+    int64_t len,
     size_t n,
     Int print,
     const char *name,
@@ -1163,7 +1175,7 @@ int CHOLMOD(check_subset)
 (
     /* ---- input ---- */
     Int *Set,		/* Set [0:len-1] is a subset of 0:n-1.  Duplicates OK */
-    SuiteSparse_long len, /* size of Set (an integer array), or < 0 if 0:n-1 */
+    int64_t len,        /* size of Set (an integer array), or < 0 if 0:n-1 */
     size_t n,		/* 0:n-1 is valid range */
     /* --------------- */
     cholmod_common *Common
@@ -1179,7 +1191,7 @@ int CHOLMOD(print_subset)
 (
     /* ---- input ---- */
     Int *Set,		/* Set [0:len-1] is a subset of 0:n-1.  Duplicates OK */
-    SuiteSparse_long len, /* size of Set (an integer array), or < 0 if 0:n-1 */
+    int64_t len,        /* size of Set (an integer array), or < 0 if 0:n-1 */
     size_t n,		/* 0:n-1 is valid range */
     const char *name,	/* printed name of Set */
     /* --------------- */
@@ -1536,8 +1548,7 @@ static int check_factor
     switch (L->itype)
     {
 	case CHOLMOD_INT:     P4 ("%s", "\n  scalar types: int, ") ; break ;
-	case CHOLMOD_INTLONG: ERR ("mixed int/long type unsupported") ;
-	case CHOLMOD_LONG:    P4 ("%s", "\n  scalar types: SuiteSparse_long, ");
+	case CHOLMOD_LONG:    P4 ("%s", "\n  scalar types: int64_t, ");
         break ;
 	default:	      ERR ("unknown itype") ;
     }
@@ -1554,13 +1565,13 @@ static int check_factor
     switch (L->dtype)
     {
 	case CHOLMOD_DOUBLE:  P4 ("%s", ", double\n") ;	       break ;
-	case CHOLMOD_SINGLE:  ERR ("single unsupported") ;
+	case CHOLMOD_SINGLE:  P4 ("%s", ", single\n") ;	       break ;
 	default:	      ERR ("unknown dtype") ;
     }
 
-    if (L->itype != ITYPE || L->dtype != DTYPE)
+    if (L->itype != ITYPE)
     {
-	ERR ("integer and real type must match routine") ;
+	ERR ("integer type must match routine") ;
     }
 
     if (L->is_super)
@@ -2112,8 +2123,7 @@ static int check_triplet
     switch (T->itype)
     {
 	case CHOLMOD_INT:     P4 ("%s", "\n  scalar types: int, ") ; break ;
-	case CHOLMOD_INTLONG: ERR ("mixed int/long type unsupported") ;
-	case CHOLMOD_LONG:    P4 ("%s", "\n  scalar types: SuiteSparse_long, ");
+	case CHOLMOD_LONG:    P4 ("%s", "\n  scalar types: int64_t, ");
         break ;
 	default:	      ERR ("unknown itype") ;
     }
@@ -2130,13 +2140,13 @@ static int check_triplet
     switch (T->dtype)
     {
 	case CHOLMOD_DOUBLE:  P4 ("%s", ", double\n") ;	       break ;
-	case CHOLMOD_SINGLE:  ERR ("single unsupported") ;
+	case CHOLMOD_SINGLE:  P4 ("%s", ", single\n") ;	       break ;
 	default:	      ERR ("unknown dtype") ;
     }
 
-    if (T->itype != ITYPE || T->dtype != DTYPE)
+    if (T->itype != ITYPE)
     {
-	ERR ("integer and real type must match routine") ;
+	ERR ("integer type must match routine") ;
     }
 
     if (T->stype && nrow != ncol)
@@ -2267,7 +2277,7 @@ void CHOLMOD(dump_init) (const char *s, cholmod_common *Common)
 
 /* returns nnz (diag (A)) or EMPTY if error */
 
-SuiteSparse_long CHOLMOD(dump_sparse)
+int64_t CHOLMOD(dump_sparse)
 (
     cholmod_sparse *A,
     const char *name,
@@ -2275,7 +2285,7 @@ SuiteSparse_long CHOLMOD(dump_sparse)
 )
 {
     Int *Wi ;
-    SuiteSparse_long nnzdiag ;
+    int64_t nnzdiag ;
     Int ok ;
 
     if (CHOLMOD(dump) < -1)
@@ -2444,12 +2454,12 @@ int CHOLMOD(dump_parent)
 void CHOLMOD(dump_real)
 (
     const char *name,
-    Real *X, SuiteSparse_long nrow, SuiteSparse_long ncol, int lower,
+    double *X, int64_t nrow, int64_t ncol, int lower,
     int xentry, cholmod_common *Common
 )
 {
     /* dump an nrow-by-ncol real dense matrix */
-    SuiteSparse_long i, j ;
+    int64_t i, j ;
     double x, z ;
     if (CHOLMOD(dump) < -1)
     {
@@ -2491,7 +2501,7 @@ void CHOLMOD(dump_real)
 
 void CHOLMOD(dump_super)
 (
-    SuiteSparse_long s,
+    int64_t s,
     Int *Super, Int *Lpi, Int *Ls, Int *Lpx, double *Lx,
     int xentry,
     cholmod_common *Common
@@ -2538,11 +2548,11 @@ void CHOLMOD(dump_super)
 int CHOLMOD(dump_mem)
 (
     const char *where,
-    SuiteSparse_long should,
+    int64_t should,
     cholmod_common *Common
 )
 {
-    SuiteSparse_long diff = should - Common->memory_inuse ;
+    int64_t diff = should - Common->memory_inuse ;
     if (diff != 0)
     {
 	PRINT0 (("mem: %-15s peak %10g inuse %10g should %10g\n",
@@ -2565,12 +2575,12 @@ int CHOLMOD(dump_mem)
 
 int CHOLMOD(dump_partition)
 (
-    SuiteSparse_long n,
+    int64_t n,
     Int *Cp,
     Int *Ci,
     Int *Cnw,       /* can be NULL */
     Int *Part,
-    SuiteSparse_long sepsize,
+    int64_t sepsize,
     cholmod_common *Common
 )
 {
@@ -2628,7 +2638,7 @@ int CHOLMOD(dump_partition)
 /* === cholmod_dump_work ==================================================== */
 /* ========================================================================== */
 
-int CHOLMOD(dump_work) (int flag, int head, SuiteSparse_long wsize,
+int CHOLMOD(dump_work) (int flag, int head, int64_t wsize,
     cholmod_common *Common)
 {
     double *W ;
@@ -2648,16 +2658,19 @@ int CHOLMOD(dump_work) (int flag, int head, SuiteSparse_long wsize,
     W = Common->Xwork ;
     mark = Common->mark ;
 
+#if 0
+    // FIXME: need float and double
     if (wsize < 0)
     {
 	/* check all of Xwork */
-	wsize = Common->xworksize ;
+	wsize = Common->xworkbytes ;
     }
     else
     {
 	/* check on the first wsize doubles in Xwork */
-	wsize = MIN (wsize, (Int) (Common->xworksize)) ;
+	wsize = MIN (wsize, (Int) (Common->xworkbytes)) ;
     }
+#endif
 
     if (flag)
     {
@@ -2667,7 +2680,6 @@ int CHOLMOD(dump_work) (int flag, int head, SuiteSparse_long wsize,
 	    {
 		PRINT0 (("Flag invalid, Flag ["ID"] = "ID", mark = "ID"\n",
 			    k, Flag [k], mark)) ;
-		ASSERT (0) ;
 		return (FALSE) ;
 	    }
 	}
@@ -2680,23 +2692,25 @@ int CHOLMOD(dump_work) (int flag, int head, SuiteSparse_long wsize,
 	    if (Head [k] != EMPTY)
 	    {
 		PRINT0 (("Head invalid, Head ["ID"] = "ID"\n", k, Head [k])) ;
-		ASSERT (0) ;
 		return (FALSE) ;
 	    }
 	}
     }
 
+#if 0
+    // FIXME: need float and double
     for (k = 0 ; k < wsize ; k++)
     {
 	if (W [k] != 0.)
 	{
 	    PRINT0 (("W invalid, W ["ID"] = %g\n", k, W [k])) ;
-	    ASSERT (0) ;
 	    return (FALSE) ;
 	}
     }
+#endif
 
     return (TRUE) ;
 }
 #endif
 #endif
+

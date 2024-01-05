@@ -1,11 +1,12 @@
-/* ========================================================================== */
-/* === MatrixOps/cholmod_sdmult ============================================= */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/MatrixOps/cholmod_sdmult: sparse-times-dense matrix
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2006, Timothy A. Davis
- * http://www.suitesparse.com
- * -------------------------------------------------------------------------- */
+// CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2022, Timothy A. Davis.
+// All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /* Sparse matrix times dense matrix:
  * Y = alpha*(A*X) + beta*Y or Y = alpha*(A'*X) + beta*Y,
@@ -29,12 +30,10 @@
  * must all match.
  */
 
+#include "cholmod_internal.h"
+
 #ifndef NGPL
 #ifndef NMATRIXOPS
-
-#include "cholmod_internal.h"
-#include "cholmod_matrixops.h"
-
 
 /* ========================================================================== */
 /* === TEMPLATE ============================================================= */
@@ -116,8 +115,8 @@ int CHOLMOD(sdmult)
 
     ASSERT (CHOLMOD(dump_sparse) (A, "A", Common) >= 0) ;
     DEBUG (CHOLMOD(dump_dense) (X, "X", Common)) ;
-    DEBUG (if (IS_NONZERO (beta [0])
-	   || (IS_NONZERO (beta [1]) && A->xtype != CHOLMOD_REAL))
+    DEBUG (if ((beta [0] != 0)
+	   || ((beta [1] != 0) && A->xtype != CHOLMOD_REAL))
 	    CHOLMOD(dump_dense) (Y, "Y", Common)) ;
 
     switch (A->xtype)

@@ -2,7 +2,7 @@
 // GB_AxB_saxpy3_coarseHash_phase1: symbolic coarse Hash, optional dense mask
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -19,9 +19,8 @@
     // f < mark          : unoccupied.
     // h == i, f == mark : occupied with C(i,j)
 
-    // The mask M can be optionally checked, if it is packed (full, bitmap, or
-    // sparse/hyper with all entries present and not jumbled) and checked in
-    // place.  This method is not used if M is present and sparse.
+    // The mask M can be optionally checked, if it is bitmap, or as-if-full and
+    // checked in place.  This method is not used if M is present and sparse.
 
     for (int64_t kk = kfirst ; kk <= klast ; kk++)
     {
@@ -42,10 +41,9 @@
 
         #ifdef GB_CHECK_MASK_ij
 
-            // The mask M is packed (full, bitmap, or sparse/hyper and not
-            // jumbled, with all entries present in the entire matrix).  Get
-            // pointers Mjb and Mjx into the M(:,j) vector.
-            GB_GET_M_j
+            // The mask M is bitmap or as-if-full.  Get pointers Mjb and Mjx
+            // into the M(:,j) vector.
+            GB_GET_M_j ;
             const M_TYPE *restrict Mjx = Mask_struct ? NULL :
                 ((M_TYPE *) Mx) + (M_SIZE * pM_start) ;
             const int8_t *restrict Mjb = M_is_bitmap ? (Mb+pM_start) : NULL ;
@@ -88,7 +86,8 @@
                 int64_t hash ;
                 bool marked = false ;
                 bool done = false ;
-                for (hash = GB_HASHF (i) ; ; GB_REHASH (hash, i))
+                for (hash = GB_HASHF (i, hash_bits) ; ;
+                    GB_REHASH (hash, i, hash_bits))
                 { 
                     // if the hash entry is marked then it is occuppied with
                     // some row index in the current C(:,j).

@@ -2,17 +2,17 @@
 // GB_split: split a matrix into an array of matrices
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
-#define GB_FREE_WORK                        \
+#define GB_FREE_WORKSPACE                   \
     GB_WERK_POP (Tile_cols, int64_t) ;      \
     GB_WERK_POP (Tile_rows, int64_t) ;
 
 #define GB_FREE_ALL                         \
-    GB_FREE_WORK ;                          \
+    GB_FREE_WORKSPACE ;                     \
     for (int64_t k = 0 ; k < m*n ; k++)     \
     {                                       \
         GB_Matrix_free (&(Tiles [k])) ;     \
@@ -28,7 +28,7 @@ GrB_Info GB_split                   // split a matrix
     const GrB_Index *Tile_nrows,    // array of size m
     const GrB_Index *Tile_ncols,    // array of size n
     const GrB_Matrix A,             // input matrix
-    GB_Context Context
+    GB_Werk Werk
 )
 {
 
@@ -56,8 +56,12 @@ GrB_Info GB_split                   // split a matrix
     // check inputs
     //--------------------------------------------------------------------------
 
-    ASSERT_MATRIX_OK (A, "A input for GB_concat", GB0) ;
+    ASSERT_MATRIX_OK (A, "A input for GB_split", GB0) ;
     GB_MATRIX_WAIT (A) ;
+    if (A->iso)
+    { 
+        GBURBLE ("(iso split) ") ;
+    }
 
     //--------------------------------------------------------------------------
     // check the sizes of each tile
@@ -65,8 +69,6 @@ GrB_Info GB_split                   // split a matrix
 
     int64_t nrows = GB_NROWS (A) ;
     int64_t ncols = GB_NCOLS (A) ;
-
-    #define offset (GB_Global_print_one_based_get ( ) ? 1 : 0)
 
     int64_t s = 0 ;
     for (int64_t i = 0 ; i < m ; i++)
@@ -106,27 +108,30 @@ GrB_Info GB_split                   // split a matrix
     // Tiles = split (A)
     //--------------------------------------------------------------------------
 
-    if (GB_is_dense (A))
+    if (GB_IS_FULL (A))
     { 
         // A is full
-        GB_OK (GB_split_full (Tiles, m, n, Tile_rows, Tile_cols, A, Context)) ;
+        GBURBLE ("(full split) ") ;
+        GB_OK (GB_split_full (Tiles, m, n, Tile_rows, Tile_cols, A, Werk)) ;
     }
     else if (GB_IS_BITMAP (A))
     { 
         // A is bitmap
-        GB_OK (GB_split_bitmap (Tiles, m, n, Tile_rows, Tile_cols, A, Context));
+        GBURBLE ("(bitmap split) ") ;
+        GB_OK (GB_split_bitmap (Tiles, m, n, Tile_rows, Tile_cols, A, Werk));
     }
     else
     { 
         // A is sparse/hypersparse, each Tile has the same sparsity as A
-        GB_OK (GB_split_sparse (Tiles, m, n, Tile_rows, Tile_cols, A, Context));
+        GBURBLE ("(sparse/hyper split) ") ;
+        GB_OK (GB_split_sparse (Tiles, m, n, Tile_rows, Tile_cols, A, Werk));
     }
 
     //--------------------------------------------------------------------------
     // free workspace and return result
     //--------------------------------------------------------------------------
 
-    GB_FREE_WORK ;
+    GB_FREE_WORKSPACE ;
     return (GrB_SUCCESS) ;
 }
 

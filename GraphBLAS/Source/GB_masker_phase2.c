@@ -2,10 +2,12 @@
 // GB_masker_phase2: phase2 for R = masker (C,M,Z)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
+
+// JIT: needed.
 
 // GB_masker_phase2 computes R = masker (C,M,Z).  It is preceded first by
 // GB_add_phase0, which computes the list of vectors of R to compute (Rh) and
@@ -22,12 +24,14 @@
 // This function either frees Rp and Rh, or transplants then into R, as R->p
 // and R->h.  Either way, the caller must not free them.
 
+// R is iso if both C and Z are iso and zij == cij.
+
 #include "GB_mask.h"
 #include "GB_ek_slice.h"
 #include "GB_unused.h"
 
-#undef  GB_FREE_WORK
-#define GB_FREE_WORK                        \
+#undef  GB_FREE_WORKSPACE
+#define GB_FREE_WORKSPACE                   \
 {                                           \
     GB_WERK_POP (M_ek_slicing, int64_t) ;   \
     GB_WERK_POP (C_ek_slicing, int64_t) ;   \
@@ -36,8 +40,8 @@
 #undef  GB_FREE_ALL
 #define GB_FREE_ALL                         \
 {                                           \
-    GB_FREE_WORK ;                          \
-    GB_phbix_free (R) ;                     \
+    GB_FREE_WORKSPACE ;                     \
+    GB_phybix_free (R) ;                    \
 }
 
 GrB_Info GB_masker_phase2           // phase2 for R = masker (C,M,Z)
@@ -66,7 +70,7 @@ GrB_Info GB_masker_phase2           // phase2 for R = masker (C,M,Z)
     const bool Mask_struct,         // if true, use the only structure of M
     const GrB_Matrix C,
     const GrB_Matrix Z,
-    GB_Context Context
+    GB_Werk Werk
 )
 {
 
@@ -95,7 +99,7 @@ GrB_Info GB_masker_phase2           // phase2 for R = masker (C,M,Z)
     ASSERT (C->vdim == M->vdim && C->vlen == M->vlen) ;
     ASSERT (C->type == Z->type) ;
 
-    ASSERT (R != NULL && R->static_header) ;
+    ASSERT (R != NULL && (R->static_header || GBNSTATIC)) ;
 
     GB_WERK_DECLARE (C_ek_slicing, int64_t) ;
     GB_WERK_DECLARE (M_ek_slicing, int64_t) ;
@@ -116,10 +120,32 @@ GrB_Info GB_masker_phase2           // phase2 for R = masker (C,M,Z)
 
     int64_t rnz = (R_is_sparse_or_hyper) ? Rp [Rnvec] : C->vlen*C->vdim ;
 
+    size_t czsize = Z->type->size ;
+    bool R_iso ;
+    int64_t cnz = GB_nnz (C) ;
+    int64_t znz = GB_nnz (Z) ;
+    if (cnz == 0)
+    { 
+        // C is empty: R is iso if Z is iso
+        R_iso = Z->iso ;
+    }
+    else if (znz == 0)
+    { 
+        // Z is empty: R is iso if C is iso
+        R_iso = C->iso ;
+    }
+    else
+    { 
+        // C and Z are both non-empty:  R is iso if both C and Z are
+        // iso, and have the same iso value.
+        R_iso = (C->iso && Z->iso && (memcmp (C->x, Z->x, czsize) == 0)) ;
+    }
+
     // allocate the result R (but do not allocate R->p or R->h)
-    GrB_Info info = GB_new_bix (&R, true, // any sparsity, static header
+    // set R->iso = R_iso   OK
+    GrB_Info info = GB_new_bix (&R, // any sparsity, existing header
         C->type, C->vlen, C->vdim, GB_Ap_null, R_is_csc,
-        R_sparsity, true, C->hyper_switch, Rnvec, rnz, true, Context) ;
+        R_sparsity, true, C->hyper_switch, Rnvec, rnz, true, R_iso) ;
     if (info != GrB_SUCCESS)
     { 
         // out of memory; caller must free R_to_M, R_to_C, R_to_Z
@@ -133,6 +159,7 @@ GrB_Info GB_masker_phase2           // phase2 for R = masker (C,M,Z)
     { 
         R->nvec_nonempty = Rnvec_nonempty ;
         R->p = (int64_t *) Rp ; R->p_size = Rp_size ;
+        R->nvals = rnz ;
         (*Rp_handle) = NULL ;
     }
 
@@ -154,20 +181,40 @@ GrB_Info GB_masker_phase2           // phase2 for R = masker (C,M,Z)
     //--------------------------------------------------------------------------
 
     #define GB_PHASE_2_OF_2
-    #include "GB_masker_template.c"
+    if (R_iso)
+    { 
+        // R can be iso only if C and/or Z are iso
+        GBURBLE ("(iso mask) ") ;
+        #define GB_ISO_MASKER
+        if (cnz == 0)
+        { 
+            // Z must be iso; copy its iso value into R
+            memcpy (R->x, Z->x, czsize) ;
+        }
+        else
+        { 
+            // C must be iso; copy its iso value into R
+            memcpy (R->x, C->x, czsize) ;
+        }
+        #include "GB_masker_template.c"
+    }
+    else
+    { 
+        #include "GB_masker_template.c"
+    }
 
     //--------------------------------------------------------------------------
     // prune empty vectors from Rh
     //--------------------------------------------------------------------------
 
-    GB_OK (GB_hypermatrix_prune (R, Context)) ;
+    GB_OK (GB_hypermatrix_prune (R, Werk)) ;
 
     //--------------------------------------------------------------------------
     // free workspace and return result
     //--------------------------------------------------------------------------
 
     // caller must free R_to_M, R_to_C, and R_to_Z, but not Rp or Rh
-    GB_FREE_WORK ;
+    GB_FREE_WORKSPACE ;
     ASSERT_MATRIX_OK (R, "R output for mask phase2", GB0) ;
     ASSERT (!GB_ZOMBIES (R)) ; 
     ASSERT (!GB_JUMBLED (R)) ;

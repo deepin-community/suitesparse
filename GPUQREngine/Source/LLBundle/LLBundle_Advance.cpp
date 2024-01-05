@@ -1,6 +1,12 @@
 // =============================================================================
 // === GPUQREngine/Source/LLBundle_Advance.cpp =================================
 // =============================================================================
+
+// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
+// and Sanjay Ranka.  All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 //
 // The LLBundle Advance member function advances the bundle, leaving behind the
 // min tile (which becomes the bundle's Shadow). On advance, the bundle is
@@ -13,11 +19,10 @@
 // front in it to begin with.
 //
 // =============================================================================
-
+#include "GPUQREngine_LLBundle.hpp"
 #include "GPUQREngine_BucketList.hpp"
-
-
-bool LLBundle::Advance
+template <typename Int>
+bool LLBundle <Int>::Advance
 (
     void
 )
@@ -78,3 +83,12 @@ bool LLBundle::Advance
 
     return stillAround;
 }
+
+template bool LLBundle <int32_t>::Advance
+(
+    void
+) ;
+template bool LLBundle <int64_t>::Advance
+(
+    void
+) ;

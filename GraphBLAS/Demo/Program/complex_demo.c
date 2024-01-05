@@ -2,23 +2,27 @@
 // GraphBLAS/Demo/Program/complex_demo.c: demo for user-defined complex type
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
 // This demo illustrates the creation and use of a user-defined type for double
-// complex matrices and vectors.  Run the output of this program in MATLAB
+// complex matrices and vectors.  Run the *.m output of this program
 // to check the results.
 
 #include "graphblas_demos.h"
+#include "usercomplex.h"
+#include "usercomplex.c"
+#include "simple_rand.c"
+#include "random_matrix.c"
 
 //------------------------------------------------------------------------------
 // print a complex matrix
 //------------------------------------------------------------------------------
 
 // when printed, 1 is added to all row indices so the results can be
-// checked in MATLAB
+// checked later with the *.m file
 
 void print_complex_matrix (GrB_Matrix A, char *name)
 {
@@ -77,6 +81,9 @@ int main (int argc, char **argv)
     GxB_Global_Option_get (GxB_GLOBAL_NTHREADS, &nthreads) ;
     fprintf (stderr, "complex_demo: nthreads: %d\n", nthreads) ;
 
+    // print in 1-based notation
+    GxB_Global_Option_set (GxB_PRINT_1BASED, true) ;
+
     bool predefined = (argc > 1) ;
     if (predefined)
     {
@@ -99,8 +106,8 @@ int main (int argc, char **argv)
     random_matrix (&A, false, false, m, k, 6, 0, true) ;
     random_matrix (&B, false, false, k, n, 8, 0, true) ;
 
-    GxB_Matrix_fprint (A, "C", GxB_SHORT, stderr) ;
-    GxB_Matrix_fprint (B, "C", GxB_SHORT, stderr) ;
+    GxB_Matrix_fprint (A, "A", GxB_SHORT, stderr) ;
+    GxB_Matrix_fprint (B, "B", GxB_SHORT, stderr) ;
 
     // C = A*B
     GrB_Matrix_new (&C, Complex, m, n) ;
@@ -109,7 +116,7 @@ int main (int argc, char **argv)
     GxB_Matrix_fprint (C, "C", GxB_SHORT, stderr) ;
 
     // print the results
-    printf ("\n%% run this output of this program as a script in MATLAB:\n") ;
+    printf ("\n%% run this output of this program as a script:\n") ;
     print_complex_matrix (A, "A") ;
     print_complex_matrix (B, "B") ;
     print_complex_matrix (C, "C") ;
@@ -129,15 +136,4 @@ int main (int argc, char **argv)
     // finalize GraphBLAS
     GrB_finalize ( ) ;
 }
-
-//------------------------------------------------------------------------------
-
-#if 0
-
-int main ( )
-{
-    printf ("complex data type not available (ANSI C11 or higher required)\n") ;
-}
-
-#endif
 

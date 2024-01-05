@@ -2,6 +2,9 @@
 /* === SuiteSparseQR_definitions.h ========================================== */
 /* ========================================================================== */
 
+// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
 /* Core definitions for both C and C++ programs. */
 
 #ifndef SUITESPARSEQR_DEFINITIONS_H
@@ -59,11 +62,12 @@
         #endif
  */
 
-#define SPQR_DATE "Dec 28, 2018"
+#define SPQR_DATE "Oct 23, 2023"
+#define SPQR_MAIN_VERSION   4
+#define SPQR_SUB_VERSION    2
+#define SPQR_SUBSUB_VERSION 2
+
 #define SPQR_VER_CODE(main,sub) ((main) * 1000 + (sub))
-#define SPQR_MAIN_VERSION 2
-#define SPQR_SUB_VERSION 0
-#define SPQR_SUBSUB_VERSION 9
 #define SPQR_VERSION SPQR_VER_CODE(SPQR_MAIN_VERSION,SPQR_SUB_VERSION)
 
 #endif

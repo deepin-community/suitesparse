@@ -2,7 +2,7 @@
 // GB_I_inverse: invert an index list
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ GrB_Info GB_I_inverse           // invert the I list for C=A(I,:)
     int64_t *restrict *p_Inext, // next pointers for buckets, size nI
     size_t *p_Inext_size,
     int64_t *p_ndupl,           // number of duplicate entries in I
-    GB_Context Context
+    GB_Werk Werk
 )
 {
 
@@ -50,13 +50,13 @@ GrB_Info GB_I_inverse           // invert the I list for C=A(I,:)
     // allocate workspace
     //--------------------------------------------------------------------------
 
-    Mark  = GB_CALLOC_WERK (avlen, int64_t, &Mark_size) ;
-    Inext = GB_MALLOC_WERK (nI,    int64_t, &Inext_size) ;
+    Mark  = GB_CALLOC_WORK (avlen, int64_t, &Mark_size) ;
+    Inext = GB_MALLOC_WORK (nI,    int64_t, &Inext_size) ;
     if (Inext == NULL || Mark == NULL)
     { 
         // out of memory
-        GB_FREE_WERK (&Mark, Mark_size) ;
-        GB_FREE_WERK (&Inext, Inext_size) ;
+        GB_FREE_WORK (&Mark, Mark_size) ;
+        GB_FREE_WORK (&Inext, Inext_size) ;
         return (GrB_OUT_OF_MEMORY) ;
     }
 

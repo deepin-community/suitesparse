@@ -1,11 +1,11 @@
-/* ========================================================================== */
-/* === umf_internal.h ======================================================= */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// UMFPACK/Source/umf_internal.h: internal definitions for UMFPACK
+//------------------------------------------------------------------------------
 
-/* -------------------------------------------------------------------------- */
-/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
-/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
-/* -------------------------------------------------------------------------- */
+// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /*
     This file is for internal use in UMFPACK itself, and should not be included
@@ -76,8 +76,6 @@
 #define UMFPACK_ARCHITECTURE "HP 700 Unix"
 
 #else
-/* If the architecture is unknown, and you call the BLAS, you may need to */
-/* define BLAS_BY_VALUE, BLAS_NO_UNDERSCORE, and/or BLAS_CHAR_ARG yourself. */
 #define UMFPACK_ARCHITECTURE "unknown"
 #endif
 
@@ -93,6 +91,7 @@
 /* -------------------------------------------------------------------------- */
 
 /* stdio.h, stdlib.h, limits.h, and math.h, NDEBUG definition, assert.h */
+#define SUITESPARSE_BLAS_DEFINITIONS
 #include "amd_internal.h"
 
 /* -------------------------------------------------------------------------- */
@@ -106,7 +105,7 @@
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* Real/complex and int/SuiteSparse_long definitions, double relops */
+/* Real/complex and int32_t/int64_t definitions, double relops */
 /* -------------------------------------------------------------------------- */
 
 #include "umf_version.h"
@@ -259,7 +258,7 @@ typedef union Unit_union Unit ;
     same version that created them (umfpack_di_*, umfpack_dl_*, umfpack_zi_*,
     or umfpack_zl_*).  The values have also been changed since prior releases of
     the code to ensure that all routines that operate on the objects are of the
-    same release.  The values themselves are purely arbitrary.  The are less
+    same release.  The values themselves are purely arbitrary.  They are less
     than the ANSI C required minimums of INT_MAX and LONG_MAX, respectively.
 */
 
@@ -672,6 +671,8 @@ typedef struct	/* SymbolicType */
 	*Esize,
 	dense_row_threshold,
 	n1,			/* number of singletons */
+    n1r,                    /* number of row singletons */
+    n1c,                    /* number of column singletons */
 	nempty,			/* MIN (nempty_row, nempty_col) */
 	*Diagonal_map,		/* initial "diagonal" */
 	esize,			/* size of Esize array */
@@ -692,6 +693,27 @@ typedef struct	/* SymbolicType */
 
 } SymbolicType ;
 
+/* -------------------------------------------------------------------------- */
+/* SW Type: used internally in umfpack_qsymbolic */
+/* -------------------------------------------------------------------------- */
+
+typedef struct	/* SWType */
+{
+    Int *Front_npivcol ;    /* size n_col + 1 */
+    Int *Front_nrows ;	    /* size n_col */
+    Int *Front_ncols ;	    /* size n_col */
+    Int *Front_parent ;	    /* size n_col */
+    Int *Front_cols ;	    /* size n_col */
+    Int *InFront ;	    /* size n_row */
+    Int *Ci ;		    /* size Clen */
+    Int *Cperm1 ;	    /* size n_col */
+    Int *Rperm1 ;	    /* size n_row */
+    Int *InvRperm1 ;	    /* size n_row */
+    Int *Si ;		    /* size nz */
+    Int *Sp ;		    /* size n_col + 1 */
+    double *Rs ;	    /* size n_row */
+
+} SWType ;
 
 /* -------------------------------------------------------------------------- */
 /* for debugging only: */
@@ -714,12 +736,8 @@ typedef struct	/* SymbolicType */
 /* for testing out-of-memory conditions: */
 #define UMF_TCOV_TEST
 
-#ifndef EXTERN
-#define EXTERN extern
-#endif
-
-GLOBAL EXTERN int umf_fail, umf_fail_lo, umf_fail_hi ;
-GLOBAL EXTERN int umf_realloc_fail, umf_realloc_lo, umf_realloc_hi ;
+extern int umf_fail, umf_fail_lo, umf_fail_hi ;
+extern int umf_realloc_fail, umf_realloc_lo, umf_realloc_hi ;
 
 /* for testing malloc count: */
 #define UMF_MALLOC_COUNT

@@ -1,11 +1,12 @@
-/* ========================================================================== */
-/* === Tcov/memory ========================================================== */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/Tcov/memory: memory-failure testing in CHOLMOD
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/Tcov Module.  Copyright (C) 2005-2006, Timothy A. Davis
- * http://www.suitesparse.com
- * -------------------------------------------------------------------------- */
+// CHOLMOD/Tcov Module.  Copyright (C) 2005-2022, Timothy A. Davis.
+// All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /* Extensive memory-failure testing for CHOLMOD.
  *
@@ -21,7 +22,7 @@
 /* === my_tries ============================================================= */
 /* ========================================================================== */
 
-Int my_tries = -1 ; /* a global variable */
+int64_t my_tries = -1 ; /* a global variable */
 
 
 /* ========================================================================== */
@@ -34,7 +35,7 @@ void *my_malloc2 (size_t size)
     if (my_tries == 0)
     {
 	/* pretend to fail */
-	/* printf ("p 0 (pretend to fail)\n") ; */
+	// printf ("(my_malloc2 pretend to fail)\n") ;
 	return (NULL) ;
     }
     if (my_tries > 0)
@@ -57,7 +58,7 @@ void *my_calloc2 (size_t n, size_t size)
     if (my_tries == 0)
     {
 	/* pretend to fail */
-	/* printf ("p 0 (pretend to fail)\n") ; */
+	// printf ("(my_calloc2 pretend to fail)\n") ;
 	return (NULL) ;
     }
     if (my_tries > 0)
@@ -80,7 +81,7 @@ void *my_realloc2 (void *p, size_t size)
     if (my_tries == 0)
     {
 	/* pretend to fail */
-	/* printf ("p2 0 (pretend to fail)\n") ; */
+	// printf ("(my_realloc2 pretend to fail)\n") ;
 	return (NULL) ;
     }
     if (my_tries > 0)
@@ -109,11 +110,10 @@ void my_free2 (void *p)
 
 void normal_memory_handler ( void )
 {
-
-    SuiteSparse_config.malloc_func = malloc ;
-    SuiteSparse_config.calloc_func = calloc ;
-    SuiteSparse_config.realloc_func = realloc ;
-    SuiteSparse_config.free_func = free ;
+    SuiteSparse_config_malloc_func_set (malloc) ;
+    SuiteSparse_config_calloc_func_set (calloc) ;
+    SuiteSparse_config_realloc_func_set (realloc) ;
+    SuiteSparse_config_free_func_set (free) ;
 
     cm->error_handler = my_handler ;
     CHOLMOD(free_work) (cm) ;
@@ -126,10 +126,10 @@ void normal_memory_handler ( void )
 
 void test_memory_handler ( void )
 {
-    SuiteSparse_config.malloc_func = my_malloc2 ;
-    SuiteSparse_config.calloc_func = my_calloc2 ;
-    SuiteSparse_config.realloc_func = my_realloc2 ;
-    SuiteSparse_config.free_func = my_free2 ;
+    SuiteSparse_config_malloc_func_set (my_malloc2) ;
+    SuiteSparse_config_calloc_func_set (my_calloc2) ;
+    SuiteSparse_config_realloc_func_set (my_realloc2) ;
+    SuiteSparse_config_free_func_set (my_free2) ;
 
     cm->error_handler = NULL ;
     CHOLMOD(free_work) (cm) ;

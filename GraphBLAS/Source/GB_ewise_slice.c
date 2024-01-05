@@ -2,29 +2,34 @@
 // GB_ewise_slice: slice the entries and vectors for an ewise operation
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
-// Constructs a set of tasks to compute C, for an element-wise operation
-// (GB_add, GB_emult, and GB_mask) that operates on two input matrices,
-// C=op(A,B).  The mask is ignored for computing where to slice the work, but
-// it is sliced once the location has been found.
+// JIT: not needed, but could use variants for sparsity formats.
+
+// Constructs a set of tasks to compute C, for an element-wise operation that
+// operates on two input matrices, C=op(A,B).  These include:
+// GB_add, GB_emult, and GB_masker, and many GB_subassign_* methods
+// (02, 04, 06s_and_14, 08n, 08s_and_16, 09, 10_and_18, 11, 12_and_20).
+
+// The mask is ignored for computing where to slice the work, but it is sliced
+// once the location has been found.
 
 // M, A, B: any sparsity structure (hypersparse, sparse, bitmap, or full).
 // C: constructed as sparse or hypersparse in the caller.
 
-#define GB_FREE_WORK                            \
+#define GB_FREE_WORKSPACE                       \
 {                                               \
     GB_WERK_POP (Coarse, int64_t) ;             \
-    GB_FREE_WERK (&Cwork, Cwork_size) ;         \
+    GB_FREE_WORK (&Cwork, Cwork_size) ;         \
 }
 
 #define GB_FREE_ALL                             \
 {                                               \
-    GB_FREE_WORK ;                              \
-    GB_FREE_WERK (&TaskList, TaskList_size) ;   \
+    GB_FREE_WORKSPACE ;                         \
+    GB_FREE_WORK (&TaskList, TaskList_size) ;   \
 }
 
 #include "GB.h"
@@ -50,7 +55,7 @@ GrB_Info GB_ewise_slice
     const GrB_Matrix M,             // mask matrix to slice (optional)
     const GrB_Matrix A,             // matrix to slice
     const GrB_Matrix B,             // matrix to slice
-    GB_Context Context
+    GB_Werk Werk
 )
 {
 
@@ -91,7 +96,8 @@ GrB_Info GB_ewise_slice
     // determine # of threads to use
     //--------------------------------------------------------------------------
 
-    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
+    int nthreads_max = GB_Context_nthreads_max ( ) ;
+    double chunk = GB_Context_chunk ( ) ;
 
     //--------------------------------------------------------------------------
     // allocate the initial TaskList
@@ -108,7 +114,7 @@ GrB_Info GB_ewise_slice
     GB_task_struct *restrict TaskList = NULL ; size_t TaskList_size = 0 ;
     int max_ntasks = 0 ;
     int ntasks0 = (M == NULL && nthreads_max == 1) ? 1 : (32 * nthreads_max) ;
-    GB_REALLOC_TASK_WERK (TaskList, ntasks0, max_ntasks) ;
+    GB_REALLOC_TASK_WORK (TaskList, ntasks0, max_ntasks) ;
 
     //--------------------------------------------------------------------------
     // check for quick return for a single task
@@ -154,7 +160,7 @@ GrB_Info GB_ewise_slice
     // allocate workspace
     //--------------------------------------------------------------------------
 
-    Cwork = GB_MALLOC_WERK (Cnvec+1, int64_t, &Cwork_size) ;
+    Cwork = GB_MALLOC_WORK (Cnvec+1, int64_t, &Cwork_size) ;
     if (Cwork == NULL)
     { 
         // out of memory
@@ -245,9 +251,9 @@ GrB_Info GB_ewise_slice
 
         ASSERT (kA >= -1 && kA < A->nvec) ;
         ASSERT (kB >= -1 && kB < B->nvec) ;
-        int64_t aknz = (kA < 0) ? 0 :
+        const int64_t aknz = (kA < 0) ? 0 :
             ((Ap == NULL) ? vlen : (Ap [kA+1] - Ap [kA])) ;
-        int64_t bknz = (kB < 0) ? 0 :
+        const int64_t bknz = (kB < 0) ? 0 :
             ((Bp == NULL) ? vlen : (Bp [kB+1] - Bp [kB])) ;
 
         Cwork [k] = aknz + bknz + 1 ;
@@ -257,7 +263,7 @@ GrB_Info GB_ewise_slice
     // replace Cwork with its cumulative sum
     //--------------------------------------------------------------------------
 
-    GB_cumsum (Cwork, Cnvec, NULL, nthreads_for_Cwork, Context) ;
+    GB_cumsum (Cwork, Cnvec, NULL, nthreads_for_Cwork, Werk) ;
     double cwork = (double) Cwork [Cnvec] ;
 
     //--------------------------------------------------------------------------
@@ -320,7 +326,7 @@ GrB_Info GB_ewise_slice
 
             // This is a non-empty coarse-grain task that does two or more
             // entire vectors of C, vectors k:klast, inclusive.
-            GB_REALLOC_TASK_WERK (TaskList, ntasks + 1, max_ntasks) ;
+            GB_REALLOC_TASK_WORK (TaskList, ntasks + 1, max_ntasks) ;
             TaskList [ntasks].kfirst = k ;
             TaskList [ntasks].klast  = klast ;
             ntasks++ ;
@@ -457,7 +463,7 @@ GrB_Info GB_ewise_slice
             nfine = GB_IMAX (nfine, 1) ;
 
             // make the TaskList bigger, if needed
-            GB_REALLOC_TASK_WERK (TaskList, ntasks + nfine, max_ntasks) ;
+            GB_REALLOC_TASK_WORK (TaskList, ntasks + nfine, max_ntasks) ;
 
             //------------------------------------------------------------------
             // create the fine-grain tasks
@@ -540,7 +546,7 @@ GrB_Info GB_ewise_slice
     // free workspace and return result
     //--------------------------------------------------------------------------
 
-    GB_FREE_WORK ;
+    GB_FREE_WORKSPACE ;
     (*p_TaskList     ) = TaskList ;
     (*p_TaskList_size) = TaskList_size ;
     (*p_ntasks       ) = ntasks ;
