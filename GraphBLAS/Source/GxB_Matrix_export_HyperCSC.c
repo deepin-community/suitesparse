@@ -2,7 +2,7 @@
 // GxB_Matrix_export_HyperCSC: export a matrix in hypersparse CSC format
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -26,13 +26,13 @@ GrB_Info GxB_Matrix_export_HyperCSC  // export and free a hypersparse CSC matrix
     GrB_Index *Ah_size, // size of Ah in bytes
     GrB_Index *Ai_size, // size of Ai in bytes
     GrB_Index *Ax_size, // size of Ax in bytes
-    bool *is_uniform,   // if true, A has uniform values (TODO:::unsupported)
+    bool *iso,          // if true, A is iso
 
     GrB_Index *nvec,    // number of columns that appear in Ah
     bool *jumbled,      // if true, indices in each column may be unsorted
     const GrB_Descriptor desc
 )
-{ 
+{
 
     //--------------------------------------------------------------------------
     // check inputs and get the descriptor
@@ -40,22 +40,21 @@ GrB_Info GxB_Matrix_export_HyperCSC  // export and free a hypersparse CSC matrix
 
     GB_WHERE1 ("GxB_Matrix_export_HyperCSC (&A, &type, &nrows, &ncols, "
         "&Ap, &Ah, &Ai, &Ax, &Ap_size, &Ah_size, &Ai_size, &Ax_size, "
-        "&is_uniform, &nvec, &jumbled, desc)") ;
-    GB_BURBLE_START ("GxB_Matrix_export_HyperCSC") ;
+        "&iso, &nvec, &jumbled, desc)") ;
+    // GB_BURBLE_START ("GxB_Matrix_export_HyperCSC") ;
     GB_RETURN_IF_NULL (A) ;
     GB_RETURN_IF_NULL_OR_FAULTY (*A) ;
     GB_GET_DESCRIPTOR (info, desc, xx1, xx2, xx3, xx4, xx5, xx6, xx7) ;
 
     //--------------------------------------------------------------------------
-    // ensure the matrix is in CSC format
+    // ensure the matrix is in by-col format
     //--------------------------------------------------------------------------
 
     if (!((*A)->is_csc))
     { 
-        // A = A', done in-place, to put A in CSC format
-        GBURBLE ("(transpose) ") ;
-        GB_OK (GB_transpose (NULL, NULL, true, *A,  // in_place_A
-            NULL, NULL, NULL, false, Context)) ;
+        // A = A', done in-place, to put A in by-col format
+        GBURBLE ("(export transpose) ") ;
+        GB_OK (GB_transpose_in_place (*A, true, Werk)) ;
     }
 
     //--------------------------------------------------------------------------
@@ -77,7 +76,7 @@ GrB_Info GxB_Matrix_export_HyperCSC  // export and free a hypersparse CSC matrix
     // ensure the matrix is hypersparse
     //--------------------------------------------------------------------------
 
-    GB_OK (GB_convert_any_to_hyper (*A, Context)) ;
+    GB_OK (GB_convert_any_to_hyper (*A, Werk)) ;
 
     //--------------------------------------------------------------------------
     // export the matrix
@@ -92,7 +91,7 @@ GrB_Info GxB_Matrix_export_HyperCSC  // export and free a hypersparse CSC matrix
     int sparsity ;
     bool is_csc ;
 
-    info = GB_export (A, type, nrows, ncols, false,
+    info = GB_export (false, A, type, nrows, ncols, false,
         Ap,   Ap_size,  // Ap
         Ah,   Ah_size,  // Ah
         NULL, NULL,     // Ab
@@ -100,14 +99,14 @@ GrB_Info GxB_Matrix_export_HyperCSC  // export and free a hypersparse CSC matrix
         Ax,   Ax_size,  // Ax
         NULL, jumbled, nvec,                // jumbled or not
         &sparsity, &is_csc,                 // hypersparse by col
-        is_uniform, Context) ;
+        iso, Werk) ;
 
     if (info == GrB_SUCCESS)
     {
         ASSERT (sparsity == GxB_HYPERSPARSE) ;
         ASSERT (is_csc) ;
     }
-    GB_BURBLE_END ;
+    // GB_BURBLE_END ;
     return (info) ;
 }
 

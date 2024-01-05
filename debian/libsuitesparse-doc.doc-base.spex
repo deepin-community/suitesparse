@@ -1,0 +1,8 @@
+Document: spex
+Title: SuiteSparse/SPEX Userguide
+Author: Christopher Lourenco, Jinhao Chen, Erick Moreno-Centeno, Timothy A. Davis
+Abstract: SPEX is a library for solving sparse linear systems in exact arithmetic.
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/SPEX_UserGuide.pdf

@@ -2,10 +2,12 @@
 // GxB_Vector_type: return the type of a vector
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
+
+// NOTE: this function is historical.  Use GxB_Vector_type_name instead.
 
 #include "GB.h"
 
@@ -27,6 +29,6 @@ GrB_Info GxB_Vector_type    // get the type of a vector
     // get the type
     //--------------------------------------------------------------------------
 
-    return (GB_matvec_type (type, (GrB_Matrix) v, Context)) ;
+    return (GB_matvec_type (type, (GrB_Matrix) v, Werk)) ;
 }
 

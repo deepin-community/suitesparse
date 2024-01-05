@@ -2,8 +2,9 @@ function [r, stats] = pagerank (A, opts)
 %GRB.PAGERANK PageRank of a graph.
 % r = GrB.pagerank (A) computes the PageRank of a graph with adjacency
 % matrix A.  r = GrB.pagerank (A, options) allows for non-default options
-% to be selected.  For compatibility with MATLAB, defaults are identical to
-% the MATLAB pagerank method in @graph/centrality and @digraph/centrality:
+% to be selected.  For compatibility with the built-in methods, defaults
+% are identical to the built-in pagerank method in @graph/centrality and
+% @digraph/centrality:
 %
 %   opts.tol = 1e-4         stopping criterion
 %   opts.maxit = 100        maximum # of iterations to take
@@ -11,7 +12,7 @@ function [r, stats] = pagerank (A, opts)
 %   opts.weighted = false   true: use edgeweights of A; false: use spones(A)
 %   opts.type = 'double'    compute in 'single' or 'double' precision
 %
-% A can be a GraphBLAS or MATLAB matrix.  A can have any format ('by row'
+% A can be a GraphBLAS or built-in matrix.  A can have any format ('by row'
 % or 'by col'), but GrB.pagerank is faster if A is 'by col'.
 %
 % An optional 2nd output argument provides statistics:
@@ -21,8 +22,8 @@ function [r, stats] = pagerank (A, opts)
 %
 % See also graph/centrality.
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
-% SPDX-License-Identifier: GPL-3.0-or-later
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+% SPDX-License-Identifier: Apache-2.0
 
 % NOTE: this is a high-level algorithm that uses GrB objects.
 
@@ -53,7 +54,7 @@ if (~isfield (opts, 'type'))
 end
 
 if (~(isequal (opts.type, 'single') || isequal (opts.type, 'double')))
-    error ('opts.type must be ''single'' or ''double''') ;
+    error ('GrB:error', 'opts.type must be ''single'' or ''double''') ;
 end
 
 % get options
@@ -67,7 +68,7 @@ weighted = opts.weighted ;
 
 [m, n] = size (A) ;
 if (m ~= n)
-    error ('A must be square') ;
+    error ('GrB:error', 'A must be square') ;
 end
 
 % select the semiring and determine if A is native
@@ -130,7 +131,7 @@ for iter = 1:maxit
     teleport = tfactor ;
     if (any_sinks)
         % add the teleport factor from all the sinks
-        % teleport = teleport + dn * sum (r (sinks})) ;
+        % teleport = teleport + dn * sum (r (sinks))) ;
         teleport = teleport + dn * sum (GrB.extract (r, { sinks })) ;
     end
     % r (1:n) = teleport

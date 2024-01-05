@@ -1,6 +1,12 @@
 // =============================================================================
 // === GPUQREngine/Include/GPUQREngine_BucketList.hpp ==========================
 // =============================================================================
+
+// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
+// and Sanjay Ranka.  All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 //
 // The BucketList is a principal class in the GPUQREngine.
 //
@@ -18,11 +24,15 @@
 #include "GPUQREngine_TaskDescriptor.hpp"
 #include "GPUQREngine_LLBundle.hpp"
 #include "GPUQREngine_Front.hpp"
+#include "SuiteSparseGPU_internal.hpp"
+
+
 
 struct TaskDescriptor;
+template <typename Int>
 class LLBundle;
 
-class BucketList
+template <typename Int = int64_t> class BucketList
 {
 public:
     bool useFlag;            // A flag indicating whether to use this
@@ -40,7 +50,7 @@ public:
     Int *bundleCount;        // The # of bundles native to bucket index
     Int *idleTileCount;      // The # of idle tiles in bucket index
 
-    Front *front;
+    Front <Int> *front;
     Int numRowTiles;         // # row tiles of F
     Int numColTiles;         // # col tiles of F
     Int numBuckets;          // min(numRowTiles, numColTiles)
@@ -54,7 +64,7 @@ public:
     Int ApplyGranularity;    // The desired granularity (in col tiles)
                              // for applies
 
-    LLBundle *Bundles;       // The bundles maintained by this scheduler
+    LLBundle <Int> *Bundles;       // The bundles maintained by this scheduler
     Int numBundles;          // Total # of bundles
 
     Workspace *wsMongoVT;    // The VT blocks this bucket list scheduler owns
@@ -62,11 +72,11 @@ public:
     int VThead;              // Index of the first available entry in VTlist
 
     // Constructors
-    void *operator new(long unsigned int, BucketList* p)
+    void *operator new(long unsigned int, BucketList <Int>* p)
     {
         return p;
     }
-    BucketList(Front *f, Int minApplyGranularity);
+    BucketList(Front <Int> *f, Int minApplyGranularity);
     ~BucketList();
 
     // Bundle management functions
@@ -77,8 +87,21 @@ public:
     #endif
 
     // VT management functions
-    double *allocateVT();
-    double *freeVT(double *gpuVT);
+    double *allocateVT
+    (
+        void
+    )
+    {
+        return gpuVT[VThead++];
+    }
+    double *freeVT
+    (
+        double *doneVT              // The GPU pointer of a released VT tile
+    )
+    {
+        gpuVT[--VThead] = doneVT;
+        return NULL;
+    }
 
     bool IsDone()
     {
@@ -151,7 +174,7 @@ public:
     // edge case kernels.
     bool IsInternal
     (
-        LLBundle& bundle,
+        LLBundle <Int>& bundle,
         int jLast
     );
 
@@ -164,5 +187,8 @@ public:
         Int *queueIndex         // The current index into the queue
     );
 };
+
+extern template class BucketList<int32_t>;
+extern template class BucketList<int64_t>;
 
 #endif

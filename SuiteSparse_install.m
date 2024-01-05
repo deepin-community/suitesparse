@@ -6,7 +6,7 @@ function SuiteSparse_install (do_demo)
 %
 % GraphBLAS      graph algorithms via sparse linear algebra (graphblas.org)
 % Mongoose       graph partitioner
-% SLIP_LU        solve sparse Ax=b exactly
+% SPEX           solve sparse Ax=b exactly
 % UMFPACK        sparse LU factorization (multifrontal)
 % CHOLMOD        sparse Cholesky factorization, and many other operations
 % AMD            sparse symmetric approximate minimum degree ordering
@@ -38,19 +38,30 @@ function SuiteSparse_install (do_demo)
 % See also AMD, COLAMD, CAMD, CCOLAMD, CHOLMOD, UMFPACK, CSPARSE, CXSPARSE,
 %      ssget, RBio, SuiteSparseCollection, KLU, BTF, MESHND, SSMULT, LINFACTOR,
 %      SPOK, SPQR_RANK, SuiteSparse, SPQR, PATHTOOL, PATH, FACTORIZE,
-%      SPARSEINV, Mongoose, GraphBLAS, SLIP_LU.
+%      SPARSEINV, Mongoose, GraphBLAS, SPEX.
 %
 % This script installs the full-featured CXSparse rather than CSparse.
 %
-% If you get errors building or using METIS, just remove the metis-5.1.0
-% folder.  This often occurs on Windows.
+% If you get errors building or using METIS, just remove the
+% CHOLMOD/SuiteSparse_metis folder.  This often occurs on Windows.
 %
-% Copyright 1990-2020, Timothy A. Davis, http://suitesparse.com.
+% Before using SuiteSparse_install, you must compile the GraphBLAS library for
+% use in MATLAB.  In the system shell while in the SuiteSparse folder, type
+% "make gbmatlab".  You must then either install the libgraphblas_matlab.so
+% library system-wide ( cd GraphBLAS/GraphBLAS ; make ; sudo make install), or
+% install % your own copy ( make local ; make install ) and then add the
+% SuiteSparse/lib folder to your LD_LIBRARY_PATH.  Restart MATLAB after
+% compiling libgraphblas_matlab.so.
+%
+% Copyright (c) 1990-2023, Timothy A. Davis, http://suitesparse.com.
+%
 % In collaboration with (in alphabetical order): Patrick Amestoy, David
-% Bateman, Jinhao Chen.  Yanqing Chen, Iain Duff, Les Foster, William Hager,
-% Scott Kolodziej, Chris Lourenco, Stefan Larimore, Erick Moreno-Centeno,
-% Ekanathan Palamadai, Sivasankaran Rajamanickam, Sanjay Ranka, Wissam
-% Sid-Lakhdar, Nuri Yeralan.
+% Bateman, Jinhao Chen, Yanqing Chen, Iain Duff, Les Foster, John Gilbert,
+% William Hager, Scott Kolodziej, Chris Lourenco, Stefan Larimore, Erick
+% Moreno-Centeno, Esmond Ng, Ekanathan Palamadai, Sivasankaran Rajamanickam,
+% Sanjay Ranka, Wissam Sid-Lakhdar, Nuri Yeralan.
+%
+% See each package for its license.
 
 %-------------------------------------------------------------------------------
 % initializations
@@ -288,17 +299,6 @@ catch me
     failed {end+1} = 'spok' ;
 end
 
-%{
-% compile and install PIRO_BAND
-try
-    paths = add_to_path (paths, [SuiteSparse '/PIRO_BAND/MATLAB']) ;
-    piro_band_make ;
-catch me
-    disp (me.message) ;
-    fprintf ('PIRO_BAND not installed\n') ;
-end
-%}
-
 % compile and install sparsinv
 try
     paths = add_to_path (paths, [SuiteSparse '/MATLAB_Tools/sparseinv']) ;
@@ -311,8 +311,10 @@ end
 
 % compile and install Mongoose
 try
+    fprintf ('\nCompiling Mongoose\n') ;
     paths = add_to_path (paths, [SuiteSparse '/Mongoose/MATLAB']) ;
     mongoose_make (0) ;
+    fprintf ('\n') ;
 catch me
     disp (me.message) ;
     fprintf ('Mongoose not installed\n') ;
@@ -321,7 +323,8 @@ end
 
 % compile and install GraphBLAS
 try
-    paths = add_to_path (paths, [SuiteSparse '/GraphBLAS/build']) ;
+    fprintf ('\nCompiling GraphBLAS\n') ;
+    paths = add_to_path (paths, [SuiteSparse '/GraphBLAS/GraphBLAS/build']) ;
     paths = add_to_path (paths, [SuiteSparse '/GraphBLAS/GraphBLAS/demo']) ;
     paths = add_to_path (paths, [SuiteSparse '/GraphBLAS/GraphBLAS']) ;
     cd ('@GrB/private') ;
@@ -332,14 +335,14 @@ catch me
     failed {end+1} = 'GraphBLAS' ;
 end
 
-% compile and install SLIP_LU
 try
-    paths = add_to_path (paths, [SuiteSparse '/SLIP_LU/MATLAB']) ;
-    SLIP_install (do_demo) ;
+    fprintf ('try to install SPEX (requires GMP and MPFR)\n') ;
+    paths = add_to_path (paths, [SuiteSparse '/SPEX/SPEX_Left_LU/MATLAB']) ;
+    SPEX_Left_LU_install (0) ;
 catch me
     disp (me.message) ;
-    fprintf ('SLIP_LU not installed\n') ;
-    failed {end+1} = 'SLIP_LU' ;
+    fprintf ('SPEX not installed\n') ;
+    failed {end+1} = 'SPEX' ;
 end
 
 %-------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 // GB_clear: clears the content of a matrix
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -21,15 +21,15 @@
 // header is left.
 
 // A is first converted to sparse or hypersparse, and then conformed via
-// GB_conform.  If A->sparsity disables the sparse and hypersparse structures,
-// A is converted bitmap instead.
+// GB_conform.  If A->sparsity_control disables the sparse and hypersparse
+// structures, A is converted bitmap instead.
 
 #include "GB.h"
 
 GrB_Info GB_clear           // clear a matrix, type and dimensions unchanged
 (
     GrB_Matrix A,           // matrix to clear
-    GB_Context Context
+    GB_Werk Werk
 )
 {
 
@@ -49,12 +49,13 @@ GrB_Info GB_clear           // clear a matrix, type and dimensions unchanged
     // clear the content of A if bitmap
     //--------------------------------------------------------------------------
 
-    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
-    int sparsity = GB_sparsity_control (A->sparsity, A->vdim) ;
-    if (((sparsity & (GxB_SPARSE + GxB_HYPERSPARSE)) == 0) && GB_IS_BITMAP (A))
+    int nthreads_max = GB_Context_nthreads_max ( ) ;
+    int sparsity_control = GB_sparsity_control (A->sparsity_control, A->vdim) ;
+    if (((sparsity_control & (GxB_SPARSE + GxB_HYPERSPARSE)) == 0)
+        && GB_IS_BITMAP (A))
     { 
         // A should remain bitmap
-        GB_memset (A->b, 0, GB_NNZ_HELD (A), nthreads_max) ;
+        GB_memset (A->b, 0, GB_nnz_held (A), nthreads_max) ;
         A->nvals = 0 ;
         A->magic = GB_MAGIC ;
         return (GrB_SUCCESS) ;
@@ -65,7 +66,7 @@ GrB_Info GB_clear           // clear a matrix, type and dimensions unchanged
     //--------------------------------------------------------------------------
 
     // free all content
-    GB_phbix_free (A) ;
+    GB_phybix_free (A) ;
 
     // no more zombies or pending tuples
     ASSERT (!GB_ZOMBIES (A)) ;
@@ -96,7 +97,7 @@ GrB_Info GB_clear           // clear a matrix, type and dimensions unchanged
         if (A->p == NULL)
         { 
             // out of memory
-            GB_phbix_free (A) ;
+            GB_phybix_free (A) ;
             return (GrB_OUT_OF_MEMORY) ;
         }
         GB_memset (A->p, 0, (plen+1) * sizeof (int64_t), nthreads_max) ;
@@ -117,12 +118,12 @@ GrB_Info GB_clear           // clear a matrix, type and dimensions unchanged
         if (A->p == NULL || A->h == NULL)
         { 
             // out of memory
-            GB_phbix_free (A) ;
+            GB_phybix_free (A) ;
             return (GrB_OUT_OF_MEMORY) ;
         }
         A->p [0] = 0 ;
         if (plen > 0)
-        {
+        { 
             A->p [1] = 0 ;
             A->h [0] = 0 ;
         }
@@ -134,6 +135,6 @@ GrB_Info GB_clear           // clear a matrix, type and dimensions unchanged
     // conform A to its desired sparsity 
     //--------------------------------------------------------------------------
 
-    return (GB_conform (A, Context)) ;
+    return (GB_conform (A, Werk)) ;
 }
 

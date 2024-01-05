@@ -1,12 +1,12 @@
-/* ========================================================================== */
-/* === Modify/cholmod_updown ================================================ */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/Modify/cholmod_updown: sparse Cholesky update/downdate
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/Modify Module.
- * Copyright (C) 2005-2006, Timothy A. Davis and William W. Hager.
- * http://www.suitesparse.com
- * -------------------------------------------------------------------------- */
+// CHOLMOD/Modify Module.  Copyright (C) 2005-2022, Timothy A. Davis,
+// and William W. Hager. All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /* Updates/downdates the LDL' factorization (symbolic, then numeric), by
  * computing a new factorization of
@@ -58,12 +58,10 @@
  * numeric identity matrix.
  */
 
+#include "cholmod_internal.h"
+
 #ifndef NGPL
 #ifndef NMODIFY
-
-#include "cholmod_internal.h"
-#include "cholmod_modify.h"
-
 
 /* ========================================================================== */
 /* === cholmod_updown ======================================================= */
@@ -543,7 +541,8 @@ int CHOLMOD(updown_mask2)
     /* ---------------------------------------------------------------------- */
 
     /* mark = CHOLMOD(clear_flag) (Common) ; */
-    CHOLMOD_CLEAR_FLAG (Common) ;
+    CLEAR_FLAG (Common) ;
+    ASSERT (check_flag (Common)) ;
     mark = Common->mark ;
 
     PRINT1 (("updown, rank %g update %d\n", (double) C->ncol, update)) ;
@@ -737,7 +736,7 @@ int CHOLMOD(updown_mask2)
 	    if (do_solve)
 	    {
 		xj = Xx [j] ;
-		if (IS_NONZERO (xj))
+		if (xj != 0)
 		{
 		    xj = Xx [j] ;
 		    /* This is first time column j has been seen for entire */

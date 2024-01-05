@@ -1,4 +1,1 @@
-buildflags.patch
-mongoose-build.patch
-graphblas-build.patch
-libatomic.patch
+do-not-build-graphblas.patch

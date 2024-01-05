@@ -2,13 +2,14 @@
 // gbnew: create a GraphBLAS matrix
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
-// A may be a MATLAB sparse matrix, or a MATLAB struct containing a GraphBLAS
-// matrix.  C is returned as a MATLAB struct containing a GraphBLAS matrix.
+// A may be a built-in sparse matrix, or a built-in struct containing a
+// GraphBLAS matrix.  C is returned as a built-in struct containing a GraphBLAS
+// matrix.
 
 // Usage:
 
@@ -23,7 +24,7 @@
 // C = gbnew (m, n, type, format)
 // C = gbnew (m, n, format, type)
 
-#include "gb_matlab.h"
+#include "gb_interface.h"
 
 #define USAGE "usage: C = GrB (m,n,type,format) or C = GrB (A,type,format)"
 
@@ -90,7 +91,7 @@ void mexFunction
 
                 if (gb_mxarray_is_empty (pargin [0]))
                 { 
-                    // A is a 0-by-0 MATLAB matrix.  create a new 0-by-0
+                    // A is a 0-by-0 built-in matrix.  create a new 0-by-0
                     // GraphBLAS matrix C of the given type, with the default
                     // format.
                     C = gb_new (type, 0, 0, -1, 0) ;
@@ -135,8 +136,8 @@ void mexFunction
             //------------------------------------------------------------------
 
             // m-by-n GraphBLAS double matrix, no entries, default format
-            GrB_Index nrows = mxGetScalar (pargin [0]) ;
-            GrB_Index ncols = mxGetScalar (pargin [1]) ;
+            GrB_Index nrows = gb_mxget_uint64_scalar (pargin [0], "m") ;
+            GrB_Index ncols = gb_mxget_uint64_scalar (pargin [1], "n") ;
             C = gb_new (GrB_FP64, nrows, ncols, -1, 0) ;
 
         }
@@ -166,8 +167,8 @@ void mexFunction
             //------------------------------------------------------------------
 
             // create an m-by-n matrix with no entries
-            GrB_Index nrows = mxGetScalar (pargin [0]) ;
-            GrB_Index ncols = mxGetScalar (pargin [1]) ;
+            GrB_Index nrows = gb_mxget_uint64_scalar (pargin [0], "m") ;
+            GrB_Index ncols = gb_mxget_uint64_scalar (pargin [1], "n") ;
             GrB_Type type = gb_mxstring_to_type (pargin [2]) ;
             bool ok = gb_mxstring_to_format (pargin [2], &fmt, &sparsity) ;
 
@@ -248,8 +249,8 @@ void mexFunction
 
             // create an m-by-n matrix with no entries, of the requested
             // type and format
-            GrB_Index nrows = mxGetScalar (pargin [0]) ;
-            GrB_Index ncols = mxGetScalar (pargin [1]) ;
+            GrB_Index nrows = gb_mxget_uint64_scalar (pargin [0], "m") ;
+            GrB_Index ncols = gb_mxget_uint64_scalar (pargin [1], "n") ;
 
             GrB_Type type = gb_mxstring_to_type (pargin [2]) ;
             bool ok = gb_mxstring_to_format (pargin [3], &fmt, &sparsity) ;
@@ -279,7 +280,7 @@ void mexFunction
     }
 
     //--------------------------------------------------------------------------
-    // export the output matrix C back to MATLAB as a GraphBLAS matrix
+    // export the output matrix C as a GraphBLAS matrix
     //--------------------------------------------------------------------------
 
     pargout [0] = gb_export (&C, KIND_GRB) ;

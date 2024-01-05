@@ -1,0 +1,46 @@
+Description: Do not build GraphBLAS
+ It is provided independently by src:suitesparse-graphblas.
+Author: Sébastien Villemot <sebastien@debian.org>
+Forwarded: not-needed
+Last-Update: 2021-11-26
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/Makefile
++++ b/Makefile
+@@ -39,7 +39,6 @@ library:
+ 	( cd SuiteSparse_GPURuntime && $(MAKE) )
+ 	( cd GPUQREngine && $(MAKE) )
+ 	( cd SPQR && $(MAKE) )
+-	( cd GraphBLAS && $(MAKE) )
+ 	( cd SPEX && $(MAKE) )
+ 
+ # compile; "make install" only in  SuiteSparse/lib and SuiteSparse/include
+@@ -105,7 +104,6 @@ install:
+ 	( cd SuiteSparse_GPURuntime && $(MAKE) install )
+ 	( cd GPUQREngine && $(MAKE) install )
+ 	( cd SPQR && $(MAKE) install )
+-	( cd GraphBLAS && $(MAKE) install )
+ 	( cd SPEX && $(MAKE) install )
+ 
+ # uninstall all packages
+@@ -154,7 +152,6 @@ purge:
+ 	- $(RM) MATLAB_Tools/*/*.mex* MATLAB_Tools/*/*/*.mex*
+ 	- $(RM) MATLAB_Tools/*/*.o    MATLAB_Tools/*/*/*.o
+ 	- $(RM) -r Example/build/*
+-	- ( cd GraphBLAS && $(MAKE) purge )
+ 	- ( cd SPEX && $(MAKE) purge )
+ 	- $(RM) -r include/* bin/* lib/*
+ 
+@@ -177,12 +174,10 @@ demos:
+ 	- ( cd CXSparse && $(MAKE) demos )
+ 	- ( cd RBio && $(MAKE) demos )
+ 	- ( cd SPQR && $(MAKE) demos )
+-	- ( cd GraphBLAS && $(MAKE) demos )
+ 	- ( cd SPEX && $(MAKE) demos )
+ 
+ # Create the PDF documentation
+ docs:
+-	( cd GraphBLAS && $(MAKE) docs )
+ 	( cd Mongoose  && $(MAKE) docs )
+ 	( cd AMD && $(MAKE) docs )
+ 	( cd CAMD && $(MAKE) docs )

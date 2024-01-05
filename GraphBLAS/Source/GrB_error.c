@@ -2,7 +2,7 @@
 // GrB_error: return an error string describing the last error
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -10,6 +10,13 @@
 #include "GB.h"
 
 const char empty [8] = "" ;
+
+GrB_Info GxB_Context_error (const char **error, const GxB_Context context)
+{ 
+    GB_RETURN_IF_NULL (error) ;
+    (*error) = empty ;
+    return (GrB_SUCCESS) ;
+}
 
 GrB_Info GrB_Type_error (const char **error, const GrB_Type type)
 { 
@@ -32,7 +39,7 @@ GrB_Info GrB_BinaryOp_error (const char **error, const GrB_BinaryOp op)
     return (GrB_SUCCESS) ;
 }
 
-GrB_Info GxB_SelectOp_error (const char **error, const GxB_SelectOp op)
+GrB_Info GrB_IndexUnaryOp_error (const char **error, const GrB_IndexUnaryOp op)
 { 
     GB_RETURN_IF_NULL (error) ;
     (*error) = empty ;
@@ -53,7 +60,7 @@ GrB_Info GrB_Semiring_error (const char **error, const GrB_Semiring semiring)
     return (GrB_SUCCESS) ;
 }
 
-GrB_Info GxB_Scalar_error (const char **error, const GxB_Scalar s)
+GrB_Info GrB_Scalar_error (const char **error, const GrB_Scalar s)
 { 
     GB_RETURN_IF_NULL (error) ;
     (*error) = empty ;
@@ -61,6 +68,12 @@ GrB_Info GxB_Scalar_error (const char **error, const GxB_Scalar s)
     if (s->logger == NULL) return (GrB_SUCCESS) ;
     (*error) = s->logger ;
     return (GrB_SUCCESS) ;
+}
+
+// historical; use GrB_Scalar_error instead.
+GrB_Info GxB_Scalar_error (const char **error, const GrB_Scalar s)
+{
+    return (GrB_Scalar_error (error, s)) ;
 }
 
 GrB_Info GrB_Vector_error (const char **error, const GrB_Vector v)

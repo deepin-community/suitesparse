@@ -1,11 +1,12 @@
-/* ========================================================================== */
-/* === Tcov/solve =========================================================== */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/Tcov/solve: test CHOLMOD solvers
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/Tcov Module.  Copyright (C) 2005-2006, Timothy A. Davis
- * http://www.suitesparse.com
- * -------------------------------------------------------------------------- */
+// CHOLMOD/Tcov Module.  Copyright (C) 2005-2022, Timothy A. Davis.
+// All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /* Test CHOLMOD for solving various systems of linear equations. */
 
@@ -487,13 +488,13 @@ double solve (cholmod_sparse *A)
 		/* E3 = A3*C3-I */
 		if (isreal)
 		{
-		    BLAS_dgemm ("N", "N", n, n, n, one, A3->x, n, C3->x, n,
-			minusone, E3->x, n) ;
+		    SUITESPARSE_BLAS_dgemm ("N", "N", n, n, n, one, A3->x, n,
+                        C3->x, n, minusone, E3->x, n, cm->blas_ok) ;
 		}
 		else
 		{
-		    BLAS_zgemm ("N", "N", n, n, n, one, A3->x, n, C3->x, n,
-			minusone, E3->x, n) ;
+		    SUITESPARSE_BLAS_zgemm ("N", "N", n, n, n, one, A3->x, n,
+                        C3->x, n, minusone, E3->x, n, cm->blas_ok) ;
 		}
 		OK (cm->blas_ok) ;
 	    }
@@ -705,13 +706,26 @@ double solve (cholmod_sparse *A)
 	    CHOLMOD(free) (ncol, sizeof (Int), fset, cm) ;
 	    G = CHOLMOD(ssmult) (AF, AFt, 0, TRUE, TRUE, cm) ;
 
+// int save = cm->print ;
+// cm->print = 5 ;
+// CHOLMOD (print_sparse) (A, "HERE A", cm) ;
+// CHOLMOD (print_sparse) (AFt, "HERE AFt", cm) ;
+// CHOLMOD (print_sparse) (AF, "HERE AF", cm) ;
+// CHOLMOD (print_sparse) (G, "HERE G", cm) ;
+
 	    /* also try aat */
 	    H = CHOLMOD(aat) (AF, NULL, 0, 1, cm) ;
+
+// CHOLMOD (print_sparse) (H, "HERE H", cm) ;
+// printf ("status %d\n", cm->status) ;
+// cm->print = save ;
+
 	    E = CHOLMOD(add) (G, H, one, minusone, TRUE, FALSE, cm) ;
+
 	    enorm = CHOLMOD(norm_sparse) (E, 0, cm) ;
 	    gnorm = CHOLMOD(norm_sparse) (G, 0, cm) ;
 	    MAXERR (maxerr, enorm, gnorm) ;
-	    if (cm->print > 1)
+	    if (1) // (cm->print > 1)
 	    {
 		printf ("enorm %g gnorm %g hnorm %g\n", enorm, gnorm,
 		    CHOLMOD(norm_sparse) (H, 0, cm)) ;
@@ -725,6 +739,7 @@ double solve (cholmod_sparse *A)
 	    CHOLMOD(free_sparse) (&AF, cm) ;
 	    CHOLMOD(free_sparse) (&E, cm) ;
 	    CHOLMOD(free_sparse) (&H, cm) ;
+
 	}
 	else
 	{

@@ -2,7 +2,15 @@
 // SuiteSparse_GPURuntime/Source/SuiteSparseGPU_Workspace_transfer.cpp =========
 // =============================================================================
 
-#include "SuiteSparseGPU_Runtime.hpp"
+// SuiteSparse_GPURuntime, Copyright (c) 2013-2016, Timothy A Davis,
+// Sencer Nuri Yeralan, and Sanjay Ranka.  All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
+
+#ifdef SUITESPARSE_CUDA
+
+#include "SuiteSparseGPU_internal.hpp"
 
 // -----------------------------------------------------------------------------
 // transfer: synchronous/asynchronous transfer of memory to/from the CPU/GPU
@@ -58,3 +66,6 @@ bool Workspace::transfer(cudaMemcpyKind direction, bool synchronous,
 
     return true;            // success
 }
+
+#endif
+

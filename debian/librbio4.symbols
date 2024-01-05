@@ -1,0 +1,16 @@
+librbio.so.4 librbio4 #MINVER#
+* Build-Depends-Package: libsuitesparse-dev
+ RBget_entry@Base 1:7.1.0
+ RBget_entry_i@Base 1:7.1.0
+ RBkind@Base 1:7.1.0
+ RBkind_i@Base 1:7.1.0
+ RBok@Base 1:7.1.0
+ RBok_i@Base 1:7.1.0
+ RBput_entry@Base 1:7.1.0
+ RBput_entry_i@Base 1:7.1.0
+ RBread@Base 1:7.1.0
+ RBread_i@Base 1:7.1.0
+ RBreadraw@Base 1:7.1.0
+ RBreadraw_i@Base 1:7.1.0
+ RBwrite@Base 1:7.1.0
+ RBwrite_i@Base 1:7.1.0

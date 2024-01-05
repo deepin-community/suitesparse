@@ -6,9 +6,9 @@ function s = isinteger (G)
 % See also GrB/isnumeric, GrB/isfloat, GrB/isreal, GrB/islogical,
 % GrB.type, GrB/isa, GrB.
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
-% SPDX-License-Identifier: GPL-3.0-or-later
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+% SPDX-License-Identifier: Apache-2.0
 
 G = G.opaque ;
-s = contains (gbtype (G), 'int') ;
+s = gb_contains (gbtype (G), 'int') ;
 

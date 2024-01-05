@@ -2,12 +2,14 @@
 // GB_ijsort:  sort an index array I and remove duplicates
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
-// Sort an index array and remove duplicates.  In MATLAB notation:
+// JIT: not needed.  Only one variant possible.
+
+// Sort an index array and remove duplicates:
 
 /*
     [I1 I1k] = sort (I) ;
@@ -19,9 +21,9 @@
 #include "GB_ij.h"
 #include "GB_sort.h"
 
-#define GB_FREE_WORK                    \
+#define GB_FREE_WORKSPACE               \
 {                                       \
-    GB_FREE_WERK (&Work, Work_size) ;   \
+    GB_FREE_WORK (&Work, Work_size) ;   \
 }
 
 GrB_Info GB_ijsort
@@ -32,8 +34,7 @@ GrB_Info GB_ijsort
                         // contains the sorted indices with duplicates removed.
     size_t *I2_size_handle,
     GrB_Index *restrict *p_I2k,  // output array of size ni2
-    size_t *I2k_size_handle,
-    GB_Context Context
+    size_t *I2k_size_handle
 )
 {
 
@@ -62,7 +63,8 @@ GrB_Info GB_ijsort
     // determine the number of threads to use
     //--------------------------------------------------------------------------
 
-    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
+    int nthreads_max = GB_Context_nthreads_max ( ) ;
+    double chunk = GB_Context_chunk ( ) ;
     int nthreads = GB_nthreads (ni, chunk, nthreads_max) ;
 
     //--------------------------------------------------------------------------
@@ -77,7 +79,7 @@ GrB_Info GB_ijsort
     // allocate workspace
     //--------------------------------------------------------------------------
 
-    Work = GB_MALLOC_WERK (2*ni + ntasks + 1, GrB_Index, &Work_size) ;
+    Work = GB_MALLOC_WORK (2*ni + ntasks + 1, GrB_Index, &Work_size) ;
     if (Work == NULL)
     { 
         // out of memory
@@ -108,11 +110,11 @@ GrB_Info GB_ijsort
     // sort [I1 I1k]
     //--------------------------------------------------------------------------
 
-    info = GB_msort_2b ((int64_t *) I1, (int64_t *) I1k, ni, nthreads) ;
+    info = GB_msort_2 ((int64_t *) I1, (int64_t *) I1k, ni, nthreads) ;
     if (info != GrB_SUCCESS)
     { 
         // out of memory
-        GB_FREE_WORK ;
+        GB_FREE_WORKSPACE ;
         return (GrB_OUT_OF_MEMORY) ;
     }
 
@@ -143,14 +145,14 @@ GrB_Info GB_ijsort
     // allocate the result I2
     //--------------------------------------------------------------------------
 
-    I2  = GB_MALLOC_WERK (ni2, GrB_Index, &I2_size) ;
-    I2k = GB_MALLOC_WERK (ni2, GrB_Index, &I2k_size) ;
+    I2  = GB_MALLOC_WORK (ni2, GrB_Index, &I2_size) ;
+    I2k = GB_MALLOC_WORK (ni2, GrB_Index, &I2k_size) ;
     if (I2 == NULL || I2k == NULL)
     { 
         // out of memory
-        GB_FREE_WORK ;
-        GB_FREE_WERK (&I2, I2_size) ;
-        GB_FREE_WERK (&I2k, I2k_size) ;
+        GB_FREE_WORKSPACE ;
+        GB_FREE_WORK (&I2, I2_size) ;
+        GB_FREE_WORK (&I2k, I2k_size) ;
         return (GrB_OUT_OF_MEMORY) ;
     }
 
@@ -211,7 +213,7 @@ GrB_Info GB_ijsort
     // free workspace and return the new sorted list
     //--------------------------------------------------------------------------
 
-    GB_FREE_WORK ;
+    GB_FREE_WORKSPACE ;
     *(p_I2 ) = (GrB_Index *) I2  ; (*I2_size_handle ) = I2_size ;
     *(p_I2k) = (GrB_Index *) I2k ; (*I2k_size_handle) = I2k_size ;
     *(p_ni ) = (int64_t    ) ni2 ;

@@ -1,11 +1,12 @@
-/* ========================================================================== */
-/* === MatrixOps/cholmod_norm =============================================== */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// CHOLMOD/MatrixOps/cholmod_norm: compute norm of a sparse matrix
+//------------------------------------------------------------------------------
 
-/* -----------------------------------------------------------------------------
- * CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2006, Timothy A. Davis
- * http://www.suitesparse.com
- * -------------------------------------------------------------------------- */
+// CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2022, Timothy A. Davis.
+// All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /* r = norm (A), compute the infinity-norm, 1-norm, or 2-norm of a sparse or
  * dense matrix.  Can compute the 2-norm only for a dense column vector.
@@ -14,12 +15,10 @@
  * Pattern, real, complex, and zomplex sparse matrices are supported.
  */
 
+#include "cholmod_internal.h"
+
 #ifndef NGPL
 #ifndef NMATRIXOPS
-
-#include "cholmod_internal.h"
-#include "cholmod_matrixops.h"
-
 
 /* ========================================================================== */
 /* === abs_value ============================================================ */
@@ -48,11 +47,11 @@ static double abs_value
 	    break ;
 
 	case CHOLMOD_COMPLEX:
-	    s = SuiteSparse_config.hypot_func (Ax [2*p], Ax [2*p+1]) ;
+	    s = SuiteSparse_config_hypot (Ax [2*p], Ax [2*p+1]) ;
 	    break ;
 
 	case CHOLMOD_ZOMPLEX:
-	    s = SuiteSparse_config.hypot_func (Ax [p], Az [p]) ;
+	    s = SuiteSparse_config_hypot (Ax [p], Az [p]) ;
 	    break ;
     }
     return (s) ;
@@ -145,7 +144,7 @@ double CHOLMOD(norm_dense)
 	for (i = 0 ; i < nrow ; i++)
 	{
 	    s = W [i] ;
-	    if ((IS_NAN (s) || s > xnorm) && !IS_NAN (xnorm))
+	    if ((isnan (s) || s > xnorm) && !isnan (xnorm))
 	    {
 		xnorm = s ;
 	    }
@@ -167,7 +166,7 @@ double CHOLMOD(norm_dense)
 	    {
 		s += abs_value (xtype, Xx, Xz, i+j*d, Common) ;
 	    }
-	    if ((IS_NAN (s) || s > xnorm) && !IS_NAN (xnorm))
+	    if ((isnan (s) || s > xnorm) && !isnan (xnorm))
 	    {
 		xnorm = s ;
 	    }
@@ -188,7 +187,7 @@ double CHOLMOD(norm_dense)
 	    {
 		s += abs_value (xtype, Xx, Xz, i+j*d, Common) ;
 	    }
-	    if ((IS_NAN (s) || s > xnorm) && !IS_NAN (xnorm))
+	    if ((isnan (s) || s > xnorm) && !isnan (xnorm))
 	    {
 		xnorm = s ;
 	    }
@@ -417,7 +416,7 @@ double CHOLMOD(norm_sparse)
 		    s += abs_value (xtype, Ax, Az, p, Common) ;
 		}
 	    }
-	    if ((IS_NAN (s) || s > anorm) && !IS_NAN (anorm))
+	    if ((isnan (s) || s > anorm) && !isnan (anorm))
 	    {
 		anorm = s ;
 	    }
@@ -433,7 +432,7 @@ double CHOLMOD(norm_sparse)
 	for (i = 0 ; i < nrow ; i++)
 	{
 	    s = W [i] ;
-	    if ((IS_NAN (s) || s > anorm) && !IS_NAN (anorm))
+	    if ((isnan (s) || s > anorm) && !isnan (anorm))
 	    {
 		anorm = s ;
 	    }

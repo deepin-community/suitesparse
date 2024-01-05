@@ -7,24 +7,24 @@ Build-Depends: debhelper-compat (= 13),
                gfortran,
                libblas-dev,
                liblapack-dev,
-               libmetis-dev,
                libgmp-dev,
                libmpfr-dev,
                cmake,
-               texlive-latex-extra,
-               texlive-plain-generic,
-               texlive-bibtex-extra,
-               texlive-fonts-extra,
-               ghostscript,
-               texlive-science,
-               texlive-xetex
-Standards-Version: 4.6.0
+               pkgconf
+Build-Depends-Indep: texlive-latex-extra,
+                     texlive-plain-generic,
+                     texlive-bibtex-extra,
+                     texlive-fonts-extra,
+                     ghostscript,
+                     texlive-science,
+                     texlive-xetex
+Standards-Version: 4.6.2
 Vcs-Browser: https://salsa.debian.org/science-team/suitesparse
 Vcs-Git: https://salsa.debian.org/science-team/suitesparse.git
 Homepage: http://suitesparse.com
 Rules-Requires-Root: no
 
-Package: libamd2
+Package: libamd3
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -39,7 +39,7 @@ Description: approximate minimum degree ordering library for sparse matrices
  prior to Cholesky or LU factorization, using the "Approximate Minimum Degree
  ordering" algorithm.
 
-Package: libbtf1
+Package: libbtf2
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -58,7 +58,7 @@ Description: permutation to block triangular form library for sparse matrices
  method for finding the strongly connected components of a graph. These two
  methods together give the permutation to block upper triangular form.
 
-Package: libcamd2
+Package: libcamd3
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -73,7 +73,7 @@ Description: symmetric approximate minimum degree library for sparse matrices
  prior to Cholesky or LU factorization, using the approximate minimum degree
  ordering algorithm with optional ordering constraints.
 
-Package: libcolamd2
+Package: libcolamd3
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -89,7 +89,7 @@ Description: column approximate minimum degree ordering library for sparse matri
  of A (:,P) tends to be sparser than that of A. The Cholesky factorization of
  (A (:,P))'*(A (:,P)) will also tend to be sparser than that of A'*A.
 
-Package: libccolamd2
+Package: libccolamd3
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -106,7 +106,7 @@ Description: constrained column approximate library for sparse matrices
  factorization of (A (:,P))'*(A (:,P)) will also tend to be sparser than that
  of A'*A.
 
-Package: libcholmod3
+Package: libcholmod5
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -125,7 +125,7 @@ Description: sparse Cholesky factorization library for sparse matrices
  factorization relies on LAPACK and the Level-3 BLAS, and obtains a substantial
  fraction of the peak performance of the BLAS.
 
-Package: libcxsparse3
+Package: libcxsparse4
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -144,7 +144,7 @@ Description: concise sparse matrix library
  competitive with UMFPACK or CHOLMOD, but the codes are much more concise and
  easy to understand. Other methods are competitive.
 
-Package: libklu1
+Package: libklu2
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -158,7 +158,7 @@ Description: circuit simulation sparse LU factorization library
  The KLU library provides routines for LU factorization, primarily for circuit
  simulation.
 
-Package: libldl2
+Package: libldl3
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -175,7 +175,7 @@ Description: simple LDL' factorization library for sparse matrices
  the algorithms in a very concise and readable manner, primarily for
  educational purposes.
 
-Package: libumfpack5
+Package: libumfpack6
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -189,7 +189,7 @@ Description: sparse LU factorization library
  The UMFPACK library provides a set of routines solving sparse linear systems
  via LU factorization.
 
-Package: librbio2
+Package: librbio4
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -203,7 +203,7 @@ Description: read/write sparse matrices in Rutherford/Boeing format
  RBio is a library for reading/writing sparse matrices in the Rutherford/Boeing
  format.
 
-Package: libspqr2
+Package: libspqr4
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -217,26 +217,7 @@ Description: sparse QR factorization library
  SuiteSparseQR (SPQR) is a multithreaded, multifrontal, rank-revealing sparse
  QR factorization method.
 
-Package: libgraphblas5
-Architecture: any
-Multi-Arch: same
-Section: libs
-Depends: ${shlibs:Depends},
-         ${misc:Depends}
-Pre-Depends: ${misc:Pre-Depends}
-Description: graph algorithms via sparse matrix operations on semirings
- Suitesparse is a collection of libraries for computations involving
- sparse matrices.
- .
- SuiteSparse:GraphBLAS is an full implementation of the GraphBLAS standard,
- which defines a set of sparse matrix operations on an extended algebra of
- semirings using an almost unlimited variety of operators and types. When
- applied to sparse adjacency matrices, these algebraic operations are
- equivalent to computations on graphs. GraphBLAS provides a powerful and
- expressive framework for creating graph algorithms based on the elegant
- mathematics of sparse matrix operations on a semiring.
-
-Package: libmongoose2
+Package: libmongoose3
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -273,7 +254,7 @@ Description: graph partitioning tool that can quickly compute edge cuts (executa
  .
  This package contains the standalone executable.
 
-Package: libsliplu1
+Package: libspex2
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -284,7 +265,7 @@ Description: solves sparse linear systems in exact arithmetic
  Suitesparse is a collection of libraries for computations involving
  sparse matrices.
  .
- SLIP LU is a software package designed to exactly solve unsymmetric sparse
+ SPEX Left LU is a software package designed to exactly solve unsymmetric sparse
  linear systems, Ax = b, where A, b and x contain rational numbers. This
  package performs a left-looking, roundoff-error-free (REF) LU factorization
  PAQ = LDU, where L and U are integer, D is diagonal, and P and Q are row and
@@ -293,7 +274,7 @@ Description: solves sparse linear systems in exact arithmetic
  .
  This package relies on GNU GMP and MPRF for exact arithmetic computations.
 
-Package: libsuitesparseconfig5
+Package: libsuitesparseconfig7
 Architecture: any
 Multi-Arch: same
 Section: libs
@@ -312,26 +293,24 @@ Architecture: any
 Multi-Arch: same
 Section: libdevel
 Depends: ${misc:Depends},
-         libamd2 (= ${binary:Version}),
-         libcamd2 (= ${binary:Version}),
-         libbtf1 (= ${binary:Version}),
-         libcolamd2 (= ${binary:Version}),
-         libccolamd2 (= ${binary:Version}),
-         libcholmod3 (= ${binary:Version}),
-         libcxsparse3 (= ${binary:Version}),
-         libgraphblas5 (= ${binary:Version}),
-         libklu1 (= ${binary:Version}),
-         libldl2 (= ${binary:Version}),
-         libmongoose2 (= ${binary:Version}),
-         libumfpack5 (= ${binary:Version}),
-         librbio2 (= ${binary:Version}),
-         libspqr2 (= ${binary:Version}),
-         libsliplu1 (= ${binary:Version}),
-         libsuitesparseconfig5 (= ${binary:Version}),
+         libamd3 (= ${binary:Version}),
+         libcamd3 (= ${binary:Version}),
+         libbtf2 (= ${binary:Version}),
+         libcolamd3 (= ${binary:Version}),
+         libccolamd3 (= ${binary:Version}),
+         libcholmod5 (= ${binary:Version}),
+         libcxsparse4 (= ${binary:Version}),
+         libklu2 (= ${binary:Version}),
+         libldl3 (= ${binary:Version}),
+         libmongoose3 (= ${binary:Version}),
+         libumfpack6 (= ${binary:Version}),
+         librbio4 (= ${binary:Version}),
+         libspqr4 (= ${binary:Version}),
+         libspex2 (= ${binary:Version}),
+         libsuitesparseconfig7 (= ${binary:Version}),
          libblas-dev | libblas.so,
          liblapack-dev | liblapack.so
-Conflicts: libsuitesparse-metis-dev
-Replaces: libsuitesparse-metis-dev
+Recommends: libgraphblas-dev
 Description: libraries for sparse matrices computations (development files)
  Suitesparse is a collection of libraries for computations involving
  sparse matrices.  This package includes the following libraries:
@@ -360,11 +339,9 @@ Description: libraries for sparse matrices computations (development files)
  .
  SPQR        sparse QR factorization
  .
- GraphBLAS   graph algorithms via sparse matrix operations on semirings
- .
  Mongoose    graph partitioning library that can quickly compute edge cuts
  .
- SLIP_LU     solves sparse linear systems in exact arithmetic
+ SPEX        solves sparse linear systems in exact arithmetic
  .
  SuiteSparse_config    configuration routines for all the above packages.
  .
@@ -375,6 +352,7 @@ Architecture: all
 Multi-Arch: foreign
 Section: doc
 Depends: ${misc:Depends}
+Recommends: libgraphblas-doc
 Suggests: liblapack-doc,
           libatlas-doc
 Description: libraries for sparse matrices computations (documentation)

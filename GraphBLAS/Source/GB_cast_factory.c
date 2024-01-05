@@ -2,7 +2,7 @@
 // GB_cast_factory: return a pointer to a typecasting function
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -12,13 +12,11 @@
 // s is the size for user-defined types, which can only be copied.
 
 // This function returns one of ((13*13) + 1) pointers to a typecasting/copy
-// function.  13*13 is the set of functions named GB__cast_ZTYPE_XTYPE, for
-// each pair of built-in types (ZTYPE, XTYPE).  The last pointer is the
+// function, defined by GB_casting.c.  The last function pointer is the
 // function GB_copy_user_user.
 
 #include "GB.h"
 
-GB_PUBLIC   // accessed by the MATLAB tests in GraphBLAS/Test only
 GB_cast_function GB_cast_factory   // returns pointer to function to cast x to z
 (
     const GB_Type_code code1,      // the type of z, the output value
@@ -40,7 +38,8 @@ GB_cast_function GB_cast_factory   // returns pointer to function to cast x to z
 
     // switch factory for two built-in types; user types are skipped.
     // no generic worker so the switch factory cannot be disabled.
-    #include "GB_2type_factory.c"
+    // no JIT kernel.
+    #include "GB_twotype_factory.c"
 
     //--------------------------------------------------------------------------
     // user-defined types fall through the switch factory to here

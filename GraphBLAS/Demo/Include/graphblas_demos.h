@@ -2,7 +2,7 @@
 // GraphBLAS/Demo/Include/graphblas_demos.h: include file for all demo programs
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -46,7 +46,7 @@
 #endif
 
 #ifndef GB_MICROSOFT
-#if ( _MSC_VER && !__INTEL_COMPILER )
+#if ( defined (_MSC_VER) && !defined(__INTEL_COMPILER) )
 #define GB_MICROSOFT 1
 #else
 #define GB_MICROSOFT 0
@@ -55,57 +55,13 @@
 
 #include "GraphBLAS.h"
 #include "simple_rand.h"
-#include "simple_timer.h"
-#include "usercomplex.h"
-#include "prand.h"
-
-#ifdef MATLAB_MEX_FILE
-#include "mex.h"
-#include "matrix.h"
-#define malloc  mxMalloc
-#define free    mxFree
-#define calloc  mxCalloc
-#define realloc mxRealloc
-#endif
+// #include "usercomplex.h"
 
 #undef MIN
 #undef MAX
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
-GB_PUBLIC
-GrB_Info bfs5m              // BFS of a graph (using vector assign & reduce)
-(
-    GrB_Vector *v_output,   // v [i] is the BFS level of node i in the graph
-    const GrB_Matrix A,     // input graph, treated as if boolean in semiring
-    GrB_Index s             // starting node of the BFS
-) ;
-
-GB_PUBLIC
-GrB_Info bfs5m_check        // BFS of a graph (using vector assign & reduce)
-(
-    GrB_Vector *v_output,   // v [i] is the BFS level of node i in the graph
-    const GrB_Matrix A,     // input graph, treated as if boolean in semiring
-    GrB_Index s             // starting node of the BFS
-) ;
-
-GB_PUBLIC
-GrB_Info bfs6               // BFS of a graph (using apply)
-(
-    GrB_Vector *v_output,   // v [i] is the BFS level of node i in the graph
-    const GrB_Matrix A,     // input graph, treated as if boolean in semiring
-    GrB_Index s             // starting node of the BFS
-) ;
-
-GB_PUBLIC
-GrB_Info bfs6_check         // BFS of a graph (using apply)
-(
-    GrB_Vector *v_output,   // v [i] is the BFS level of node i in the graph
-    const GrB_Matrix A,     // input graph, treated as if boolean in semiring
-    GrB_Index s             // starting node of the BFS
-) ;
-
-GB_PUBLIC
 GrB_Info read_matrix        // read a double-precision matrix
 (
     GrB_Matrix *A,          // handle of matrix to create
@@ -117,29 +73,6 @@ GrB_Info read_matrix        // read a double-precision matrix
     bool printstuff         // if true, print status to stdout
 ) ;
 
-GB_PUBLIC
-GrB_Info mis                    // compute a maximal independent set
-(
-    GrB_Vector *iset_output,    // iset(i) = true if i is in the set
-    const GrB_Matrix A,         // symmetric Boolean matrix
-    int64_t seed                // random number seed
-) ;
-
-GB_PUBLIC
-GrB_Info mis_check              // compute a maximal independent set
-(
-    GrB_Vector *iset_output,    // iset(i) = true if i is in the set
-    const GrB_Matrix A,         // symmetric Boolean matrix
-    int64_t seed                // random number seed
-) ;
-
-GB_PUBLIC
-void mis_score  (void *result, const void *degree) ;
-
-GB_PUBLIC
-void mis_score2 (void *result, const void *degree, const void *xrand) ;
-
-GB_PUBLIC
 GrB_Info random_matrix      // create a random double-precision matrix
 (
     GrB_Matrix *A_output,   // handle of matrix to create
@@ -152,7 +85,6 @@ GrB_Info random_matrix      // create a random double-precision matrix
     bool A_complex          // if true, create a Complex matrix
 ) ;
 
-GB_PUBLIC
 GrB_Info get_matrix         // get a matrix from stdin, or create random one
 (
     GrB_Matrix *A_output,   // matrix to create
@@ -163,7 +95,6 @@ GrB_Info get_matrix         // get a matrix from stdin, or create random one
     bool spones             // if true, return all entries equal to 1
 ) ;
 
-GB_PUBLIC
 GrB_Info wathen             // construct a random Wathen matrix
 (
     GrB_Matrix *A_output,   // output matrix
@@ -174,26 +105,12 @@ GrB_Info wathen             // construct a random Wathen matrix
     double *rho_given       // nx-by-ny dense matrix, if NULL use random rho
 ) ;
 
-GB_PUBLIC
 GrB_Info triu               // C = triu (A,1)
 (
     GrB_Matrix *C_output,   // output matrix
     const GrB_Matrix A      // input matrix, boolean or double
 ) ;
 
-GB_PUBLIC
-GrB_Info tricount           // count # of triangles
-(
-    int64_t *ntri,          // # of triangles in the graph
-    const int method,       // 0 to 4, see above
-    const GrB_Matrix A,     // adjacency matrix for methods 0, 1, and 2
-    const GrB_Matrix E,     // edge incidence matrix for method 0
-    const GrB_Matrix L,     // L=tril(A) for methods 2, 4, and 4
-    const GrB_Matrix U,     // U=triu(A) for methods 2, 3, and 5
-    double t [2]            // t [0]: multiply time, t [1]: reduce time
-) ;
-
-GB_PUBLIC
 GrB_Info isequal_type       // return GrB_SUCCESS if successful
 (
     bool *result,           // true if A == B, false if A != B or error
@@ -202,7 +119,6 @@ GrB_Info isequal_type       // return GrB_SUCCESS if successful
     GrB_BinaryOp op         // should be GrB_EQ_<type>, for the type of A and B
 ) ;
 
-GB_PUBLIC
 GrB_Info isequal            // return GrB_SUCCESS if successful
 (
     bool *result,           // true if A == B, false if A != B or error
@@ -213,75 +129,9 @@ GrB_Info isequal            // return GrB_SUCCESS if successful
 ) ;
 
 //------------------------------------------------------------------------------
-// page rank
-//------------------------------------------------------------------------------
-
-// dpagerank computes an array of structs for its result
-typedef struct
-{
-    double pagerank ;   // the pagerank of a node
-    GrB_Index page ;    // the node number itself
-}
-PageRank ;
-
-// ipagerank computes an array of structs for its result
-typedef struct
-{
-    uint64_t pagerank ;     // the pagerank of a node
-    GrB_Index page ;        // the node number itself
-}
-iPageRank ;
-
-// using a standard semiring and FP64 arithmetic
-GB_PUBLIC
-GrB_Info dpagerank          // GrB_SUCCESS or error condition
-(
-    PageRank **Phandle,     // output: pointer to array of PageRank structs
-    GrB_Matrix A
-) ;
-
-// like dpagerank but with user-defined type, operators, and semiring;
-// also a stopping critirion
-GB_PUBLIC
-GrB_Info dpagerank2         // GrB_SUCCESS or error condition
-(
-    PageRank **Phandle,     // output: pointer to array of PageRank structs
-    GrB_Matrix A,           // input graph, not modified
-    int itermax,            // max number of iterations
-    double tol,             // stop when norm (r-rnew,2) < tol
-    int *iters,             // number of iterations taken
-    GrB_Desc_Value method   // method to use for GrB_vxm (for testing only)
-) ;
-
-GB_PUBLIC
-GrB_Info drowscale          // GrB_SUCCESS or error condition
-(
-    GrB_Matrix *Chandle,    // output matrix C = rowscale (A)
-    GrB_Matrix A            // input matrix, not modified
-) ;
-
-GB_PUBLIC
-GrB_Info ipagerank          // GrB_SUCCESS or error condition
-(
-    iPageRank **Phandle,    // output: pointer to array of iPageRank structs
-    GrB_Matrix A            // input graph, not modified
-) ;
-
-GB_PUBLIC
-GrB_Info irowscale          // GrB_SUCCESS or error condition
-(
-    GrB_Matrix *Chandle,    // output matrix C = rowscale (A)
-    GrB_Matrix A            // input matrix, not modified
-) ;
-
-// multiplicative scaling factor for ipagerank, ZSCALE = 2^30
-#define ZSCALE ((uint64_t) 1073741824)
-
-//------------------------------------------------------------------------------
 // import/export test
 //------------------------------------------------------------------------------
 
-GB_PUBLIC
 GrB_Info import_test (GrB_Matrix *C_handle, int format, bool dump) ;
 
 //------------------------------------------------------------------------------

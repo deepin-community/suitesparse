@@ -1,5 +1,5 @@
 /usr/lib/*/*.a
 /usr/lib/*/*.so
-/usr/include/suitesparse/
-/usr/include/GraphBLAS.h
-/usr/include/Mongoose.hpp
+/usr/lib/*/cmake/
+/usr/lib/*/pkgconfig/
+/usr/include/*          /usr/include/suitesparse/

@@ -1,77 +1,106 @@
 //------------------------------------------------------------------------------
-// GB_emult_03_template: C<M>= A.*B, M sparse/hyper, A and B bitmap/full
+// GB_emult_03_template: C = A.*B when A is bitmap/full and B is sparse/hyper
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
-// C is sparse, with the same sparsity structure as M.
-// A and B are both bitmap/full.
+// C is sparse, with the same sparsity structure as B.  No mask is present, or
+// M is bitmap/full.  A is bitmap/full, and B is sparse/hyper.
 
 {
 
     //--------------------------------------------------------------------------
-    // get M, A, B, and C
+    // get A, B, and C
     //--------------------------------------------------------------------------
 
-    const int8_t *restrict Ab = A->b ;
-    const int8_t *restrict Bb = B->b ;
+    const int64_t *restrict Bp = B->p ;
+    const int64_t *restrict Bh = B->h ;
+    const int64_t *restrict Bi = B->i ;
+    const int64_t vlen = B->vlen ;
 
-    const GB_ATYPE *restrict Ax = (GB_ATYPE *) A->x ;
-    const GB_BTYPE *restrict Bx = (GB_BTYPE *) B->x ;
+    const int8_t  *restrict Ab = A->b ;
 
-    const int64_t *restrict Mp = M->p ;
-    const int64_t *restrict Mh = M->h ;
-    const int64_t *restrict Mi = M->i ;
-    const GB_void *restrict Mx = (GB_void *) ((Mask_struct) ? NULL : M->x) ;
-    const int64_t vlen = M->vlen ;
-    const size_t  msize = M->type->size ;
+    const int64_t *restrict kfirst_Bslice = B_ek_slicing ;
+    const int64_t *restrict klast_Bslice  = B_ek_slicing + B_ntasks ;
+    const int64_t *restrict pstart_Bslice = B_ek_slicing + B_ntasks * 2 ;
+
+    #ifdef GB_JIT_KERNEL
+    #define A_iso GB_A_ISO
+    #define B_iso GB_B_ISO
+    #else
+    const bool A_iso = A->iso ;
+    const bool B_iso = B->iso ;
+    #endif
+
+    #ifdef GB_ISO_EMULT
+    ASSERT (C->iso) ;
+    #else
+    ASSERT (!C->iso) ;
+    ASSERT (!(A_iso && B_iso)) ;    // one of A or B can be iso, but not both
+    const GB_A_TYPE *restrict Ax = (GB_A_TYPE *) A->x ;
+    const GB_B_TYPE *restrict Bx = (GB_B_TYPE *) B->x ;
+          GB_C_TYPE *restrict Cx = (GB_C_TYPE *) C->x ;
+    #endif
 
     const int64_t  *restrict Cp = C->p ;
           int64_t  *restrict Ci = C->i ;
-          GB_CTYPE *restrict Cx = (GB_CTYPE *) C->x ;
 
-    const int64_t *restrict kfirst_Mslice = M_ek_slicing ;
-    const int64_t *restrict klast_Mslice  = M_ek_slicing + M_ntasks ;
-    const int64_t *restrict pstart_Mslice = M_ek_slicing + M_ntasks * 2 ;
+    #ifdef GB_JIT_KERNEL
+    #define Mask_comp   GB_MASK_COMP
+    #define Mask_struct GB_MASK_STRUCT
+    #endif
 
     //--------------------------------------------------------------------------
-    // C<M>=A.*B where M is sparse/hyper, A and B are bitmap/full
+    // C=A.*B or C<#M>=A.*B
     //--------------------------------------------------------------------------
 
-    int tid ;
-    #pragma omp parallel for num_threads(M_nthreads) schedule(dynamic,1)
-    for (tid = 0 ; tid < M_ntasks ; tid++)
-    {
-        int64_t kfirst = kfirst_Mslice [tid] ;
-        int64_t klast  = klast_Mslice  [tid] ;
-        for (int64_t k = kfirst ; k <= klast ; k++)
+    #ifdef GB_JIT_KERNEL
+
+        #if GB_NO_MASK
         {
-            int64_t j = GBH (Mh, k) ;
-            int64_t pstart = j * vlen ;
-            int64_t pM, pM_end, pC ;
-            GB_get_pA_and_pC (&pM, &pM_end, &pC, tid, k, kfirst, klast,
-                pstart_Mslice, Cp_kfirst, Cp, vlen, Mp, vlen) ;
-            for ( ; pM < pM_end ; pM++)
+            #if GB_A_IS_BITMAP
             {
-                int64_t i = Mi [pM] ;
-                if (GB_mcast (Mx, pM, msize) &&
-                    (GBB (Ab, pstart + i)
-                    &&  // TODO: for GB_add, use || instead
-                    GBB (Bb, pstart + i)))
-                {
-                    int64_t p = pstart + i ;
-                    // C (i,j) = A (i,j) .* B (i,j)
-                    Ci [pC] = i ;
-                    GB_GETA (aij, Ax, p) ;
-                    GB_GETB (bij, Bx, p) ;
-                    GB_BINOP (GB_CX (pC), aij, bij, i, j) ;
-                    pC++ ;
-                }
+                // C=A.*B, where A is bitmap and B is sparse/hyper
+                #include "GB_emult_03a.c"
+            }
+            #else
+            {
+                // C=A.*B, where A is full and B is sparse/hyper
+                #include "GB_emult_03b.c"
+            }
+            #endif
+        }
+        #else
+        {
+            // C<#M>=A.*B, where M and A are bitmap/full and B is sparse/hyper
+            #include "GB_emult_03c.c"
+        }
+        #endif
+
+    #else
+
+        if (M == NULL)
+        {
+            if (GB_IS_BITMAP (A))
+            { 
+                // C=A.*B, where A is bitmap and B is sparse/hyper
+                #include "GB_emult_03a.c"
+            }
+            else
+            { 
+                // C=A.*B, where A is full and B is sparse/hyper
+                #include "GB_emult_03b.c"
             }
         }
-    }
+        else
+        { 
+            // C<#M>=A.*B, where M and A are bitmap/full and B is sparse/hyper
+            #include "GB_emult_03c.c"
+        }
+
+    #endif
 }
 

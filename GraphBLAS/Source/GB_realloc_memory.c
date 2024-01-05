@@ -2,7 +2,7 @@
 // GB_realloc_memory: wrapper for realloc
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -22,8 +22,8 @@
 
 // Usage:
 
-//      p = GB_realloc_memory (nitems_new, nitems_old, size_of_item, p,
-//              &size_allocated, &ok, Context)
+//      p = GB_realloc_memory (nitems_new, size_of_item, p,
+//              &size_allocated, &ok)
 //      if (ok)
 //      {
 //          p points to a block of at least nitems_new*size_of_item bytes and
@@ -40,19 +40,16 @@
 
 #include "GB.h"
 
-GB_PUBLIC   // accessed by the MATLAB tests in GraphBLAS/Test only
 void *GB_realloc_memory     // pointer to reallocated block of memory, or
                             // to original block if the reallocation failed.
 (
     size_t nitems_new,      // new number of items in the object
-    size_t nitems_old,      // old number of items in the object
     size_t size_of_item,    // size of each item
     // input/output
     void *p,                // old object to reallocate
     size_t *size_allocated, // # of bytes actually allocated
     // output
-    bool *ok,               // true if successful, false otherwise
-    GB_Context Context
+    bool *ok                // true if successful, false otherwise
 )
 {
 
@@ -71,30 +68,27 @@ void *GB_realloc_memory     // pointer to reallocated block of memory, or
     // check inputs
     //--------------------------------------------------------------------------
 
-    // make sure at least one item is allocated
-    nitems_old = GB_IMAX (1, nitems_old) ;
-    nitems_new = GB_IMAX (1, nitems_new) ;
-
     // make sure at least one byte is allocated
     size_of_item = GB_IMAX (1, size_of_item) ;
+
+    size_t oldsize_allocated = (*size_allocated) ;
+    ASSERT (oldsize_allocated == GB_Global_memtable_size (p)) ;
+
+    // make sure at least one item is allocated
+    size_t nitems_old = oldsize_allocated / size_of_item ;
+    nitems_new = GB_IMAX (1, nitems_new) ;
 
     size_t newsize, oldsize ;
     (*ok) = GB_size_t_multiply (&newsize, nitems_new, size_of_item)
          && GB_size_t_multiply (&oldsize, nitems_old, size_of_item) ;
 
-    if (!(*ok) || nitems_new > GxB_INDEX_MAX || size_of_item > GxB_INDEX_MAX)
+    if (!(*ok) || (((uint64_t) nitems_new) > GB_NMAX)
+               || (((uint64_t) size_of_item) > GB_NMAX))
     { 
         // overflow
         (*ok) = false ;
         return (p) ;
     }
-
-    //--------------------------------------------------------------------------
-    // reallocate an existing block to accommodate the change in # of items
-    //--------------------------------------------------------------------------
-
-    int64_t oldsize_allocated = (*size_allocated) ;
-    ASSERT (oldsize_allocated == GB_Global_memtable_size (p)) ;
 
     //--------------------------------------------------------------------------
     // check for quick return
@@ -117,19 +111,12 @@ void *GB_realloc_memory     // pointer to reallocated block of memory, or
 
     void *pnew = NULL ;
     size_t newsize_allocated = GB_IMAX (newsize, 8) ;
-    int k = GB_CEIL_LOG2 (newsize_allocated) ;
-    if (!GB_Global_have_realloc_function ( ) ||
-        (GB_Global_free_pool_limit_get (k) > 0))
+    if (!GB_Global_have_realloc_function ( ))
     {
 
         //----------------------------------------------------------------------
-        // use malloc/memcpy/free
+        // no realloc function: use malloc/memcpy/free
         //----------------------------------------------------------------------
-
-        // Either no realloc function is provided, or the new block will fit in
-        // the free_pool and so must be rounded up to a power of 2.  This is
-        // done by GB_malloc_memory, which allocates a new block or gets it
-        // from the free_pool if one exists of that size.
 
         // allocate the new space
         pnew = GB_malloc_memory (nitems_new, size_of_item, &newsize_allocated) ;
@@ -137,10 +124,10 @@ void *GB_realloc_memory     // pointer to reallocated block of memory, or
         if (pnew != NULL)
         { 
             // copy from the old to new with a parallel memcpy
-            GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
+            int nthreads_max = GB_Context_nthreads_max ( ) ;
             GB_memcpy (pnew, p, GB_IMIN (oldsize, newsize), nthreads_max) ;
-            // free the old block (either hard free, or return to free_pool)
-            GB_dealloc_memory (&p, oldsize_allocated) ;
+            // free the old block
+            GB_free_memory (&p, oldsize_allocated) ;
         }
     }
     else
@@ -150,9 +137,6 @@ void *GB_realloc_memory     // pointer to reallocated block of memory, or
         // use realloc
         //----------------------------------------------------------------------
 
-        // The realloc function has been provided, and the block is larger
-        // than what can be accomodated by the free_pool.
-
         bool pretend_to_fail = false ;
         if (GB_Global_malloc_tracking_get ( ) && GB_Global_malloc_debug_get ( ))
         {
@@ -160,10 +144,14 @@ void *GB_realloc_memory     // pointer to reallocated block of memory, or
         }
         if (!pretend_to_fail)
         { 
-//          printf ("hard realloc %p oldsize %ld newsize %ld\n",
-//              p, oldsize_allocated, newsize_allocated) ;
+            #ifdef GB_MEMDUMP
+            printf ("hard realloc %p oldsize %ld newsize %ld\n",    // MEMDUMP
+                p, oldsize_allocated, newsize_allocated) ;
+            #endif
             pnew = GB_Global_realloc_function (p, newsize_allocated) ;
-//          GB_Global_free_pool_dump (2) ; GB_Global_memtable_dump ( ) ;
+            #ifdef GB_MEMDUMP
+            GB_Global_memtable_dump ( ) ;
+            #endif
         }
     }
 

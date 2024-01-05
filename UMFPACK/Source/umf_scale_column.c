@@ -1,11 +1,11 @@
-/* ========================================================================== */
-/* === UMF_scale_column ===================================================== */
-/* ========================================================================== */
+//------------------------------------------------------------------------------
+// UMFPACK/Source/umf_scale_column: scale current pivot column and move pivot
+//------------------------------------------------------------------------------
 
-/* -------------------------------------------------------------------------- */
-/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
-/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
-/* -------------------------------------------------------------------------- */
+// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 
 /*
     Scale the current pivot column, move the pivot row and column into place,
@@ -41,7 +41,7 @@ PRIVATE void shift_pivot_row (Entry *Fd, Entry *Fs, Entry *Fe, Int len, Int d)
 /* === UMF_scale_column ===================================================== */
 /* ========================================================================== */
 
-GLOBAL void UMF_scale_column
+void UMF_scale_column
 (
     NumericType *Numeric,
     WorkType *Work

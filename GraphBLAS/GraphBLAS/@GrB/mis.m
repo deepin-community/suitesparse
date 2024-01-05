@@ -22,14 +22,14 @@ function iset = mis (A, check)
 %
 % See also GrB.offdiag.
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
-% SPDX-License-Identifier: GPL-3.0-or-later
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+% SPDX-License-Identifier: Apache-2.0
 
 % NOTE: this is a high-level algorithm that uses GrB objects.
 
 [m, n] = size (A) ;
 if (m ~= n)
-    error ('A must be square') ;
+    error ('GrB:error', 'A must be square') ;
 end
 
 % convert A to logical
@@ -41,16 +41,16 @@ else
     if (isequal (check, 'check'))
         check = true ;
     else
-        error ('unknown option') ;
+        error ('GrB:error', 'unknown option') ;
     end
 end
 
 if (check)
     if (nnz (diag (A)) > 0)
-        error ('A must not have any diagonal entries') ;
+        error ('GrB:error', 'A must not have any diagonal entries') ;
     end
     if (~issymmetric (A))
-        error ('A must be symmetric') ;
+        error ('GrB:error', 'A must be symmetric') ;
     end
 end
 
@@ -91,8 +91,6 @@ while (ncand > 0)
 
     % compute a random probability scaled by inverse of degree
     % FUTURE: this is slower than it should be; rand may not be parallel,
-    % See GraphBLAS/Demo/Source/mis.c and the prand_* functions for a better
-    % approach using user-defined types and operators.
     prob = 0.0001 + rand (n,1) ./ (1 + 2 * degrees) ;
     prob = GrB.assign (prob, candidates, prob, r_desc) ;
 
@@ -126,7 +124,7 @@ while (ncand > 0)
 
     % this will not occur, unless the input is corrupted somehow
     if (last_ncand == ncand)
-        error ('method stalled; rerun with ''check'' option') ;
+        error ('GrB:error', 'method stalled; rerun with ''check'' option') ;
     end
     last_ncand = ncand ;
 end

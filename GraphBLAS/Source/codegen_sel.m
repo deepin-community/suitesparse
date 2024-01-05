@@ -4,219 +4,121 @@ function codegen_sel
 % This function creates all files of the form GB_sel__*.c,
 % and the include file GB_sel__include.h.
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 % SPDX-License-Identifier: Apache-2.0
 
 fprintf ('\nselection operators:\n') ;
+addpath ('../Test') ;
 
-f = fopen ('Generated/GB_sel__include.h', 'w') ;
-fprintf (f, '//------------------------------------------------------------------------------\n') ;
-fprintf (f, '// GB_sel__include.h: definitions for GB_sel__*.c\n') ;
-fprintf (f, '//------------------------------------------------------------------------------\n') ;
-fprintf (f, '\n') ;
-fprintf (f, '// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.\n') ;
-fprintf (f, '// SPDX-License-Identifier: Apache-2.0\n\n') ;
-fprintf (f, '// This file has been automatically generated from Generator/GB_sel.h') ;
-fprintf (f, '\n\n') ;
-fclose (f) ;
-
-%-------------------------------------------------------------------------------
-
-% USER:
-fprintf ('\nuser       ') ;
-codegen_sel_method ('user',  ...
-    [ 'user_select (' ...
-      'flipij ? j : GBI (Ai, p, avlen), flipij ? GBI (Ai, p, avlen) : j, ' ...
-      'Ax +((p)*asize), xthunk)' ] , 'GB_void') ;
-
-% TRIL, TRIU, DIAG, OFFIDIAG, RESIZE:
-fprintf ('\ntril       ') ;
-codegen_sel_method ('tril'      , [ ], 'GB_void' , 'GB_TRIL_SELECTOR'    ) ;
-fprintf ('\ntriu       ') ;
-codegen_sel_method ('triu'      , [ ], 'GB_void' , 'GB_TRIU_SELECTOR'    ) ;
-fprintf ('\ndiag       ') ;
-codegen_sel_method ('diag'      , [ ], 'GB_void' , 'GB_DIAG_SELECTOR'    ) ;
-fprintf ('\noffdiag    ') ;
-codegen_sel_method ('offdiag'   , [ ], 'GB_void' , 'GB_OFFDIAG_SELECTOR' ) ;
-fprintf ('\nresize     ') ;
-codegen_sel_method ('resize'    , [ ], 'GB_void' , 'GB_RESIZE_SELECTOR'  ) ;
+fh = fopen ('FactoryKernels/GB_sel__include.h', 'w') ;
+fprintf (fh, '//------------------------------------------------------------------------------\n') ;
+fprintf (fh, '// GB_sel__include.h: definitions for GB_sel__*.c\n') ;
+fprintf (fh, '//------------------------------------------------------------------------------\n') ;
+fprintf (fh, '\n') ;
+fprintf (fh, '// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.\n') ;
+fprintf (fh, '// SPDX-License-Identifier: Apache-2.0\n\n') ;
+fprintf (fh, '// This file has been automatically generated from Generator/GB_sel.h') ;
+fprintf (fh, '\n\n') ;
+fclose (fh) ;
 
 % NONZOMBIE:         name         selector                     type
-% phase1: depends on Ai only, so only nonzombie_any is used
-% phase2: use all 14 workers
 fprintf ('\nnonzombie  ') ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'bool'      ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'int8_t'    ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'int16_t'   ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'int32_t'   ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'int64_t'   ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'uint8_t'   ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'uint16_t'  ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'uint32_t'  ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'uint64_t'  ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'float'     ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'double'    ) ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'GxB_FC32_t') ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'GxB_FC64_t') ;
-codegen_sel_method ('nonzombie', 'GB_IS_NOT_ZOMBIE (Ai, p)', 'GB_void'   ) ;
-
-% NONZERO            name         selector       type
-fprintf ('\nnonzero    ') ;
-codegen_sel_method ('nonzero'  , 'Ax [p]',      'bool'    ) ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'int8_t'  ) ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'int16_t' ) ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'int32_t' ) ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'int64_t' ) ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'uint8_t' ) ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'uint16_t') ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'uint32_t') ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'uint64_t') ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'float'   ) ;
-codegen_sel_method ('nonzero'  , 'Ax [p] != 0', 'double'  ) ;
-codegen_sel_method ('nonzero'  , 'GB_FC32_ne0 (Ax [p])', 'GxB_FC32_t') ;
-codegen_sel_method ('nonzero'  , 'GB_FC64_ne0 (Ax [p])', 'GxB_FC64_t') ;
-codegen_sel_method ('nonzero'  , ...
-                    'GB_is_nonzero (Ax +((p)*asize), asize)', 'GB_void') ;
-
-% EQ_ZERO            name         selector       type
-fprintf ('\neq_zero    ') ;
-codegen_sel_method ('eq_zero'  , '!(Ax [p])',   'bool'    ) ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'int8_t'  ) ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'int16_t' ) ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'int32_t' ) ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'int64_t' ) ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'uint8_t' ) ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'uint16_t') ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'uint32_t') ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'uint64_t') ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'float'   ) ;
-codegen_sel_method ('eq_zero'  , 'Ax [p] == 0', 'double'  ) ;
-codegen_sel_method ('eq_zero'  , 'GB_FC32_eq0 (Ax [p])', 'GxB_FC32_t') ;
-codegen_sel_method ('eq_zero'  , 'GB_FC64_eq0 (Ax [p])', 'GxB_FC64_t') ;
-codegen_sel_method ('eq_zero'  , ...
-                    '!GB_is_nonzero (Ax +((p)*asize), asize)', 'GB_void') ;
-
-% GT_ZERO            name         selector       type
-fprintf ('\ngt_zero    ') ;
-codegen_sel_method ('gt_zero'  , 'Ax [p] > 0', 'int8_t'  ) ;
-codegen_sel_method ('gt_zero'  , 'Ax [p] > 0', 'int16_t' ) ;
-codegen_sel_method ('gt_zero'  , 'Ax [p] > 0', 'int32_t' ) ;
-codegen_sel_method ('gt_zero'  , 'Ax [p] > 0', 'int64_t' ) ;
-codegen_sel_method ('gt_zero'  , 'Ax [p] > 0', 'float'   ) ;
-codegen_sel_method ('gt_zero'  , 'Ax [p] > 0', 'double'  ) ;
-
-% GE_ZERO            name         selector       type
-fprintf ('\nge_zero    ') ;
-codegen_sel_method ('ge_zero'  , 'Ax [p] >= 0', 'int8_t'  ) ;
-codegen_sel_method ('ge_zero'  , 'Ax [p] >= 0', 'int16_t' ) ;
-codegen_sel_method ('ge_zero'  , 'Ax [p] >= 0', 'int32_t' ) ;
-codegen_sel_method ('ge_zero'  , 'Ax [p] >= 0', 'int64_t' ) ;
-codegen_sel_method ('ge_zero'  , 'Ax [p] >= 0', 'float'   ) ;
-codegen_sel_method ('ge_zero'  , 'Ax [p] >= 0', 'double'  ) ;
-
-% LT_ZERO            name         selector       type
-fprintf ('\nlt_zero    ') ;
-codegen_sel_method ('lt_zero'  , 'Ax [p] < 0', 'int8_t'  ) ;
-codegen_sel_method ('lt_zero'  , 'Ax [p] < 0', 'int16_t' ) ;
-codegen_sel_method ('lt_zero'  , 'Ax [p] < 0', 'int32_t' ) ;
-codegen_sel_method ('lt_zero'  , 'Ax [p] < 0', 'int64_t' ) ;
-codegen_sel_method ('lt_zero'  , 'Ax [p] < 0', 'float'   ) ;
-codegen_sel_method ('lt_zero'  , 'Ax [p] < 0', 'double'  ) ;
-
-% LE_ZERO            name         selector       type
-fprintf ('\nle_zero    ') ;
-codegen_sel_method ('le_zero'  , 'Ax [p] <= 0', 'int8_t'  ) ;
-codegen_sel_method ('le_zero'  , 'Ax [p] <= 0', 'int16_t' ) ;
-codegen_sel_method ('le_zero'  , 'Ax [p] <= 0', 'int32_t' ) ;
-codegen_sel_method ('le_zero'  , 'Ax [p] <= 0', 'int64_t' ) ;
-codegen_sel_method ('le_zero'  , 'Ax [p] <= 0', 'float'   ) ;
-codegen_sel_method ('le_zero'  , 'Ax [p] <= 0', 'double'  ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'bool'      ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'int8_t'    ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'int16_t'   ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'int32_t'   ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'int64_t'   ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'uint8_t'   ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'uint16_t'  ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'uint32_t'  ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'uint64_t'  ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'float'     ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'double'    ) ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'GxB_FC32_t') ;
+codegen_sel_method ('nonzombie', 'bool keep = (i >= 0)', 'GxB_FC64_t') ;
 
 % NE_THUNK           name         selector            type
 fprintf ('\nne_thunk   ') ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'int8_t'  ) ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'int16_t' ) ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'int32_t' ) ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'int64_t' ) ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'uint8_t' ) ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'uint16_t') ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'uint32_t') ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'uint64_t') ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'float'   ) ;
-codegen_sel_method ('ne_thunk'  , 'Ax [p] != thunk', 'double'  ) ;
-codegen_sel_method ('ne_thunk'  , 'GB_FC32_ne (Ax [p], thunk)', 'GxB_FC32_t') ;
-codegen_sel_method ('ne_thunk'  , 'GB_FC64_ne (Ax [p], thunk)', 'GxB_FC64_t') ;
-codegen_sel_method ('ne_thunk'  , ...
-                    'memcmp (Ax +((p)*asize), xthunk, asize) != 0', 'GB_void') ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'int8_t'  ) ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'int16_t' ) ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'int32_t' ) ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'int64_t' ) ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'uint8_t' ) ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'uint16_t') ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'uint32_t') ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'uint64_t') ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'float'   ) ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = (Ax [p] != y)', 'double'  ) ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = GB_FC32_ne (Ax [p], y)', 'GxB_FC32_t') ;
+codegen_sel_method ('ne_thunk'  , 'bool keep = GB_FC64_ne (Ax [p], y)', 'GxB_FC64_t') ;
 
 % EQ_THUNK           name         selector            type
 fprintf ('\neq_thunk   ') ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'int8_t'  ) ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'int16_t' ) ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'int32_t' ) ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'int64_t' ) ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'uint8_t' ) ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'uint16_t') ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'uint32_t') ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'uint64_t') ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'float'   ) ;
-codegen_sel_method ('eq_thunk'  , 'Ax [p] == thunk', 'double'  ) ;
-codegen_sel_method ('eq_thunk'  , 'GB_FC32_eq (Ax [p], thunk)', 'GxB_FC32_t') ;
-codegen_sel_method ('eq_thunk'  , 'GB_FC64_eq (Ax [p], thunk)', 'GxB_FC64_t') ;
-codegen_sel_method ('eq_thunk'  , ...
-                    'memcmp (Ax +((p)*asize), xthunk, asize) == 0', 'GB_void') ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'bool'    ) ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'int8_t'  ) ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'int16_t' ) ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'int32_t' ) ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'int64_t' ) ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'uint8_t' ) ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'uint16_t') ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'uint32_t') ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'uint64_t') ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'float'   ) ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = (Ax [p] == y)', 'double'  ) ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = GB_FC32_eq (Ax [p], y)', 'GxB_FC32_t') ;
+codegen_sel_method ('eq_thunk'  , 'bool keep = GB_FC64_eq (Ax [p], y)', 'GxB_FC64_t') ;
 
 % GT_THUNK           name         selector            type
 fprintf ('\ngt_thunk   ') ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'int8_t'  ) ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'int16_t' ) ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'int32_t' ) ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'int64_t' ) ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'uint8_t' ) ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'uint16_t') ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'uint32_t') ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'uint64_t') ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'float'   ) ;
-codegen_sel_method ('gt_thunk'  , 'Ax [p] > thunk', 'double'  ) ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'int8_t'  ) ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'int16_t' ) ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'int32_t' ) ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'int64_t' ) ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'uint8_t' ) ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'uint16_t') ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'uint32_t') ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'uint64_t') ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'float'   ) ;
+codegen_sel_method ('gt_thunk'  , 'bool keep = (Ax [p] > y)', 'double'  ) ;
 
 % GE_THUNK           name         selector            type
 fprintf ('\nge_thunk   ') ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'int8_t'  ) ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'int16_t' ) ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'int32_t' ) ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'int64_t' ) ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'uint8_t' ) ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'uint16_t') ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'uint32_t') ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'uint64_t') ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'float'   ) ;
-codegen_sel_method ('ge_thunk'  , 'Ax [p] >= thunk', 'double'  ) ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'int8_t'  ) ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'int16_t' ) ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'int32_t' ) ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'int64_t' ) ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'uint8_t' ) ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'uint16_t') ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'uint32_t') ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'uint64_t') ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'float'   ) ;
+codegen_sel_method ('ge_thunk'  , 'bool keep = (Ax [p] >= y)', 'double'  ) ;
 
 % LT_THUNK           name         selector            type
 fprintf ('\nlt_thunk   ') ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'int8_t'  ) ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'int16_t' ) ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'int32_t' ) ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'int64_t' ) ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'uint8_t' ) ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'uint16_t') ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'uint32_t') ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'uint64_t') ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'float'   ) ;
-codegen_sel_method ('lt_thunk'  , 'Ax [p] < thunk', 'double'  ) ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'int8_t'  ) ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'int16_t' ) ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'int32_t' ) ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'int64_t' ) ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'uint8_t' ) ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'uint16_t') ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'uint32_t') ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'uint64_t') ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'float'   ) ;
+codegen_sel_method ('lt_thunk'  , 'bool keep = (Ax [p] < y)', 'double'  ) ;
 
 % LE_THUNK           name         selector            type
 fprintf ('\nle_thunk   ') ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'int8_t'  ) ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'int16_t' ) ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'int32_t' ) ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'int64_t' ) ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'uint8_t' ) ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'uint16_t') ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'uint32_t') ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'uint64_t') ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'float'   ) ;
-codegen_sel_method ('le_thunk'  , 'Ax [p] <= thunk', 'double'  ) ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'int8_t'  ) ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'int16_t' ) ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'int32_t' ) ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'int64_t' ) ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'uint8_t' ) ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'uint16_t') ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'uint32_t') ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'uint64_t') ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'float'   ) ;
+codegen_sel_method ('le_thunk'  , 'bool keep = (Ax [p] <= y)', 'double'  ) ;
 
 fprintf ('\n') ;
 

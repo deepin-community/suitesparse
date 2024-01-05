@@ -2,18 +2,18 @@
 // GB_convert_any_to_full: convert any matrix to full
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2021, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
 // All entries in A must be present, with no pending work; GB_as_if_full (A)
-// must be true on input.  A may be hypersparse, sparse, bitmap, or full on
-// input, and full on output.
+// must be true on input, or A must be iso.  A may be hypersparse, sparse,
+// bitmap, or full on input. A is full on output.  If A is iso, it remains so
+// on output.
 
 #include "GB.h"
 
-GB_PUBLIC                       // used by MATLAB interface
 void GB_convert_any_to_full     // convert any matrix to full
 (
     GrB_Matrix A                // matrix to convert to full
@@ -25,7 +25,7 @@ void GB_convert_any_to_full     // convert any matrix to full
     //--------------------------------------------------------------------------
 
     ASSERT_MATRIX_OK (A, "A converting any to full", GB0) ;
-    ASSERT (GB_as_if_full (A)) ;
+    ASSERT (A->iso || GB_as_if_full (A)) ;
 
     if (GB_IS_FULL (A))
     { 
@@ -33,14 +33,14 @@ void GB_convert_any_to_full     // convert any matrix to full
         return ;
     }
 
-    GBURBLE ("(%s to full) ", (A->h != NULL) ? "hypersparse" :
+    GB_BURBLE_N (A->nvals, "(%s to full) ", (A->h != NULL) ? "hypersparse" :
         (GB_IS_BITMAP (A) ? "bitmap" : "sparse")) ;
 
     //--------------------------------------------------------------------------
     // free A->h, A->p, A->i, and A->b
     //--------------------------------------------------------------------------
 
-    GB_ph_free (A) ;
+    GB_phy_free (A) ;
 
     if (!A->i_shallow) GB_FREE (&(A->i), A->i_size) ;
     A->i = NULL ;

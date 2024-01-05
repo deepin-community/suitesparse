@@ -3,10 +3,11 @@
 /* ========================================================================== */
 
 /* -----------------------------------------------------------------------------
- * Mongoose Graph Partitioning Library  Copyright (C) 2017-2018,
+ * Mongoose Graph Partitioning Library, Copyright (C) 2017-2018,
  * Scott P. Kolodziej, Nuri S. Yeralan, Timothy A. Davis, William W. Hager
  * Mongoose is licensed under Version 3 of the GNU General Public License.
  * Mongoose is also available under other licenses; contact authors for details.
+ * SPDX-License-Identifier: GPL-3.0-only
  * -------------------------------------------------------------------------- */
 
 // #pragma once
@@ -16,11 +17,17 @@
 #include "SuiteSparse_config.h"
 #include <string>
 
+// Configuration information from CMake
+#define Mongoose_VERSION_MAJOR 3
+#define Mongoose_VERSION_MINOR 2
+#define Mongoose_VERSION_PATCH 1
+#define Mongoose_DATE "Sept 18, 2023"
+
 namespace Mongoose
 {
 
 /* Type definitions */
-typedef SuiteSparse_long Int;
+typedef int64_t Int;
 
 typedef struct cs_sparse /* matrix in compressed-column or triplet form */
 {

@@ -1,6 +1,12 @@
 // =============================================================================
 // === GPUQREngine/Include/GPUQREngine_Scheduler.hpp ===========================
 // =============================================================================
+
+// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
+// and Sanjay Ranka.  All Rights Reserved.
+// SPDX-License-Identifier: GPL-2.0+
+
+//------------------------------------------------------------------------------
 //
 // The Scheduler is a principal class in the GPUQREngine.
 //
@@ -27,6 +33,7 @@ size_t ssgpu_maxQueueSize       // return size of scheduler queue
     size_t gpuMemorySize        // size of GPU memory, in bytes
 ) ;
 
+template <typename Int = int64_t>
 class Scheduler
 {
 private:
@@ -53,13 +60,13 @@ public:
                                         // successfully invoke the cuda
                                         // initialization calls.
 
-    Front *frontList;
+    Front <Int> *frontList;
     Int numFronts;
     Int numFrontsCompleted;
 
     int activeSet;
 
-    BucketList *bucketLists;
+    BucketList <Int> *bucketLists;
 
     Int *afPerm;                        // Permutation of "active" fronts
     Int *afPinv;                        // Inverse permutation of "active" fronts
@@ -90,8 +97,8 @@ public:
     cudaStream_t memoryStreamD2H;
 
     /* Scheduler.cpp */
-    void *operator new(long unsigned int, Scheduler* p){ return p; }
-    Scheduler(Front *fronts, Int numFronts, size_t gpuMemorySize);
+    void *operator new(long unsigned int, Scheduler <Int>* p){ return p; }
+    Scheduler(Front <Int> *fronts, Int numFronts, size_t gpuMemorySize);
     ~Scheduler();
 
     /* Scheduler_Front.cpp */
@@ -111,7 +118,7 @@ public:
     )
     {
         // NOTE: tested by SPQR/Tcov, but not flagged as such in cov results
-        BucketList *dlbl = (&bucketLists[f]);
+        BucketList <Int> *dlbl = (&bucketLists[f]);
         if(dlbl->useFlag) dlbl->Initialize();
     }
 
@@ -150,7 +157,7 @@ public:
     /* Stats */
     float kernelTime;
     Int numKernelLaunches;
-    Int gpuFlops;
+    int64_t gpuFlops;
 
 #ifdef GPUQRENGINE_RENDER
     /* Debug stuff */
@@ -161,8 +168,10 @@ public:
 #endif
 
 #if 1
-    void debugDumpFront(Front *front);
+    void debugDumpFront(Front <Int> *front);
 #endif
 };
 
+extern template class Scheduler<int32_t>;
+extern template class Scheduler<int64_t>;
 #endif
