@@ -1,3 +1,9 @@
+suitesparse (1:7.3.1+dfsg-2deepin0) unstable; urgency=medium
+
+  * No source change upload against GCC 12.
+
+ -- Tianyu Chen <sweetyfish@deepin.org>  Fri, 20 Sep 2024 12:19:33 +0800
+
 suitesparse (1:7.3.1+dfsg-2) unstable; urgency=medium
 
   * Upload to unstable
