@@ -2,8 +2,8 @@
 // gblogextract: logical extraction: C = A(M)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 //------------------------------------------------------------------------------
 
@@ -96,7 +96,7 @@ void mexFunction
     //--------------------------------------------------------------------------
 
     gb_usage (nargin == 2 && nargout <= 1, USAGE) ;
-    GB_WERK ("gblogextract") ;
+    GB_CONTEXT ("gblogextract") ;
 
     //--------------------------------------------------------------------------
     // get A
@@ -121,10 +121,8 @@ void mexFunction
     // make M boolean, stored by column, and drop explicit zeros
     GrB_Matrix M_input = gb_get_shallow (pargin [1]) ;
     GrB_Matrix M = gb_new (GrB_BOOL, nrows, ncols, GxB_BY_COL, not_bitmap) ;
-//  OK1 (M, GxB_Matrix_select (M, NULL, NULL, GxB_NONZERO, M_input,
-//      NULL, NULL)) ;
-    OK1 (M, GrB_Matrix_select_BOOL (M, NULL, NULL, GrB_VALUENE_BOOL, M_input,
-        0, NULL)) ;
+    OK1 (M, GxB_Matrix_select (M, NULL, NULL, GxB_NONZERO, M_input,
+        NULL, NULL)) ;
     OK (GrB_Matrix_free (&M_input)) ;
 
     GrB_Index mnz ;
@@ -188,7 +186,7 @@ void mexFunction
     struct GB_Matrix_opaque K_header ;
     GrB_Matrix K = GB_clear_static_header (&K_header) ;
 
-    OK (GB_shallow_copy (K, GxB_BY_COL, M, NULL)) ;
+    OK (GB_shallow_copy (K, GxB_BY_COL, M, Context)) ;
     OK (GxB_Matrix_Option_get (K, GxB_SPARSITY_STATUS, &sparsity)) ;
     CHECK_ERROR (sparsity == GxB_BITMAP, "internal error 10") ;
 
@@ -277,7 +275,6 @@ void mexFunction
     int64_t *Vp = V->p ;
     Vp [0] = 0 ;
     Vp [1] = tnvals ;
-    V->nvals = tnvals ;
     V->magic = GB_MAGIC ;
     V->nvec_nonempty = (tnvals > 0) ? 1 : 0 ;
 

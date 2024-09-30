@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/Scheduler_Render.cpp =================================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 // === This code is used only for internal development and debugging ===========
 // =============================================================================
 //
@@ -26,16 +20,16 @@
 //
 // =============================================================================
 
-
+#include "GPUQREngine_Internal.hpp"
 
 #ifdef GPUQRENGINE_RENDER
-#include "GPUQREngine_Internal.hpp"
+
 #include "GPUQREngine_Scheduler.hpp"
 #include <stdio.h>
 #include <string.h>
 
 
-void Scheduler <Int>::render
+void Scheduler::render
 (
     void
 )
@@ -99,12 +93,4 @@ void Scheduler <Int>::render
 
     fclose(output);
 }
-template void Scheduler <int32_t>::render
-(
-    void
-) ;
-template void Scheduler <int64_t>::render
-(
-    void
-) ;
 #endif

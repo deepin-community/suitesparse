@@ -2,12 +2,10 @@
 // GB_emult_08_phase2: C=A.*B, C<M>=A.*B, or C<!M>=A.*B
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: done.
 
 // GB_emult_08_phase2 computes C=A.*B, C<M>=A.*B, or C<!M>=A.*B.  It is
 // preceded first by GB_emult_08_phase0, which computes the list of vectors of
@@ -17,10 +15,10 @@
 // GB_emult_08_phase2 computes the pattern and values of each vector of C(:,j),
 // entirely in parallel.
 
-// C is sparse or hypersparse; M, A, and B can be have any sparsity structure.
-// If M is sparse or hypersparse, and complemented, however, then it is not
-// applied and not passed to this function.  It is applied later, as determined
-// by GB_emult_sparsity.
+// C, M, A, and B can be have any sparsity structure.  If M is sparse or
+// hypersparse, and complemented, however, then it is not applied and not
+// passed to this function.  It is applied later, as determined by
+// GB_emult_sparsity.
 
 // This function either frees Cp or transplants it into C, as C->p.  Either
 // way, the caller must not free it.
@@ -29,14 +27,13 @@
 #include "GB_emult.h"
 #include "GB_binop.h"
 #include "GB_unused.h"
-#include "GB_stringify.h"
-#ifndef GBCOMPACT
-#include "GB_ew__include.h"
+#ifndef GBCUDA_DEV
+#include "GB_binop__include.h"
 #endif
 
 #define GB_FREE_ALL             \
 {                               \
-    GB_phybix_free (C) ;        \
+    GB_phbix_free (C) ;         \
 }
 
 GrB_Info GB_emult_08_phase2             // C=A.*B or C<M>=A.*B
@@ -69,7 +66,7 @@ GrB_Info GB_emult_08_phase2             // C=A.*B or C<M>=A.*B
     const bool Mask_comp,           // if true, use !M
     const GrB_Matrix A,
     const GrB_Matrix B,
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -105,8 +102,8 @@ GrB_Info GB_emult_08_phase2             // C=A.*B or C<M>=A.*B
     //--------------------------------------------------------------------------
 
     bool C_is_hyper = (C_sparsity == GxB_HYPERSPARSE) ;
-    ASSERT (C_is_hyper || (C_sparsity == GxB_SPARSE)) ;
-    ASSERT (Cp != NULL) ;
+    bool C_is_sparse_or_hyper = (C_sparsity == GxB_SPARSE) || C_is_hyper ;
+    ASSERT (C_is_sparse_or_hyper == (Cp != NULL)) ;
     ASSERT (C_is_hyper == (Ch != NULL)) ;
 
     GB_Opcode opcode = op->opcode ;
@@ -127,21 +124,21 @@ GrB_Info GB_emult_08_phase2             // C=A.*B or C<M>=A.*B
 
     const size_t csize = ctype->size ;
     GB_void cscalar [GB_VLA(csize)] ;
-    bool C_iso = GB_emult_iso (cscalar, ctype, A, B, op) ;
+    bool C_iso = GB_iso_emult (cscalar, ctype, A, B, op) ;
 
     //--------------------------------------------------------------------------
     // allocate the output matrix C
     //--------------------------------------------------------------------------
 
-    int64_t cnz = Cp [Cnvec] ;
+    int64_t cnz = (C_is_sparse_or_hyper) ? Cp [Cnvec] : GB_nnz_full (A) ;
 
     // allocate the result C (but do not allocate C->p or C->h)
     // set C->iso = C_iso   OK
-    GrB_Info info = GB_new_bix (&C, // sparse/hyper, existing header
+    GrB_Info info = GB_new_bix (&C, // any sparsity, existing header
         ctype, A->vlen, A->vdim, GB_Ap_null, C_is_csc,
-        C_sparsity, true, A->hyper_switch, Cnvec, cnz, true, C_iso) ;
+        C_sparsity, true, A->hyper_switch, Cnvec, cnz, true, C_iso, Context) ;
     if (info != GrB_SUCCESS)
-    { 
+    {
         // out of memory; caller must free C_to_M, C_to_A, C_to_B
         // Ch must not be freed since Ch is always shallow
         GB_FREE (Cp_handle, Cp_size) ;
@@ -149,10 +146,12 @@ GrB_Info GB_emult_08_phase2             // C=A.*B or C<M>=A.*B
     }
 
     // transplant Cp into C as the vector pointers, from GB_emult_08_phase1
-    C->nvec_nonempty = Cnvec_nonempty ;
-    C->p = (int64_t *) Cp ; C->p_size = Cp_size ;
-    C->nvals = cnz ;
-    (*Cp_handle) = NULL ;
+    if (C_is_sparse_or_hyper)
+    { 
+        C->nvec_nonempty = Cnvec_nonempty ;
+        C->p = (int64_t *) Cp ; C->p_size = Cp_size ;
+        (*Cp_handle) = NULL ;
+    }
 
     // add Ch as the hypersparse list for C, from GB_emult_08_phase0
     if (C_is_hyper)
@@ -186,13 +185,15 @@ GrB_Info GB_emult_08_phase2             // C=A.*B or C<M>=A.*B
     // using a built-in binary operator (except for positional operators)
     //--------------------------------------------------------------------------
 
-    info = GrB_NO_VALUE ;
+    #define GB_PHASE_2_OF_2
+
+    bool done = false ;
 
     if (C_iso)
     { 
 
         //----------------------------------------------------------------------
-        // via the iso kernel
+        // C is iso
         //----------------------------------------------------------------------
 
         // Cx [0] = cscalar = op (A,B)
@@ -202,19 +203,13 @@ GrB_Info GB_emult_08_phase2             // C=A.*B or C<M>=A.*B
         // pattern of C = set intersection of pattern of A and B
         #define GB_ISO_EMULT
         #include "GB_emult_08_meta.c"
-        info = GrB_SUCCESS ;
+        done = true ;
 
     }
     else
     {
 
-        //----------------------------------------------------------------------
-        // via the factory kernel
-        //----------------------------------------------------------------------
-
-        #ifndef GBCOMPACT
-        GB_IF_FACTORY_KERNELS_ENABLED
-        { 
+        #ifndef GBCUDA_DEV
 
             //------------------------------------------------------------------
             // define the worker for the switch factory
@@ -224,9 +219,11 @@ GrB_Info GB_emult_08_phase2             // C=A.*B or C<M>=A.*B
 
             #define GB_BINOP_WORKER(mult,xname)                             \
             {                                                               \
-                info = GB_AemultB_08(mult,xname) (C, M,                     \
-                    Mask_struct, Mask_comp, A, B, C_to_M, C_to_A, C_to_B,   \
-                    TaskList, C_ntasks, C_nthreads) ;                       \
+                info = GB_AemultB_08(mult,xname) (C, C_sparsity,            \
+                    ewise_method, M, Mask_struct, Mask_comp,                \
+                    A, B, C_to_M, C_to_A, C_to_B,                           \
+                    TaskList, C_ntasks, C_nthreads, Context) ;              \
+                done = (info != GrB_NO_VALUE) ;                             \
             }                                                               \
             break ;
 
@@ -242,46 +239,28 @@ GrB_Info GB_emult_08_phase2             // C=A.*B or C<M>=A.*B
                 #define GB_NO_PAIR
                 #include "GB_binop_factory.c"
             }
-        }
+
         #endif
     }
 
     //--------------------------------------------------------------------------
-    // via the JIT or PreJIT kernel
+    // generic worker
     //--------------------------------------------------------------------------
 
-    if (info == GrB_NO_VALUE)
-    { 
-        info = GB_emult_08_jit (C, C_sparsity, M, Mask_struct,
-            Mask_comp, op, A, B, C_to_M, C_to_A, C_to_B, TaskList, C_ntasks,
-            C_nthreads) ;
-    }
-
-    //--------------------------------------------------------------------------
-    // via the generic kernel
-    //--------------------------------------------------------------------------
-
-    if (info == GrB_NO_VALUE)
+    if (!done)
     { 
         GB_BURBLE_MATRIX (C, "(generic emult: %s) ", op->name) ;
-        info = GB_emult_generic (C, op, TaskList, C_ntasks, C_nthreads,
+        GB_ewise_generic (C, op, TaskList, C_ntasks, C_nthreads,
             C_to_M, C_to_A, C_to_B, C_sparsity, ewise_method, NULL,
             NULL, 0, 0, NULL, 0, 0, NULL, 0, 0,
-            M, Mask_struct, Mask_comp, A, B) ;
+            M, Mask_struct, Mask_comp, A, B, Context) ;
     }
 
     //--------------------------------------------------------------------------
-    // remove empty vectors from C, if hypersparse
+    // construct the final C->h
     //--------------------------------------------------------------------------
 
-    if (info != GrB_SUCCESS)
-    { 
-        // out of memory, or other error
-        GB_FREE_ALL ;
-        return (info) ;
-    }
-
-    GB_OK (GB_hypermatrix_prune (C, Werk)) ;
+    GB_OK (GB_hypermatrix_prune (C, Context)) ;
 
     //--------------------------------------------------------------------------
     // return result

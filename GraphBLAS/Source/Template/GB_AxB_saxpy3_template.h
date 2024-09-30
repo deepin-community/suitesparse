@@ -2,7 +2,7 @@
 // GB_AxB_saxpy3_template.h: C=A*B, C<M>=A*B, or C<!M>=A*B via saxpy3 method
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -18,48 +18,66 @@
 //------------------------------------------------------------------------------
 
 // prepare to iterate over the vector M(:,j), for the (kk)th vector of B
-
-#define GB_GET_M_j                                                          \
-    int64_t pM_start, pM_end ;                                              \
-    if (M_is_hyper)                                                         \
-    {                                                                       \
-        /* M is hypersparse: find M(:,j) in the M->Y hyper_hash */          \
-        GB_hyper_hash_lookup (Mp, M_Yp, M_Yi, M_Yx, M_hash_bits,            \
-            GBH_B (Bh, kk), &pM_start, &pM_end) ;                           \
-    }                                                                       \
-    else                                                                    \
-    {                                                                       \
-        /* A is sparse, bitmap, or full */                                  \
-        int64_t j = GBH_B (Bh, kk) ;                                        \
-        pM_start = GBP_M (Mp, j  , mvlen) ;                                 \
-        pM_end   = GBP_M (Mp, j+1, mvlen) ;                                 \
-    }                                                                       \
-    const int64_t mjnz = pM_end - pM_start
+// FUTURE::: lookup all M(:,j) for all vectors in B, in a single pass,
+// and save the mapping (like C_to_M mapping in GB_ewise_slice)
+#define GB_GET_M_j                                              \
+    int64_t mpleft = 0 ;                                        \
+    int64_t mpright = mnvec-1 ;                                 \
+    int64_t pM_start, pM_end ;                                  \
+    GB_lookup (M_is_hyper, Mh, Mp, mvlen, &mpleft, mpright,     \
+        GBH (Bh, kk), &pM_start, &pM_end) ;                     \
+    const int64_t mjnz = pM_end - pM_start ;
 
 //------------------------------------------------------------------------------
 // GB_GET_M_j_RANGE
 //------------------------------------------------------------------------------
 
-#define GB_GET_M_j_RANGE(gamma) \
+#define GB_GET_M_j_RANGE(gamma)                                 \
     const int64_t mjnz_much = mjnz * gamma
 
 //------------------------------------------------------------------------------
 // GB_SCATTER_Mj_t: scatter M(:,j) of the given type into Gus. workspace
 //------------------------------------------------------------------------------
 
-#ifndef GB_JIT_KERNEL
+#define GB_SCATTER_Mj_t(mask_t,pMstart,pMend,mark)                      \
+{                                                                       \
+    const mask_t *restrict Mxx = (mask_t *) Mx ;                        \
+    if (M_is_bitmap)                                                    \
+    {                                                                   \
+        /* M is bitmap */                                               \
+        for (int64_t pM = pMstart ; pM < pMend ; pM++)                  \
+        {                                                               \
+            /* if (M (i,j) == 1) mark Hf [i] */                         \
+            if (Mb [pM] && Mxx [pM]) Hf [GBI (Mi, pM, mvlen)] = mark ;  \
+        }                                                               \
+    }                                                                   \
+    else                                                                \
+    {                                                                   \
+        /* M is hyper, sparse, or full */                               \
+        for (int64_t pM = pMstart ; pM < pMend ; pM++)                  \
+        {                                                               \
+            /* if (M (i,j) == 1) mark Hf [i] */                         \
+            if (Mxx [pM]) Hf [GBI (Mi, pM, mvlen)] = mark ;             \
+        }                                                               \
+    }                                                                   \
+}                                                                       \
+break ;
 
-    // for generic pre-generated kernels only; not needed for JIT kernels
-    #define GB_SCATTER_Mj_t(mask_t,pMstart,pMend,mark)                      \
+//------------------------------------------------------------------------------
+// GB_SCATTER_M_j:  scatter M(:,j) into the Gustavson workpace
+//------------------------------------------------------------------------------
+
+#define GB_SCATTER_M_j(pMstart,pMend,mark)                                  \
+    if (Mx == NULL)                                                         \
     {                                                                       \
-        const mask_t *restrict Mxx = (mask_t *) Mx ;                        \
+        /* M is structural, not valued */                                   \
         if (M_is_bitmap)                                                    \
         {                                                                   \
             /* M is bitmap */                                               \
             for (int64_t pM = pMstart ; pM < pMend ; pM++)                  \
             {                                                               \
-                /* if (M (i,j) == 1) mark Hf [i] */                         \
-                if (Mb [pM] && Mxx [pM]) Hf [GBI_M (Mi, pM, mvlen)] = mark ;\
+                /* if (M (i,j) is present) mark Hf [i] */                   \
+                if (Mb [pM]) Hf [GBI (Mi, pM, mvlen)] = mark ;              \
             }                                                               \
         }                                                                   \
         else                                                                \
@@ -67,90 +85,37 @@
             /* M is hyper, sparse, or full */                               \
             for (int64_t pM = pMstart ; pM < pMend ; pM++)                  \
             {                                                               \
-                /* if (M (i,j) == 1) mark Hf [i] */                         \
-                if (Mxx [pM]) Hf [GBI_M (Mi, pM, mvlen)] = mark ;           \
+                /* mark Hf [i] */                                           \
+                Hf [GBI (Mi, pM, mvlen)] = mark ;                           \
             }                                                               \
         }                                                                   \
     }                                                                       \
-    break ;
-
-#endif
-
-//------------------------------------------------------------------------------
-// GB_SCATTER_M_j:  scatter M(:,j) into the Gustavson workpace
-//------------------------------------------------------------------------------
-
-#ifdef GB_JIT_KERNEL
-
-    // for JIT kernels
-    #define GB_SCATTER_M_j(pMstart,pMend,mark)                              \
-        for (int64_t pM = pMstart ; pM < pMend ; pM++)                      \
+    else                                                                    \
+    {                                                                       \
+        /* mask is valued, not structural */                                \
+        switch (msize)                                                      \
         {                                                                   \
-            /* if (M (i,j) is present) mark Hf [i] */                       \
-            if (GBB_M (Mb,pM) && GB_MCAST (Mx,pM,))                         \
+            default:                                                        \
+            case GB_1BYTE: GB_SCATTER_Mj_t (uint8_t , pMstart, pMend, mark) ; \
+            case GB_2BYTE: GB_SCATTER_Mj_t (uint16_t, pMstart, pMend, mark) ; \
+            case GB_4BYTE: GB_SCATTER_Mj_t (uint32_t, pMstart, pMend, mark) ; \
+            case GB_8BYTE: GB_SCATTER_Mj_t (uint64_t, pMstart, pMend, mark) ; \
+            case GB_16BYTE:                                                 \
             {                                                               \
-                Hf [GBI_M (Mi, pM, mvlen)] = mark ;                         \
-            }                                                               \
-        }
-
-#else
-
-    // for generic pre-generated kernels
-    #define GB_SCATTER_M_j(pMstart,pMend,mark)                              \
-        if (Mx == NULL)                                                     \
-        {                                                                   \
-            /* M is structural, not valued */                               \
-            if (M_is_bitmap)                                                \
-            {                                                               \
-                /* M is bitmap */                                           \
+                const uint64_t *restrict Mxx = (uint64_t *) Mx ;            \
                 for (int64_t pM = pMstart ; pM < pMend ; pM++)              \
                 {                                                           \
-                    /* if (M (i,j) is present) mark Hf [i] */               \
-                    if (Mb [pM]) Hf [GBI_M (Mi, pM, mvlen)] = mark ;        \
-                }                                                           \
-            }                                                               \
-            else                                                            \
-            {                                                               \
-                /* M is hyper, sparse, or full */                           \
-                for (int64_t pM = pMstart ; pM < pMend ; pM++)              \
-                {                                                           \
-                    /* mark Hf [i] */                                       \
-                    Hf [GBI_M (Mi, pM, mvlen)] = mark ;                     \
-                }                                                           \
-            }                                                               \
-        }                                                                   \
-        else                                                                \
-        {                                                                   \
-            /* mask is valued, not structural */                            \
-            switch (msize)                                                  \
-            {                                                               \
-                default:                                                    \
-                case GB_1BYTE:                                              \
-                    GB_SCATTER_Mj_t (uint8_t , pMstart, pMend, mark) ;      \
-                case GB_2BYTE:                                              \
-                    GB_SCATTER_Mj_t (uint16_t, pMstart, pMend, mark) ;      \
-                case GB_4BYTE:                                              \
-                    GB_SCATTER_Mj_t (uint32_t, pMstart, pMend, mark) ;      \
-                case GB_8BYTE:                                              \
-                    GB_SCATTER_Mj_t (uint64_t, pMstart, pMend, mark) ;      \
-                case GB_16BYTE:                                             \
-                {                                                           \
-                    const uint64_t *restrict Mxx = (uint64_t *) Mx ;        \
-                    for (int64_t pM = pMstart ; pM < pMend ; pM++)          \
+                    /* if (M (i,j) == 1) mark Hf [i] */                     \
+                    if (!GBB (Mb, pM)) continue ;                           \
+                    if (Mxx [2*pM] || Mxx [2*pM+1])                         \
                     {                                                       \
-                        /* if (M (i,j) == 1) mark Hf [i] */                 \
-                        if (!GBB_M (Mb, pM)) continue ;                     \
-                        if (Mxx [2*pM] || Mxx [2*pM+1])                     \
-                        {                                                   \
-                            /* Hf [i] = M(i,j) */                           \
-                            Hf [GBI_M (Mi, pM, mvlen)] = mark ;             \
-                        }                                                   \
+                        /* Hf [i] = M(i,j) */                               \
+                        Hf [GBI (Mi, pM, mvlen)] = mark ;                   \
                     }                                                       \
                 }                                                           \
             }                                                               \
-        }
-
-#endif
+        }                                                                   \
+    }
 
 //------------------------------------------------------------------------------
 // GB_HASH_M_j: scatter M(:,j) for a coarse hash task
@@ -162,7 +127,7 @@
     {                                                       \
         GB_GET_M_ij (pM) ;      /* get M(i,j) */            \
         if (!mij) continue ;    /* skip if M(i,j)=0 */      \
-        const int64_t i = GBI_M (Mi, pM, mvlen) ;           \
+        const int64_t i = GBI (Mi, pM, mvlen) ;             \
         for (GB_HASH (i))       /* find i in hash */        \
         {                                                   \
             if (Hf [hash] < mark)                           \
@@ -191,14 +156,24 @@
 //------------------------------------------------------------------------------
 
 // prepare to iterate over the vector B(:,j), the (kk)th vector in B, where 
-// j == GBH_B (Bh, kk).  This macro works regardless of the sparsity of A and B.
+// j == GBH (Bh, kk).  This macro works regardless of the sparsity of A and B.
 #define GB_GET_B_j_FOR_ALL_FORMATS(A_is_hyper,B_is_sparse,B_is_hyper)       \
+    int64_t pleft = 0 ;                                                     \
+    int64_t pright = anvec-1 ;                                              \
     const int64_t j = (B_is_hyper) ? Bh [kk] : kk ;                         \
     GB_GET_T_FOR_SECONDJ ;  /* t = j for SECONDJ, or j+1 for SECONDJ1 */    \
     int64_t pB = (B_is_sparse || B_is_hyper) ? Bp [kk] : (kk * bvlen) ;     \
     const int64_t pB_end =                                                  \
         (B_is_sparse || B_is_hyper) ? Bp [kk+1] : (pB+bvlen) ;              \
-    const int64_t bjnz = pB_end - pB ;  /* nnz (B (:,j) */
+    const int64_t bjnz = pB_end - pB ;  /* nnz (B (:,j) */                  \
+    /* FUTURE::: can skip if mjnz == 0 for C<M>=A*B tasks */                \
+    if (A_is_hyper && (B_is_sparse || B_is_hyper) && bjnz > 2 && !B_jumbled)\
+    {                                                                       \
+        /* trim Ah [0..pright] to remove any entries past last B(:,j), */   \
+        /* to speed up GB_lookup in GB_GET_A_k_FOR_ALL_FORMATS. */          \
+        /* This requires that B is not jumbled */                           \
+        GB_bracket_right (GBI (Bi, pB_end-1, bvlen), Ah, 0, &pright) ;      \
+    }
 
 //------------------------------------------------------------------------------
 // GB_GET_B_kj: get the numeric value of B(k,j)
@@ -215,7 +190,6 @@
 #else
 
     #define GB_GET_B_kj \
-        GB_DECLAREB (bkj) ;                                 \
         GB_GETB (bkj, Bx, pB, B_iso)       /* bkj = Bx [pB] */
 
 #endif
@@ -225,19 +199,10 @@
 //------------------------------------------------------------------------------
 
 #define GB_GET_A_k_FOR_ALL_FORMATS(A_is_hyper)                              \
+    if (B_jumbled) pleft = 0 ;  /* reuse pleft if B is not jumbled */       \
     int64_t pA_start, pA_end ;                                              \
-    if (A_is_hyper)                                                         \
-    {                                                                       \
-        /* A is hypersparse: find A(:,k) in the A->Y hyper_hash */          \
-        GB_hyper_hash_lookup (Ap, A_Yp, A_Yi, A_Yx, A_hash_bits,            \
-            k, &pA_start, &pA_end) ;                                        \
-    }                                                                       \
-    else                                                                    \
-    {                                                                       \
-        /* A is sparse, bitmap, or full */                                  \
-        pA_start = GBP_A (Ap, k  , avlen) ;                                 \
-        pA_end   = GBP_A (Ap, k+1, avlen) ;                                 \
-    }                                                                       \
+    GB_lookup (A_is_hyper, Ah, Ap, avlen, &pleft, pright, k,                \
+        &pA_start, &pA_end) ;                                               \
     const int64_t aknz = pA_end - pA_start
 
 //------------------------------------------------------------------------------
@@ -246,18 +211,18 @@
 
 #define GB_GET_M_ij(pM)                             \
     /* get M(i,j), at Mi [pM] and Mx [pM] */        \
-    bool mij = GBB_M (Mb, pM) && GB_MCAST (Mx, pM, msize)
+    bool mij = GBB (Mb, pM) && GB_mcast (Mx, pM, msize)
 
 //------------------------------------------------------------------------------
 // GB_MULT_A_ik_B_kj: declare t and compute t = A(i,k) * B(k,j)
 //------------------------------------------------------------------------------
 
-#if ( GB_IS_PAIR_MULTIPLIER && !GB_Z_IS_COMPLEX )
+#if GB_IS_PAIR_MULTIPLIER
 
     // PAIR multiplier: t is always 1; no numeric work to do to compute t.
     // The LXOR_PAIR and PLUS_PAIR semirings need the value t = 1 to use in
     // their monoid operator, however.
-    #define t GB_PAIR_ONE
+    #define t (GB_CTYPE_CAST (1, 0))
     #define GB_MULT_A_ik_B_kj
 
 #elif ( GB_IS_FIRSTJ_MULTIPLIER || GB_IS_SECONDJ_MULTIPLIER )
@@ -269,7 +234,6 @@
 
     // typical semiring
     #define GB_MULT_A_ik_B_kj                                       \
-        GB_DECLAREA (aik) ;                                         \
         GB_GETA (aik, Ax, pA, A_iso) ;  /* aik = Ax [pA] ;  */      \
         GB_CIJ_DECLARE (t) ;            /* ctype t ;        */      \
         GB_MULT (t, aik, bkj, i, k, j)  /* t = aik * bkj ;  */
@@ -387,7 +351,7 @@
 #endif
 
 //------------------------------------------------------------------------------
-// GB_Z_ATOMIC_UPDATE_HX:  Hx [i] += t
+// GB_ATOMIC_UPDATE_HX:  Hx [i] += t
 //------------------------------------------------------------------------------
 
 #if GB_IS_ANY_MONOID
@@ -396,9 +360,9 @@
     // The update Hx [i] += t can be skipped entirely, for the ANY monoid.
     //--------------------------------------------------------------------------
 
-    #define GB_Z_ATOMIC_UPDATE_HX(i,t)
+    #define GB_ATOMIC_UPDATE_HX(i,t)
 
-#elif GB_Z_HAS_ATOMIC_UPDATE
+#elif GB_HAS_ATOMIC
 
     //--------------------------------------------------------------------------
     // Hx [i] += t via atomic update
@@ -407,106 +371,104 @@
     // for built-in MIN/MAX monoids only, on built-in types
     #define GB_MINMAX(i,t,done)                                     \
     {                                                               \
-        GB_Z_TYPE zold, znew, *pz = Hx + (i) ;                      \
+        GB_CTYPE xold, xnew, *px = Hx + (i) ;                       \
         do                                                          \
         {                                                           \
-            /* zold = Hx [i] via atomic read */                     \
-            GB_Z_ATOMIC_READ (zold, *pz) ;                          \
-            /* done if zold <= t for MIN, or zold >= t for MAX, */  \
-            /* but not done if zold is NaN */                       \
+            /* xold = Hx [i] via atomic read */                     \
+            GB_ATOMIC_READ                                          \
+            xold = (*px) ;                                          \
+            /* done if xold <= t for MIN, or xold >= t for MAX, */  \
+            /* but not done if xold is NaN */                       \
             if (done) break ;                                       \
-            znew = t ;  /* t should be assigned; it is not NaN */   \
+            xnew = t ;  /* t should be assigned; it is not NaN */   \
         }                                                           \
-        while (!GB_Z_ATOMIC_COMPARE_EXCHANGE (pz, zold, znew)) ;    \
+        while (!GB_ATOMIC_COMPARE_EXCHANGE (px, xold, xnew)) ;      \
     }
 
     #if GB_IS_IMIN_MONOID
 
         // built-in MIN monoids for signed and unsigned integers
-        #define GB_Z_ATOMIC_UPDATE_HX(i,t) GB_MINMAX (i, t, zold <= t)
+        #define GB_ATOMIC_UPDATE_HX(i,t)                            \
+            GB_MINMAX (i, t, xold <= t)
 
     #elif GB_IS_IMAX_MONOID
 
         // built-in MAX monoids for signed and unsigned integers
-        #define GB_Z_ATOMIC_UPDATE_HX(i,t) GB_MINMAX (i, t, zold >= t)
+        #define GB_ATOMIC_UPDATE_HX(i,t)                            \
+            GB_MINMAX (i, t, xold >= t)
 
     #elif GB_IS_FMIN_MONOID
 
         // built-in MIN monoids for float and double, with omitnan behavior.
         // The update is skipped entirely if t is NaN.  Otherwise, if t is not
-        // NaN, zold is checked.  If zold is NaN, islessequal (zold, t) is
+        // NaN, xold is checked.  If xold is NaN, islessequal (xold, t) is
         // always false, so the non-NaN t must be always be assigned to Hx [i].
-        // If both terms are not NaN, then islessequal (zold,t) is just
-        // zold <= t.  If that is true, there is no work to do and
-        // the loop breaks.  Otherwise, t is smaller than zold and so it must
+        // If both terms are not NaN, then islessequal (xold,t) is just
+        // xold <= t.  If that is true, there is no work to do and
+        // the loop breaks.  Otherwise, t is smaller than xold and so it must
         // be assigned to Hx [i].
-        #define GB_Z_ATOMIC_UPDATE_HX(i,t)                          \
+        #define GB_ATOMIC_UPDATE_HX(i,t)                            \
         {                                                           \
             if (!isnan (t))                                         \
             {                                                       \
-                GB_MINMAX (i, t, islessequal (zold, t)) ;           \
+                GB_MINMAX (i, t, islessequal (xold, t)) ;           \
             }                                                       \
         }
 
     #elif GB_IS_FMAX_MONOID
 
         // built-in MAX monoids for float and double, with omitnan behavior.
-        #define GB_Z_ATOMIC_UPDATE_HX(i,t)                          \
+        #define GB_ATOMIC_UPDATE_HX(i,t)                            \
         {                                                           \
             if (!isnan (t))                                         \
             {                                                       \
-                GB_MINMAX (i, t, isgreaterequal (zold, t)) ;        \
+                GB_MINMAX (i, t, isgreaterequal (xold, t)) ;        \
             }                                                       \
         }
 
     #elif GB_IS_PLUS_FC32_MONOID
 
         // built-in PLUS_FC32 monoid can be done as two independent atomics
-        #define GB_Z_ATOMIC_UPDATE_HX(i,t)                          \
-        {                                                           \
+        #define GB_ATOMIC_UPDATE_HX(i,t)                            \
             GB_ATOMIC_UPDATE                                        \
-            Hx_real [2*(i)] += GB_crealf (t) ;                      \
+            Hx_real [2*(i)] += crealf (t) ;                         \
             GB_ATOMIC_UPDATE                                        \
-            Hx_imag [2*(i)] += GB_cimagf (t) ;                      \
-        }
+            Hx_imag [2*(i)] += cimagf (t) ;
 
     #elif GB_IS_PLUS_FC64_MONOID
 
         // built-in PLUS_FC64 monoid can be done as two independent atomics
-        #define GB_Z_ATOMIC_UPDATE_HX(i,t)                          \
-        {                                                           \
+        #define GB_ATOMIC_UPDATE_HX(i,t)                            \
             GB_ATOMIC_UPDATE                                        \
-            Hx_real [2*(i)] += GB_creal (t) ;                       \
+            Hx_real [2*(i)] += creal (t) ;                          \
             GB_ATOMIC_UPDATE                                        \
-            Hx_imag [2*(i)] += GB_cimag (t) ;                       \
-        }
+            Hx_imag [2*(i)] += cimag (t) ;
 
-    #elif GB_Z_HAS_OMP_ATOMIC_UPDATE
+    #elif GB_HAS_OMP_ATOMIC
 
         // built-in PLUS and TIMES for integers and real, and boolean LOR,
         // LAND, LXOR monoids can be implemented with an OpenMP pragma.
-        #define GB_Z_ATOMIC_UPDATE_HX(i,t)                          \
-        {                                                           \
+        #define GB_ATOMIC_UPDATE_HX(i,t)                            \
             GB_ATOMIC_UPDATE                                        \
-            GB_HX_UPDATE (i, t) ;                                   \
-        }
+            GB_HX_UPDATE (i, t)
 
     #else
 
         // all other atomic monoids (EQ, XNOR) on boolean, signed and unsigned
-        // integers, float, double, and float complex (not double complex).
-        // user-defined monoids can use this if zsize is 1, 2, 4, or 8.
-        #define GB_Z_ATOMIC_UPDATE_HX(i,t)                              \
-        {                                                               \
-            GB_Z_TYPE zold, znew, *pz = Hx + (i) ;                      \
-            do                                                          \
-            {                                                           \
-                /* zold = Hx [i] via atomic read */                     \
-                GB_Z_ATOMIC_READ (zold, *pz) ;                          \
-                /* znew = zold + t */                                   \
-                GB_ADD (znew, zold, t) ;                                \
-            }                                                           \
-            while (!GB_Z_ATOMIC_COMPARE_EXCHANGE (pz, zold, znew)) ;    \
+        // integers, float, and double (not used for single and double
+        // complex).
+        #define GB_ATOMIC_UPDATE_HX(i,t)                            \
+        {                                                           \
+            GB_CTYPE xold, xnew, *px = Hx + (i) ;                   \
+            do                                                      \
+            {                                                       \
+                /* xold = Hx [i] via atomic read */                 \
+                GB_ATOMIC_READ                                      \
+                xold = (*px) ;                                      \
+                /* xnew = xold + t */                               \
+                xnew = GB_ADD_FUNCTION (xold, t) ;                  \
+            }                                                       \
+            while (!GB_ATOMIC_COMPARE_EXCHANGE (px, xold, xnew)) ;  \
         }
 
     #endif
@@ -517,15 +479,11 @@
     // Hx [i] += t can only be done inside the critical section
     //--------------------------------------------------------------------------
 
-    // all user-defined monoids go here, and all double complex monoids (except
-    // PLUS).  This macro is not actually atomic itself, but must be placed
-    // inside a critical section.
-    #define GB_Z_ATOMIC_UPDATE_HX(i,t)  \
-    {                                   \
+    // all user-defined monoids go here, and all complex monoids (except PLUS)
+    #define GB_ATOMIC_UPDATE_HX(i,t)    \
         GB_OMP_FLUSH                    \
         GB_HX_UPDATE (i, t) ;           \
-        GB_OMP_FLUSH                    \
-    }
+        GB_OMP_FLUSH
 
 #endif
 
@@ -534,19 +492,49 @@
      GB_IS_FMIN_MONOID || GB_IS_FMAX_MONOID)
 
 //------------------------------------------------------------------------------
-// GB_Z_ATOMIC_WRITE_HX:  Hx [i] = t via atomics or critical section
+// GB_ATOMIC_WRITE_HX:  Hx [i] = t
 //------------------------------------------------------------------------------
 
-#if GB_Z_HAS_ATOMIC_WRITE
+#if GB_IS_ANY_PAIR_SEMIRING
+
+    //--------------------------------------------------------------------------
+    // ANY_PAIR: result is purely symbolic; no numeric work to do
+    //--------------------------------------------------------------------------
+
+    #define GB_ATOMIC_WRITE_HX(i,t)
+
+#elif GB_HAS_ATOMIC
 
     //--------------------------------------------------------------------------
     // Hx [i] = t via atomic write
     //--------------------------------------------------------------------------
 
-    // The GB_Z_TYPE has an atomic write, with GB_Z_ATOMIIC_BITS defined.
-    // The generic methods do not use this option.  For the ANY_PAIR semiring,
-    // GB_Z_ATOMIC_BITS is zero and this macro becomes empty.
-    #define GB_Z_ATOMIC_WRITE_HX(i,t) GB_Z_ATOMIC_WRITE (Hx [i], t)
+    #if GB_IS_PLUS_FC32_MONOID
+
+        // built-in PLUS_FC32 monoid
+        #define GB_ATOMIC_WRITE_HX(i,t)         \
+            GB_ATOMIC_WRITE                     \
+            Hx_real [2*(i)] = crealf (t) ;      \
+            GB_ATOMIC_WRITE                     \
+            Hx_imag [2*(i)] = cimagf (t) ;
+
+    #elif GB_IS_PLUS_FC64_MONOID
+
+        // built-in PLUS_FC64 monoid
+        #define GB_ATOMIC_WRITE_HX(i,t)         \
+            GB_ATOMIC_WRITE                     \
+            Hx_real [2*(i)] = creal (t) ;       \
+            GB_ATOMIC_WRITE                     \
+            Hx_imag [2*(i)] = cimag (t) ;
+
+    #else
+
+        // all other atomic monoids
+        #define GB_ATOMIC_WRITE_HX(i,t)         \
+            GB_ATOMIC_WRITE                     \
+            GB_HX_WRITE (i, t)
+
+    #endif
 
 #else
 
@@ -554,14 +542,10 @@
     // Hx [i] = t via critical section
     //--------------------------------------------------------------------------
 
-    // This macro is not actually atomic itself, but must be placed inside a
-    // critical section.  GB_HX_WRITE is a memcpy for generic methods.
-    #define GB_Z_ATOMIC_WRITE_HX(i,t)       \
-    {                                       \
-        GB_OMP_FLUSH                        \
-        GB_HX_WRITE (i, t) ;                \
-        GB_OMP_FLUSH                        \
-    }
+    #define GB_ATOMIC_WRITE_HX(i,t)             \
+        GB_OMP_FLUSH                            \
+        GB_HX_WRITE (i, t) ;                    \
+        GB_OMP_FLUSH
 
 #endif
 
@@ -585,20 +569,13 @@
 //      }
 
 #define GB_HASH(i) \
-    int64_t hash = GB_HASHF (i,hash_bits) ; ; GB_REHASH (hash,i,hash_bits)
+    int64_t hash = GB_HASHF (i) ; ; GB_REHASH (hash,i)
 
 //------------------------------------------------------------------------------
 // define macros for any sparsity of A and B
 //------------------------------------------------------------------------------
 
-#ifdef GB_JIT_KERNEL
-// JIT kernels keep their specializations for the sparsity of A and B
-#define GB_META16
-#else
-// generic and pre-generated: define macros for any sparsity of A and B
 #undef GB_META16
-#endif
-
 #include "GB_meta16_definitions.h"
 
 #endif

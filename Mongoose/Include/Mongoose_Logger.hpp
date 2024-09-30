@@ -3,11 +3,10 @@
 /* ========================================================================== */
 
 /* -----------------------------------------------------------------------------
- * Mongoose Graph Partitioning Library, Copyright (C) 2017-2018,
+ * Mongoose Graph Partitioning Library  Copyright (C) 2017-2018,
  * Scott P. Kolodziej, Nuri S. Yeralan, Timothy A. Davis, William W. Hager
  * Mongoose is licensed under Version 3 of the GNU General Public License.
  * Mongoose is also available under other licenses; contact authors for details.
- * SPDX-License-Identifier: GPL-3.0-only
  * -------------------------------------------------------------------------- */
 
 /**
@@ -25,7 +24,7 @@
 
 #include <iostream>
 #include <string>
-#include <SuiteSparse_config.h>
+#include <time.h>
 
 // Default Logging Levels
 #ifndef LOG_ERROR
@@ -98,7 +97,7 @@ class Logger
 private:
     static int debugLevel;
     static bool timingOn;
-    static double clocks[6];
+    static clock_t clocks[6];
     static float times[6];
 
 public:
@@ -129,7 +128,7 @@ inline void Logger::tic(TimingType timingType)
 {
     if (timingOn)
     {
-        clocks[timingType] = SuiteSparse_time ();
+        clocks[timingType] = clock();
     }
 }
 
@@ -152,7 +151,7 @@ inline void Logger::toc(TimingType timingType)
     if (timingOn)
     {
         times[timingType]
-            += (float) (SuiteSparse_time () - clocks[timingType]) ;
+            += ((float)(clock() - clocks[timingType])) / CLOCKS_PER_SEC;
     }
 }
 

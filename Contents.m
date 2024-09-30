@@ -128,11 +128,10 @@
 %   GrB - the GraphBLAS matrix object; 100s of overloaded functions.
 %
 %-------------------------------------------------------------------------------
-% SPEX: solves sparse Ax=b exactly, with no roundoff error
+% SLIP_LU: solves sparse Ax=b exactly, with no roundoff error
 %-------------------------------------------------------------------------------
 %
-%   SPEX_Left_LU_backslash - solve Ax=b via sparse left-looking
-%                       integer-preserving LU
+%   SLIP_backslash - solve Ax=b via sparse left-looking integer-preserving LU
 %
 %-------------------------------------------------------------------------------
 % Other packages:
@@ -157,7 +156,6 @@
 % For help on compiling SuiteSparse or the demos, testing functions, etc.,
 % please see the help for each individual package.
 %
-% Copyright (c) 1995-2023, Timothy A. Davis, http://suitesparse.com.
-% See each package for its license.
+% Copyright 2020, Timothy A. Davis, http://suitesparse.com.
 
 help SuiteSparse

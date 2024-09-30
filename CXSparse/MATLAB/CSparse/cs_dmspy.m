@@ -15,8 +15,7 @@ function [p,q,r,s,cc,rr] = cs_dmspy (A,res,seed)
 %
 %   See also CS_DMPERM, CS_DMSOL, DMPERM, SPRANK, SPY.
 
-% CXSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 if (~issparse (A))
     A = sparse (A) ;

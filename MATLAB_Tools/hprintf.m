@@ -46,8 +46,8 @@ function count = hprintf (varargin)
 %
 % See also fprintf, strrep, sprintf.
 
-% hprintf, Copyright (c) 2007, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2007, T. Davis, with thanks to 'us' (us at neurol dot unizh dot ch)
+% for suggestions.
 
 % Aug 25, 2007
 

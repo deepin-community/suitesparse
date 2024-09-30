@@ -2,11 +2,6 @@
 // === spqr_rsolve =============================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
 // Solve X = E*(R\B) or X=R\B using the QR factorization from spqr_1factor
 // (including the singleton-row R and the multifrontal R).
 
@@ -61,14 +56,14 @@
 
 #include "spqr.hpp"
 
-template <typename Entry, typename Int> void spqr_rsolve
+template <typename Entry> void spqr_rsolve
 (
     // inputs
-    SuiteSparseQR_factorization <Entry, Int> *QR,
+    SuiteSparseQR_factorization <Entry> *QR,
     int use_Q1fill,         // if TRUE, do X=E*(R\B), otherwise do X=R\B
 
-    Int nrhs,              // number of columns of B
-    Int ldb,               // leading dimension of B
+    Long nrhs,              // number of columns of B
+    Long ldb,               // leading dimension of B
     Entry *B,               // size m-by-nrhs with leading dimesion ldb
 
     // output
@@ -76,23 +71,23 @@ template <typename Entry, typename Int> void spqr_rsolve
 
     // workspace
     Entry **Rcolp,          // size QRnum->maxfrank
-    Int *Rlive,            // size QRnum->maxfrank
+    Long *Rlive,            // size QRnum->maxfrank
     Entry *W,               // size QRnum->maxfrank * nrhs
 
     cholmod_common *cc
 )
 {
-    spqr_symbolic <Int> *QRsym ;
-    spqr_numeric <Entry, Int> *QRnum ;
-    Int n1rows, n1cols, n ;
-    Int *Q1fill, *R1p, *R1j ;
+    spqr_symbolic *QRsym ;
+    spqr_numeric <Entry> *QRnum ;
+    Long n1rows, n1cols, n ;
+    Long *Q1fill, *R1p, *R1j ;
     Entry *R1x ;
 
     Entry xi ;
     Entry **Rblock, *R, *W1, *B1, *X1 ;
-    Int *Rp, *Rj, *Super, *HStair, *Hm, *Stair ;
+    Long *Rp, *Rj, *Super, *HStair, *Hm, *Stair ;
     char *Rdead ;
-    Int nf, // m,
+    Long nf, // m,
         rank, j, f, col1, col2, fp, pr, fn, rm, k, i, row1, row2, ii,
         keepH, fm, h, t, live, kk ;
 
@@ -347,12 +342,8 @@ template <typename Entry, typename Int> void spqr_rsolve
     // === solve with the singleton rows of R ==================================
     // =========================================================================
 
-    if (n1rows > 0)
-    {
-        FLOP_COUNT2 (
-            ((n1rows <= 0) ? 0 : nrhs) ,
-            (n1rows + (2 * (R1p [n1rows] - n1rows)))) ;
-    }
+    FLOP_COUNT ((n1rows <= 0) ? 0 :
+        nrhs * (n1rows + (2 * (R1p [n1rows] - n1rows)))) ;
 
     for (kk = 0 ; kk < nrhs ; kk++)
     {
@@ -361,18 +352,18 @@ template <typename Entry, typename Int> void spqr_rsolve
             // get the right-hand side for this ith singleton row
             Entry x = B [i] ;
             // solve with the "off-diagonal" entries, x = x-R(i,:)*x2
-            for (Int p = R1p [i] + 1 ; p < R1p [i+1] ; p++)
+            for (Long p = R1p [i] + 1 ; p < R1p [i+1] ; p++)
             {
-                Int jnew = R1j [p] ;
+                Long jnew = R1j [p] ;
                 ASSERT (jnew >= i && jnew < n) ;
-                Int jold = Q1fill ? Q1fill [jnew] : jnew ;
+                Long jold = Q1fill ? Q1fill [jnew] : jnew ;
                 ASSERT (jold >= 0 && jold < n) ;
                 x -= R1x [p] * X [jold] ;
             }
             // divide by the "diagonal" (the singleton entry itself)
-            Int p = R1p [i] ;
-            Int jnew = R1j [p] ;
-            Int jold = Q1fill ? Q1fill [jnew] : jnew ;
+            Long p = R1p [i] ;
+            Long jnew = R1j [p] ;
+            Long jold = Q1fill ? Q1fill [jnew] : jnew ;
             ASSERT (jold >= 0 && jold < n) ;
             // X [jold] = x / R1x [p] ; using cc->complex_divide
             X [jold] = spqr_divide (x, R1x [p], cc) ;
@@ -382,84 +373,48 @@ template <typename Entry, typename Int> void spqr_rsolve
     }
 }
 
-template void spqr_rsolve <double, int32_t>
+// =============================================================================
+
+template void spqr_rsolve <double>
 (
     // inputs
-    SuiteSparseQR_factorization <double, int32_t> *QR,
-    int use_Q1fill,         // if TRUE, do X=E*(R\B), otherwise do X=R\B
+    SuiteSparseQR_factorization <double> *QR,
+    int use_Q1fill,
 
-    int32_t nrhs,              // number of columns of B
-    int32_t ldb,               // leading dimension of B
-    double *B,               // size m-by-nrhs with leading dimesion ldb
-
-    // output
-    double *X,               // size n-by-nrhs with leading dimension n
-
-    // workspace
-    double **Rcolp,          // size QRnum->maxfrank
-    int32_t *Rlive,            // size QRnum->maxfrank
-    double *W,               // size QRnum->maxfrank * nrhs
-
-    cholmod_common *cc
-) ;
-template void spqr_rsolve <Complex, int32_t>
-(
-    // inputs
-    SuiteSparseQR_factorization <Complex, int32_t> *QR,
-    int use_Q1fill,         // if TRUE, do X=E*(R\B), otherwise do X=R\B
-
-    int32_t nrhs,              // number of columns of B
-    int32_t ldb,               // leading dimension of B
-    Complex *B,               // size m-by-nrhs with leading dimesion ldb
+    Long nrhs,              // number of columns of B
+    Long ldb,               // leading dimension of B
+    double *B,              // size m-by-nrhs with leading dimesion ldb
 
     // output
-    Complex *X,               // size n-by-nrhs with leading dimension n
+    double *X,              // size n-by-nrhs with leading dimension n
 
     // workspace
-    Complex **Rcolp,          // size QRnum->maxfrank
-    int32_t *Rlive,            // size QRnum->maxfrank
-    Complex *W,               // size QRnum->maxfrank * nrhs
+    double **Rcolp,
+    Long *Rlive,
+    double *W,
 
     cholmod_common *cc
 ) ;
 
-template void spqr_rsolve <double, int64_t>
+
+template void spqr_rsolve <Complex>
 (
     // inputs
-    SuiteSparseQR_factorization <double, int64_t> *QR,
-    int use_Q1fill,         // if TRUE, do X=E*(R\B), otherwise do X=R\B
+    SuiteSparseQR_factorization <Complex> *QR,
+    int use_Q1fill,
 
-    int64_t nrhs,              // number of columns of B
-    int64_t ldb,               // leading dimension of B
-    double *B,               // size m-by-nrhs with leading dimesion ldb
+    Long nrhs,              // number of columns of B
+    Long ldb,               // leading dimension of B
+    Complex *B,             // size m-by-nrhs with leading dimesion ldb
 
     // output
-    double *X,               // size n-by-nrhs with leading dimension n
+    Complex *X,             // size n-by-nrhs with leading dimension n
 
     // workspace
-    double **Rcolp,          // size QRnum->maxfrank
-    int64_t *Rlive,            // size QRnum->maxfrank
-    double *W,               // size QRnum->maxfrank * nrhs
+    Complex **Rcolp,
+    Long *Rlive,
+    Complex *W,
 
     cholmod_common *cc
 ) ;
-template void spqr_rsolve <Complex, int64_t>
-(
-    // inputs
-    SuiteSparseQR_factorization <Complex, int64_t> *QR,
-    int use_Q1fill,         // if TRUE, do X=E*(R\B), otherwise do X=R\B
 
-    int64_t nrhs,              // number of columns of B
-    int64_t ldb,               // leading dimension of B
-    Complex *B,               // size m-by-nrhs with leading dimesion ldb
-
-    // output
-    Complex *X,               // size n-by-nrhs with leading dimension n
-
-    // workspace
-    Complex **Rcolp,          // size QRnum->maxfrank
-    int64_t *Rlive,            // size QRnum->maxfrank
-    Complex *W,               // size QRnum->maxfrank * nrhs
-
-    cholmod_common *cc
-) ;

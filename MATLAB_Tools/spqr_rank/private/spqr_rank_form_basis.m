@@ -18,9 +18,7 @@ function [N, stats, stats_ssp, est_sval_upper_bounds] = ...
 %      bounds
 % Not user-callable.
 
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2012, Leslie Foster and Timothy A Davis.
 
 get_details = opts.get_details ;
 implicit_null_space_basis = opts.implicit_null_space_basis ;

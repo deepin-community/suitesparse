@@ -11,8 +11,7 @@ function meshnd_quality (do_metis)
 %
 % See also meshnd, meshsparse, nested, amd, metis.
 
-% MESHND, Copyright (c) 2009, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2007-2009, Timothy A. Davis, http://www.suitesparse.com
 
 stencils = [5 9 7 27] ;
 

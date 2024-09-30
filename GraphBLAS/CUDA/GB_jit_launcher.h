@@ -43,9 +43,8 @@
 
 namespace jit {
 
-#if 0
-const std::vector<std::string> GB_jit_cuda_compiler_flags{
-    "-std=c++17",
+const std::vector<std::string> compiler_flags{
+    "-std=c++11",
             "--use_fast_math",
             "-remove-unused-globals",
             "-w",
@@ -56,11 +55,10 @@ const std::vector<std::string> GB_jit_cuda_compiler_flags{
             "-I../../Include",
             "-I../../Source",
             "-I../../Source/Template",
-//          "-Ilocal_cub/block",
+            "-Ilocal_cub/block",
             "-Itemplates",
-            "-I/usr/local/cuda/include" // FIXME: remove this?
+            "-I/usr/local/cuda/include"
 };
-#endif
 
 
 /**
@@ -127,8 +125,8 @@ class launcher {
    * @tparam grid and block sizes 
    * @return Return launcher reference if successful
    */
-  jitify::experimental::KernelLauncher configure( dim3 grid, dim3 block, unsigned int smem = 0, cudaStream_t stream = 0){
-    return get_kernel().configure( grid, block, smem, stream);
+  jitify::experimental::KernelLauncher configure( dim3 grid, dim3 block){
+    return get_kernel().configure( grid, block); 
     //return get_kernel().configure_1d_max_occupancy( max_block_size=block.x); 
   }
 

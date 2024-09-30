@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// AMD/Source/amd_dump: debug routines for AMD
-//------------------------------------------------------------------------------
+/* ========================================================================= */
+/* === AMD_dump ============================================================ */
+/* ========================================================================= */
 
-// AMD, Copyright (c) 1996-2022, Timothy A. Davis, Patrick R. Amestoy, and
-// Iain S. Duff.  All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
-//------------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
+/* AMD, Copyright (c) Timothy A. Davis,					     */
+/* Patrick R. Amestoy, and Iain S. Duff.  See ../README.txt for License.     */
+/* email: DrTimothyAldenDavis@gmail.com                                      */
+/* ------------------------------------------------------------------------- */
 
 /* Debugging routines for AMD.  Not used if NDEBUG is not defined at compile-
  * time (the default).  See comments in amd_internal.h on how to enable
@@ -18,7 +18,7 @@
 #ifndef NDEBUG
 
 /* This global variable is present only when debugging */
-Int AMD_debug = -999 ;		/* default is no debug printing */
+GLOBAL Int AMD_debug = -999 ;		/* default is no debug printing */
 
 /* ========================================================================= */
 /* === AMD_debug_init ====================================================== */
@@ -26,7 +26,7 @@ Int AMD_debug = -999 ;		/* default is no debug printing */
 
 /* Sets the debug print level, by reading the file debug.amd (if it exists) */
 
-void AMD_debug_init ( char *s )
+GLOBAL void AMD_debug_init ( char *s )
 {
     FILE *f ;
     f = fopen ("debug.amd", "r") ;
@@ -53,7 +53,7 @@ void AMD_debug_init ( char *s )
  * cannot be called when the hash buckets are non-empty.
  */
 
-void AMD_dump (
+GLOBAL void AMD_dump (
     Int n,	    /* A is n-by-n */
     Int Pe [ ],	    /* pe [0..n-1]: index in iw of start of row i */
     Int Iw [ ],	    /* workspace of size iwlen, iwlen [0..pfree-1]

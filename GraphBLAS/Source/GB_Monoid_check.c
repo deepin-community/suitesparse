@@ -2,13 +2,14 @@
 // GB_Monoid_check: check and print a monoid
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
 #include "GB.h"
 
+GB_PUBLIC
 GrB_Info GB_Monoid_check        // check a GraphBLAS monoid
 (
     const GrB_Monoid monoid,    // GraphBLAS monoid to print and check
@@ -35,18 +36,7 @@ GrB_Info GB_Monoid_check        // check a GraphBLAS monoid
     //--------------------------------------------------------------------------
 
     GB_CHECK_MAGIC (monoid) ;
-    if (monoid->header_size == 0)
-    { 
-        GBPR0 ("(built-in):") ;
-    }
-    else if (monoid->hash == 0)
-    { 
-        GBPR0 ("(user-defined; same as built-in):") ;
-    }
-    else
-    { 
-        GBPR0 ("(user-defined):") ;
-    }
+    GBPR0 (monoid->header_size > 0 ? "(user-defined)" : "(built-in)") ;
 
     GrB_Info info = GB_BinaryOp_check (monoid->op, "monoid->op", pr, f) ;
     if (info != GrB_SUCCESS || GB_OP_IS_POSITIONAL (monoid->op))

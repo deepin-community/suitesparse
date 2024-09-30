@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/BucketList_FillWorkQueue.cpp =========================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // FillWorkQueue is responsible for filling the work queue with items and
 // resolving generic TaskType entries on the bundles into concrete tasks
@@ -21,11 +15,11 @@
 
 #include "GPUQREngine_BucketList.hpp"
 
+
 // FillWorkQueue is responsible for filling the work queue with items and
 // resolving generic TaskType entries on the bundles into concrete tasks
 // to be performed by the GPU.
-template <typename Int>
-Int BucketList<Int>::FillWorkQueue
+Int BucketList::FillWorkQueue
 (
     TaskDescriptor *queue,  // The list of work items for the GPU
     Int *queueIndex         // The current index into the queue
@@ -42,7 +36,7 @@ Int BucketList<Int>::FillWorkQueue
     // For all bundles the bucket list is currently tracking:
     for (int i = 0; i < numBundles; i++)
     {
-        LLBundle <Int>& bundle = Bundles[i];
+        LLBundle& bundle = Bundles[i];
         TaskType type = bundle.CurrentTask;
         int nativeBucket = (int) bundle.NativeBucket;
 
@@ -202,14 +196,3 @@ Int BucketList<Int>::FillWorkQueue
 
     return numTasks;
 }
-
-template int32_t BucketList<int32_t>::FillWorkQueue
-(
-    TaskDescriptor *queue,  // The list of work items for the GPU
-    int32_t *queueIndex         // The current index into the queue
-) ;
-template int64_t BucketList<int64_t>::FillWorkQueue
-(
-    TaskDescriptor *queue,  // The list of work items for the GPU
-    int64_t *queueIndex         // The current index into the queue
-) ;

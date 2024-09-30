@@ -1,23 +1,22 @@
 //------------------------------------------------------------------------------
-// GB_mex_mxm: C<M> = accum(C,A*B)
+// GB_mex_mxm: C<Mask> = accum(C,A*B)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
 #include "GB_mex.h"
-#include "GB_stringify.h"
 
-#define USAGE "C = GB_mex_mxm (C, M, accum, semiring, A, B, desc, macrofy)"
+#define USAGE "C = GB_mex_mxm (C, Mask, accum, semiring, A, B, desc)"
 
 #define FREE_ALL                                    \
 {                                                   \
     GrB_Matrix_free_(&A) ;                          \
     GrB_Matrix_free_(&B) ;                          \
     GrB_Matrix_free_(&C) ;                          \
-    GrB_Matrix_free_(&M) ;                          \
+    GrB_Matrix_free_(&Mask) ;                       \
     if (semiring != Complex_plus_times)             \
     {                                               \
         if (semiring != NULL)                       \
@@ -43,12 +42,12 @@ void mexFunction
     GrB_Matrix A = NULL ;
     GrB_Matrix B = NULL ;
     GrB_Matrix C = NULL ;
-    GrB_Matrix M = NULL ;
+    GrB_Matrix Mask = NULL ;
     GrB_Semiring semiring = NULL ;
     GrB_Descriptor desc = NULL ;
 
     // check inputs
-    if (nargout > 1 || nargin < 6 || nargin > 8)
+    if (nargout > 1 || nargin < 6 || nargin > 7)
     {
         mexErrMsgTxt ("Usage: " USAGE) ;
     }
@@ -64,12 +63,12 @@ void mexFunction
         mexErrMsgTxt ("C failed") ;
     }
 
-    // get M (shallow copy)
-    M = GB_mx_mxArray_to_Matrix (pargin [1], "M", false, false) ;
-    if (M == NULL && !mxIsEmpty (pargin [1]))
+    // get Mask (shallow copy)
+    Mask = GB_mx_mxArray_to_Matrix (pargin [1], "Mask", false, false) ;
+    if (Mask == NULL && !mxIsEmpty (pargin [1]))
     {
         FREE_ALL ;
-        mexErrMsgTxt ("M failed") ;
+        mexErrMsgTxt ("Mask failed") ;
     }
 
     // get A (shallow copy)
@@ -114,8 +113,8 @@ void mexFunction
         mexErrMsgTxt ("desc failed") ;
     }
 
-    // C<M> = accum(C,A*B)
-    METHOD (GrB_mxm (C, M, accum, semiring, A, B, desc)) ;
+    // C<Mask> = accum(C,A*B)
+    METHOD (GrB_mxm (C, Mask, accum, semiring, A, B, desc)) ;
 
     // return C as a struct and free the GraphBLAS C
     pargout [0] = GB_mx_Matrix_to_mxArray (&C, "C output from GrB_mxm", true) ;

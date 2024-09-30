@@ -2,12 +2,10 @@
 // GB_ewise_slice: slice the entries and vectors for an ewise operation
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed, but could use variants for sparsity formats.
 
 // Constructs a set of tasks to compute C, for an element-wise operation that
 // operates on two input matrices, C=op(A,B).  These include:
@@ -55,7 +53,7 @@ GrB_Info GB_ewise_slice
     const GrB_Matrix M,             // mask matrix to slice (optional)
     const GrB_Matrix A,             // matrix to slice
     const GrB_Matrix B,             // matrix to slice
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -96,8 +94,7 @@ GrB_Info GB_ewise_slice
     // determine # of threads to use
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
 
     //--------------------------------------------------------------------------
     // allocate the initial TaskList
@@ -263,7 +260,7 @@ GrB_Info GB_ewise_slice
     // replace Cwork with its cumulative sum
     //--------------------------------------------------------------------------
 
-    GB_cumsum (Cwork, Cnvec, NULL, nthreads_for_Cwork, Werk) ;
+    GB_cumsum (Cwork, Cnvec, NULL, nthreads_for_Cwork, Context) ;
     double cwork = (double) Cwork [Cnvec] ;
 
     //--------------------------------------------------------------------------

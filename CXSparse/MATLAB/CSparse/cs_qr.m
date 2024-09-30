@@ -27,7 +27,6 @@ function [V,beta,p,R,q] = cs_qr (A)                                         %#ok
 %
 %   See also CS_AMD, CS_QRIGHT, CS_QR, CS_DMPERM, QR, COLAMD.
 
-% CXSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 error ('cs_qr mexFunction not found') ;

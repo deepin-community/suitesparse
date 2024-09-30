@@ -1,16 +1,14 @@
 function test1 (nmat)
 %TEST1 test for BTF
-% Requires CSparse and ssget
+% Requires CSparse and UFget
 % Example:
 %   test1
-% See also btf, maxtrans, strongcomp, dmperm, ssget,
+% See also btf, maxtrans, strongcomp, dmperm, UFget,
 %   test1, test2, test3, test4, test5.
 
-% BTF, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-% Author: Timothy A. Davis.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2007, Timothy A. Davis, http://www.suitesparse.com
 
-index = ssget ;
+index = UFget ;
 % f = find (index.sprank < min (index.nrows, index.ncols)) ;
 f = 1:length (index.nrows) ;
 
@@ -46,7 +44,7 @@ try
 
     for k = 1:nmat
 
-        Prob = ssget (f (k), index) ;
+        Prob = UFget (f (k), index) ;
         A = Prob.A ;
         clear Prob
         t = 0 ;

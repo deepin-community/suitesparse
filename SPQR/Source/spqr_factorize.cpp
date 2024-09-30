@@ -2,11 +2,6 @@
 // === spqr_factorize ==========================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
 // Given an m-by-n sparse matrix A and its symbolic analsys, compute its
 // numeric QR factorization.
 //
@@ -42,23 +37,23 @@
 // Free Sx, A, and all of Work except the Work [0:ns-1] array itself
 #define FREE_WORK_PART1 \
 { \
-    free_Work <Entry, Int> (Work, ns, n, maxfn, wtsize, cc) ; \
-    if (freeA) spqr_free_sparse <Int> (Ahandle, cc) ; \
-    spqr_free <Int> (anz, sizeof (Entry), Sx, cc) ; \
+    free_Work <Entry> (Work, ns, n, maxfn, wtsize, cc) ; \
+    if (freeA) cholmod_l_free_sparse (Ahandle, cc) ; \
+    cholmod_l_free (anz, sizeof (Entry), Sx, cc) ; \
     Sx = NULL ; \
 }
 
 // Free Cblock and the Work array itself
 #define FREE_WORK_PART2 \
 { \
-    spqr_free <Int> (ns, sizeof (spqr_work <Entry, Int>), Work, cc) ; \
+    cholmod_l_free (ns, sizeof (spqr_work <Entry>), Work, cc) ; \
     Work = NULL ; \
-    spqr_free <Int> (nf+1, sizeof (Entry *), Cblock, cc) ; \
+    cholmod_l_free (nf+1, sizeof (Entry *), Cblock, cc) ; \
     Cblock = NULL ; \
 }
 
 // Free all workspace
-#define FREE_WORK_FACTORIZE \
+#define FREE_WORK \
 { \
     FREE_WORK_PART1 ; \
     FREE_WORK_PART2 ; \
@@ -72,40 +67,40 @@
 // Allocate the Work object, which is an array of structs.  The entry Work [s]
 // contains workspace for the Stack s, for each Stack 0 to ns-1.
 
-template <typename Entry, typename Int> spqr_work <Entry, Int> *get_Work
+template <typename Entry> spqr_work <Entry> *get_Work
 (
-    Int ns,            // number of stacks
-    Int n,             // number of columns of A
-    Int maxfn,         // largest number of columns in any front
-    Int keepH,         // if true, H is kept
-    Int fchunk,
-    Int *p_wtsize,     // size of WTwork for each 
+    Long ns,            // number of stacks
+    Long n,             // number of columns of A
+    Long maxfn,         // largest number of columns in any front
+    Long keepH,         // if true, H is kept
+    Long fchunk,
+    Long *p_wtsize,     // size of WTwork for each 
     cholmod_common *cc
 )
 {
     int ok = TRUE ;
-    spqr_work <Entry, Int> *Work ;
-    Int wtsize ;
+    spqr_work <Entry> *Work ;
+    Long wtsize ;
     *p_wtsize = 0 ;
 
     // wtsize = (fchunk + (keepH ? 0:1)) * maxfn ;
     wtsize = spqr_mult (fchunk + (keepH ? 0:1), maxfn, &ok) ;
 
-    Work = (spqr_work <Entry, Int> *)    
-        spqr_malloc <Int> (ns, sizeof (spqr_work <Entry, Int>), cc) ;
+    Work = (spqr_work <Entry> *)    
+        cholmod_l_malloc (ns, sizeof (spqr_work <Entry>), cc) ;
 
     if (!ok || cc->status < CHOLMOD_OK)
     {
-        // out of memory or Int overflow
-        spqr_free <Int> (ns, sizeof (spqr_work <Entry, Int>), Work, cc) ;
+        // out of memory or Long overflow
+        cholmod_l_free (ns, sizeof (spqr_work <Entry>), Work, cc) ;
         ERROR (CHOLMOD_OUT_OF_MEMORY, "out of memory") ;
         return (NULL) ;
     }
 
-    for (Int stack = 0 ; stack < ns ; stack++)
+    for (Long stack = 0 ; stack < ns ; stack++)
     {
-        Work [stack].Fmap = (Int *) spqr_malloc <Int> (n, sizeof (Int), cc) ;
-        Work [stack].Cmap = (Int *) spqr_malloc <Int> (maxfn, sizeof(Int), cc);
+        Work [stack].Fmap = (Long *) cholmod_l_malloc (n, sizeof (Long), cc) ;
+        Work [stack].Cmap = (Long *) cholmod_l_malloc (maxfn, sizeof(Long), cc);
         if (keepH)
         {
             // Staircase is a permanent part of H
@@ -115,10 +110,10 @@ template <typename Entry, typename Int> spqr_work <Entry, Int> *get_Work
         {
             // Staircase workspace reused for each front
             Work [stack].Stair1 =
-                (Int *) spqr_malloc <Int> (maxfn, sizeof (Int), cc) ;
+                (Long *) cholmod_l_malloc (maxfn, sizeof (Long), cc) ;
         }
         Work [stack].WTwork =
-            (Entry *) spqr_malloc <Int> (wtsize, sizeof (Entry), cc) ;
+            (Entry *) cholmod_l_malloc (wtsize, sizeof (Entry), cc) ;
         Work [stack].sumfrank = 0 ;
         Work [stack].maxfrank = 0 ;
 
@@ -137,24 +132,24 @@ template <typename Entry, typename Int> spqr_work <Entry, Int> *get_Work
 
 // Free the contents of Work, but not the Work array itself
 
-template <typename Entry, typename Int> void free_Work
+template <typename Entry> void free_Work
 (
-    spqr_work <Entry, Int> *Work,
-    Int ns,            // number of stacks
-    Int n,             // number of columns of A
-    Int maxfn,         // largest number of columns in any front
-    Int wtsize,        // size of WTwork array for each Stack
+    spqr_work <Entry> *Work,
+    Long ns,            // number of stacks
+    Long n,             // number of columns of A
+    Long maxfn,         // largest number of columns in any front
+    Long wtsize,        // size of WTwork array for each Stack
     cholmod_common *cc
 )
 {
     if (Work != NULL)
     {
-        for (Int stack = 0 ; stack < ns ; stack++)
+        for (Long stack = 0 ; stack < ns ; stack++)
         {
-            spqr_free <Int> (n,      sizeof (Int),   Work [stack].Fmap,   cc) ;
-            spqr_free <Int> (maxfn,  sizeof (Int),   Work [stack].Cmap,   cc) ;
-            spqr_free <Int> (maxfn,  sizeof (Int),   Work [stack].Stair1, cc) ;
-            spqr_free <Int> (wtsize, sizeof (Entry), Work [stack].WTwork, cc) ;
+            cholmod_l_free (n,      sizeof (Long),   Work [stack].Fmap,   cc) ;
+            cholmod_l_free (maxfn,  sizeof (Long),   Work [stack].Cmap,   cc) ;
+            cholmod_l_free (maxfn,  sizeof (Long),   Work [stack].Stair1, cc) ;
+            cholmod_l_free (wtsize, sizeof (Entry), Work [stack].WTwork, cc) ;
             Work [stack].Fmap = NULL ;
             Work [stack].Cmap = NULL ;
             Work [stack].Stair1 = NULL ;
@@ -168,30 +163,30 @@ template <typename Entry, typename Int> void free_Work
 // === spqr_factorize ==========================================================
 // =============================================================================
 
-template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factorize
+template <typename Entry> spqr_numeric <Entry> *spqr_factorize
 (
     // input, optionally freed on output
     cholmod_sparse **Ahandle,
 
     // inputs, not modified
-    Int freeA,                     // if TRUE, free A on output
+    Long freeA,                     // if TRUE, free A on output
     double tol,                     // for rank detection
-    Int ntol,                      // apply tol only to first ntol columns
-    spqr_symbolic <Int> *QRsym,
+    Long ntol,                      // apply tol only to first ntol columns
+    spqr_symbolic *QRsym,
 
     // workspace and parameters
     cholmod_common *cc
 )
 {
-    Int *Wi, *Qfill, *PLinv, *Cm, *Sp, *Stack_size,
+    Long *Wi, *Qfill, *PLinv, *Cm, *Sp, *Stack_size,
         *TaskFront, *TaskFrontp, *TaskStack, *Stack_maxstack ;
     Entry *Sx, **Rblock, **Cblock, **Stacks ;
-    spqr_numeric <Entry, Int> *QRnum ;
-    Int nf, m, n, anz, fchunk, maxfn, rank, maxfrank, rjsize, rank1,
+    spqr_numeric <Entry> *QRnum ;
+    Long nf, m, n, anz, fchunk, maxfn, rank, maxfrank, rjsize, rank1,
         maxstack,j, wtsize, stack, ns, ntasks, keepH, hisize ;
     char *Rdead ;
     cholmod_sparse *A ;
-    spqr_work <Entry, Int> *Work ;
+    spqr_work <Entry> *Work ;
 
     // -------------------------------------------------------------------------
     // get inputs and contents of symbolic object
@@ -203,7 +198,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
         if (freeA)
         {
             // if freeA is true, A must always be freed, even on error
-            spqr_free_sparse <Int> (Ahandle, cc) ;
+            cholmod_l_free_sparse (Ahandle, cc) ;
         }
         return (NULL) ;
     }
@@ -256,14 +251,14 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     // allocate workspace
     // -------------------------------------------------------------------------
 
-    spqr_allocate_work <Int> (0, MAX (m,nf), 0, cc) ;
+    cholmod_l_allocate_work (0, MAX (m,nf), 0, cc) ;
 
-    // shared Int workspace
-    Wi = (Int *) cc->Iwork ;   // size m, aliased with the rest of Iwork
+    // shared Long workspace
+    Wi = (Long *) cc->Iwork ;   // size m, aliased with the rest of Iwork
     Cm = Wi ;                   // size nf
 
     // Cblock is workspace shared by all threads
-    Cblock = (Entry **) spqr_malloc <Int> (nf+1, sizeof (Entry *), cc) ;
+    Cblock = (Entry **) cholmod_l_malloc (nf+1, sizeof (Entry *), cc) ;
 
     Work = NULL ;               // Work and its contents not yet allocated
     fchunk = MIN (m, FCHUNK) ;
@@ -274,7 +269,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     // -------------------------------------------------------------------------
 
     // create numeric values of S = A(p,q) in row-form in Sx
-    Sx = (Entry *) spqr_malloc <Int> (anz, sizeof (Entry), cc) ;
+    Sx = (Entry *) cholmod_l_malloc (anz, sizeof (Entry), cc) ;
 
     if (cc->status == CHOLMOD_OK)
     {
@@ -292,7 +287,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     if (freeA)
     {
         // this is done even if out of memory, above
-        spqr_free_sparse <Int> (Ahandle, cc) ;
+        cholmod_l_free_sparse (Ahandle, cc) ;
         ASSERT (*Ahandle == NULL) ;
     }
     PR (("in spqr_factorize, freed A, status %d\n", cc->status)) ;
@@ -301,7 +296,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     {
         PR (("in spqr_factorize, failure %d\n", cc->status)) ;
         // out of memory
-        FREE_WORK_FACTORIZE ;
+        FREE_WORK ;
         return (NULL) ;
     }
 
@@ -309,23 +304,23 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     // allocate numeric object
     // -------------------------------------------------------------------------
 
-    QRnum = (spqr_numeric<Entry, Int> *)
-        spqr_malloc <Int> (1, sizeof (spqr_numeric<Entry, Int>), cc) ;
+    QRnum = (spqr_numeric<Entry> *)
+        cholmod_l_malloc (1, sizeof (spqr_numeric<Entry>), cc) ;
     PR (("after allocating numeric object header, status %d\n", cc->status)) ;
 
     if (cc->status < CHOLMOD_OK)
     {
         // out of memory
-        FREE_WORK_FACTORIZE ;
+        FREE_WORK ;
         return (NULL) ;
     }
 
-    Rblock     = (Entry **) spqr_malloc <Int> (nf, sizeof (Entry *), cc) ;
-    Rdead      = (char *)   spqr_calloc <Int> (n,  sizeof (char),    cc) ;
+    Rblock     = (Entry **) cholmod_l_malloc (nf, sizeof (Entry *), cc) ;
+    Rdead      = (char *)   cholmod_l_calloc (n,  sizeof (char),    cc) ;
 
     // these may be revised (with ns=1) if we run out of memory
-    Stacks     = (Entry **) spqr_calloc <Int> (ns, sizeof (Entry *), cc) ;
-    Stack_size = (Int *)   spqr_calloc <Int> (ns, sizeof (Int),    cc) ;
+    Stacks     = (Entry **) cholmod_l_calloc (ns, sizeof (Entry *), cc) ;
+    Stack_size = (Long *)   cholmod_l_calloc (ns, sizeof (Long),    cc) ;
 
     QRnum->Rblock     = Rblock ;
     QRnum->Rdead      = Rdead ;
@@ -335,12 +330,12 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     if (keepH)
     {
         // allocate permanent space for Stair, Tau, Hii for each front
-        QRnum->HStair= (Int *)  spqr_malloc <Int> (rjsize, sizeof (Int),  cc) ;
-        QRnum->HTau  = (Entry *) spqr_malloc <Int> (rjsize, sizeof (Entry), cc) ;
-        QRnum->Hii   = (Int *)  spqr_malloc <Int> (hisize, sizeof (Int),  cc) ;
-        QRnum->Hm    = (Int *)  spqr_malloc <Int> (nf,     sizeof (Int),  cc) ;
-        QRnum->Hr    = (Int *)  spqr_malloc <Int> (nf,     sizeof (Int),  cc) ;
-        QRnum->HPinv = (Int *)  spqr_malloc <Int> (m,      sizeof (Int),  cc) ;
+        QRnum->HStair= (Long *)  cholmod_l_malloc (rjsize, sizeof (Long),  cc) ;
+        QRnum->HTau  = (Entry *) cholmod_l_malloc (rjsize, sizeof (Entry), cc) ;
+        QRnum->Hii   = (Long *)  cholmod_l_malloc (hisize, sizeof (Long),  cc) ;
+        QRnum->Hm    = (Long *)  cholmod_l_malloc (nf,     sizeof (Long),  cc) ;
+        QRnum->Hr    = (Long *)  cholmod_l_malloc (nf,     sizeof (Long),  cc) ;
+        QRnum->HPinv = (Long *)  cholmod_l_malloc (m,      sizeof (Long),  cc) ;
     }
     else
     {
@@ -368,7 +363,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     {
         // out of memory
         spqr_freenum (&QRnum, cc) ;
-        FREE_WORK_FACTORIZE ;
+        FREE_WORK ;
         return (NULL) ;
     }
 
@@ -378,7 +373,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     // allocate workspace
     // -------------------------------------------------------------------------
 
-    Work = get_Work <Entry, Int> (ns, n, maxfn, keepH, fchunk, &wtsize, cc) ;
+    Work = get_Work <Entry> (ns, n, maxfn, keepH, fchunk, &wtsize, cc) ;
     PR (("after allocating work, status %d\n", cc->status)) ;
 
     // -------------------------------------------------------------------------
@@ -393,7 +388,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
             size_t stacksize = (ntasks == 1) ?
                 maxstack : Stack_maxstack [stack] ;
             Stack_size [stack] = stacksize ;
-            Stack = (Entry *) spqr_malloc <Int> (stacksize, sizeof (Entry), cc) ;
+            Stack = (Entry *) cholmod_l_malloc (stacksize, sizeof (Entry), cc) ;
             Stacks [stack] = Stack ;
             Work [stack].Stack_head = Stack ;
             Work [stack].Stack_top  = Stack + stacksize ;
@@ -416,31 +411,31 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
             {
                 size_t stacksize = (ntasks == 1) ?
                     maxstack : Stack_maxstack [stack] ;
-                spqr_free <Int> (stacksize, sizeof (Entry), Stacks [stack], cc) ;
+                cholmod_l_free (stacksize, sizeof (Entry), Stacks [stack], cc) ;
             }
         }
-        spqr_free <Int> (ns, sizeof (Entry *), Stacks,     cc) ;
-        spqr_free <Int> (ns, sizeof (Int),    Stack_size, cc) ;
+        cholmod_l_free (ns, sizeof (Entry *), Stacks,     cc) ;
+        cholmod_l_free (ns, sizeof (Long),    Stack_size, cc) ;
 
         // free the contents of Work, and the Work array itself
-        free_Work <Entry, Int> (Work, ns, n, maxfn, wtsize, cc) ;
-        spqr_free <Int> (ns, sizeof (spqr_work <Entry, Int>), Work, cc) ;
+        free_Work <Entry> (Work, ns, n, maxfn, wtsize, cc) ;
+        cholmod_l_free (ns, sizeof (spqr_work <Entry>), Work, cc) ;
 
         // punt to a single stack, a single task, and fchunk of 1
         ns = 1 ;
         ntasks = 1 ;
         fchunk = 1 ;
         cc->status = CHOLMOD_OK ;
-        Work = get_Work <Entry, Int> (ns, n, maxfn, keepH, fchunk, &wtsize, cc) ;
-        Stacks     = (Entry **) spqr_calloc <Int> (ns, sizeof (Entry *), cc) ;
-        Stack_size = (Int *)   spqr_calloc <Int> (ns, sizeof (Int),    cc) ;
+        Work = get_Work <Entry> (ns, n, maxfn, keepH, fchunk, &wtsize, cc) ;
+        Stacks     = (Entry **) cholmod_l_calloc (ns, sizeof (Entry *), cc) ;
+        Stack_size = (Long *)   cholmod_l_calloc (ns, sizeof (Long),    cc) ;
         QRnum->Stacks     = Stacks ;
         QRnum->Stack_size = Stack_size ;
         if (cc->status == CHOLMOD_OK)
         {
             Entry *Stack ;
             Stack_size [0] = maxstack ;
-            Stack = (Entry *) spqr_malloc <Int> (maxstack, sizeof (Entry), cc) ;
+            Stack = (Entry *) cholmod_l_malloc (maxstack, sizeof (Entry), cc) ;
             Stacks [0] = Stack ;
             Work [0].Stack_head = Stack ;
             Work [0].Stack_top  = Stack + maxstack ;
@@ -458,19 +453,19 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     if (cc->status < CHOLMOD_OK)
     {
         spqr_freenum (&QRnum, cc) ;
-        FREE_WORK_FACTORIZE ;
+        FREE_WORK ;
         return (NULL) ;
     }
 
-    // At this point, the factorization is guaranteed to succeed, unless sizeof
-    // (SUITESPARSE_BLAS_INT) < sizeof (Int), in which case, you really
-    // should get a 64-bit BLAS.
+    // At this point, the factorization is guaranteed to succeed, unless
+    // sizeof (BLAS_INT) < sizeof (Long), in which case, you really should get
+    // a 64-bit BLAS.
 
     // -------------------------------------------------------------------------
     // create the Blob : everything the numeric factorization kernel needs
     // -------------------------------------------------------------------------
 
-    spqr_blob <Entry, Int> Blob ;
+    spqr_blob <Entry> Blob ;
     Blob.QRsym = QRsym ;
     Blob.QRnum = QRnum ;
     Blob.tol = tol ;
@@ -497,7 +492,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     if (ntasks == 1)
     {
         // Just one task, with or without TBB installed: don't use TBB
-        spqr_kernel <Entry, Int> (0, &Blob) ;        // sequential case
+        spqr_kernel (0, &Blob) ;        // sequential case
     }
     else
     {
@@ -508,7 +503,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
 #else
         // TBB not installed, but the work is still split into multiple tasks.
         // do tasks 0 to ntasks-2 (skip the placeholder root task id = ntasks-1)
-        for (Int id = 0 ; id < ntasks-1 ; id++)
+        for (Long id = 0 ; id < ntasks-1 ; id++)
         {
             spqr_kernel (id, &Blob) ;
         }
@@ -518,19 +513,19 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     PR (("] did the kernel\n")) ;
 
     // -------------------------------------------------------------------------
-    // check for BLAS Int overflow on the CPU, or GPU failure
+    // check for BLAS Long overflow on the CPU, or GPU failure
     // -------------------------------------------------------------------------
 
     if (cc->status < CHOLMOD_OK)
     {
         // On the CPU, this case can only occur if the problem is too large for
         // the BLAS.  This can only occur if, for example you're on a 64-bit
-        // platform (with sizeof (Int) == 8) and using a 32-bit BLAS (with
-        // sizeof (SUITESPARSE_BLAS_INT) == 4).  On the GPU, this case can more
-        // easily occur, if we run out of memory in spqrgpu_kernel, or if we
-        // fail to communicate with the GPU.
+        // platform (with sizeof (Long) = 8) and using a 32-bit BLAS (with
+        // sizeof (BLAS_INT) = 4).  On the GPU, this case can more easily
+        // occur, if we run out of memory in spqrgpu_kernel, or if we fail to
+        // communicate with the GPU.
         spqr_freenum (&QRnum, cc) ;
-        FREE_WORK_FACTORIZE ;
+        FREE_WORK ;
         return (NULL) ;
     }
 
@@ -597,7 +592,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     // This option is mainly meant for testing, not production use.
     // It should be left at 1 for production use.
 
-    Int any_moved = FALSE ;
+    Long any_moved = FALSE ;
 
     int shrink = cc->SPQR_shrink ;
 
@@ -619,7 +614,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
             {
                 // force the block to move by malloc'ing a new one;
                 // this option is mainly for testing only.
-                Cblock [stack] = (Entry *) spqr_malloc <Int> (newstacksize,
+                Cblock [stack] = (Entry *) cholmod_l_malloc (newstacksize,
                     sizeof (Entry), cc) ;
                 if (Cblock [stack] == NULL)
                 {
@@ -634,7 +629,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
                 {
                     // malloc is OK; copy the block over and free the old one
                     memcpy (Cblock [stack], Stack, newstacksize*sizeof(Entry)) ;
-                    spqr_free <Int> (stacksize, sizeof (Entry), Stack, cc) ;
+                    cholmod_l_free (stacksize, sizeof (Entry), Stack, cc) ;
                 }
                 // the Stack has been shrunk to the new size
                 stacksize = newstacksize ;
@@ -645,7 +640,7 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
                 PR (("Normal shrink of the stack: %ld to %ld\n",
                     stacksize, newstacksize)) ;
                 Cblock [stack] =    // pointer to the new Stack
-                    (Entry *) spqr_realloc <Int> (
+                    (Entry *) cholmod_l_realloc (
                     newstacksize,   // requested size of Stack, in # of Entries
                     sizeof (Entry), // size of each Entry in the Stack
                     Stack,          // pointer to the old Stack
@@ -666,9 +661,9 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     if (any_moved)
     {
         // at least one Stack has moved; check all fronts and adjust them
-        for (Int task = 0 ; task < ntasks ; task++)
+        for (Long task = 0 ; task < ntasks ; task++)
         {
-            Int kfirst, klast ;
+            Long kfirst, klast ;
             if (ntasks == 1)
             {
                 // sequential case
@@ -687,9 +682,9 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
             Entry *New_Stack = Cblock [stack] ;
             if (New_Stack != Old_Stack)
             {
-                for (Int kf = kfirst ; kf < klast ; kf++)
+                for (Long kf = kfirst ; kf < klast ; kf++)
                 {
-                    Int f = (ntasks == 1) ? kf : TaskFront [kf] ;
+                    Long f = (ntasks == 1) ? kf : TaskFront [kf] ;
                     Rblock [f] = New_Stack + (Rblock [f] - Old_Stack) ;
                 }
             }
@@ -747,58 +742,36 @@ template <typename Entry, typename Int> spqr_numeric <Entry, Int> *spqr_factoriz
     return (QRnum) ;
 }
 
-template spqr_numeric <double, int32_t> *spqr_factorize <double, int32_t>
+
+// =============================================================================
+
+template spqr_numeric <double> *spqr_factorize <double>
 (
     // input, optionally freed on output
     cholmod_sparse **Ahandle,
 
     // inputs, not modified
-    int32_t freeA,                     // if TRUE, free A on output
+    Long freeA,                     // if TRUE, free A on output
     double tol,                     // for rank detection
-    int32_t ntol,                      // apply tol only to first ntol columns
-    spqr_symbolic <int32_t> *QRsym,
+    Long ntol,                      // apply tol only to first ntol columns
+    spqr_symbolic *QRsym,
 
     // workspace and parameters
     cholmod_common *cc
 ) ;
-template spqr_numeric <Complex, int32_t> *spqr_factorize <Complex, int32_t>
+
+// =============================================================================
+
+template spqr_numeric <Complex> *spqr_factorize <Complex>
 (
     // input, optionally freed on output
     cholmod_sparse **Ahandle,
 
     // inputs, not modified
-    int32_t freeA,                     // if TRUE, free A on output
+    Long freeA,                     // if TRUE, free A on output
     double tol,                     // for rank detection
-    int32_t ntol,                      // apply tol only to first ntol columns
-    spqr_symbolic <int32_t> *QRsym,
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template spqr_numeric <double, int64_t> *spqr_factorize <double, int64_t>
-(
-    // input, optionally freed on output
-    cholmod_sparse **Ahandle,
-
-    // inputs, not modified
-    int64_t freeA,                     // if TRUE, free A on output
-    double tol,                     // for rank detection
-    int64_t ntol,                      // apply tol only to first ntol columns
-    spqr_symbolic <int64_t> *QRsym,
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template spqr_numeric <Complex, int64_t> *spqr_factorize <Complex, int64_t>
-(
-    // input, optionally freed on output
-    cholmod_sparse **Ahandle,
-
-    // inputs, not modified
-    int64_t freeA,                     // if TRUE, free A on output
-    double tol,                     // for rank detection
-    int64_t ntol,                      // apply tol only to first ntol columns
-    spqr_symbolic <int64_t> *QRsym,
+    Long ntol,                      // apply tol only to first ntol columns
+    spqr_symbolic *QRsym,
 
     // workspace and parameters
     cholmod_common *cc

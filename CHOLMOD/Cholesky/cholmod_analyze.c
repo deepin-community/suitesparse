@@ -1,12 +1,10 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Cholesky/cholmod_analyze: order and analyze a matrix
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Cholesky/cholmod_analyze ============================================= */
+/* ========================================================================== */
 
-// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2013, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* Order and analyze a matrix (either simplicial or supernodal), in prepartion
  * for numerical factorization via cholmod_factorize or via the "expert"
@@ -108,9 +106,19 @@
  * Supports any xtype (pattern, real, complex, or zomplex)
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCHOLESKY
+
+#include "cholmod_internal.h"
+#include "cholmod_cholesky.h"
+
+#ifndef NSUPERNODAL
+#include "cholmod_supernodal.h"
+#endif
+
+#ifndef NPARTITION
+#include "cholmod_partition.h"
+#endif
+
 
 /* ========================================================================== */
 /* === cholmod_analyze ====================================================== */
@@ -408,7 +416,7 @@ cholmod_factor *CHOLMOD(analyze_p2)
     Int *First, *Level, *Work4n, *Cmember, *CParent, *ColCount, *Lperm, *Parent,
 	*Post, *Perm, *Lparent, *Lcolcount ;
     cholmod_factor *L ;
-    Int k, n, method, nmethods, status, default_strategy, ncol, uncol,
+    Int k, n, ordering, method, nmethods, status, default_strategy, ncol, uncol,
 	skip_analysis, skip_best ;
     Int amd_backup ;
     size_t s ;
@@ -477,9 +485,7 @@ cholmod_factor *CHOLMOD(analyze_p2)
          * being tried, then enable AMD backup */
         amd_backup = (nmethods > 1) || (nmethods == 1 &&
             (Common->method [0].ordering == CHOLMOD_METIS ||
-             Common->method [0].ordering == CHOLMOD_NESDIS ||
-            (Common->method [0].ordering == CHOLMOD_GIVEN &&
-                UserPerm == NULL))) ;
+             Common->method [0].ordering == CHOLMOD_NESDIS)) ;
     }
 
 #ifdef NSUPERNODAL
@@ -567,8 +573,6 @@ cholmod_factor *CHOLMOD(analyze_p2)
 	/* determine the method to try */
 	/* ------------------------------------------------------------------ */
 
-        Int ordering ;
-
 	Common->fl = EMPTY ;
 	Common->lnz = EMPTY ;
 	skip_analysis = FALSE ;
@@ -578,6 +582,7 @@ cholmod_factor *CHOLMOD(analyze_p2)
 	    /* All methods failed: backup to AMD */
 	    if (Common->selected == EMPTY && amd_backup)
 	    {
+		PRINT1 (("All methods requested failed: backup to AMD\n")) ;
 		ordering = CHOLMOD_AMD ;
 	    }
 	    else
@@ -590,6 +595,7 @@ cholmod_factor *CHOLMOD(analyze_p2)
 	    ordering = Common->method [method].ordering ;
 	}
 	Common->current = method ;
+	PRINT1 (("method "ID": Try method: "ID"\n", method, ordering)) ;
 
 	/* ------------------------------------------------------------------ */
 	/* find the fill-reducing permutation */
@@ -618,6 +624,7 @@ cholmod_factor *CHOLMOD(analyze_p2)
 	    if (UserPerm == NULL)
 	    {
 		/* this is not an error condition */
+		PRINT1 (("skip, no user perm given\n")) ;
 		continue ;
 	    }
 	    for (k = 0 ; k < n ; k++)
@@ -653,6 +660,9 @@ cholmod_factor *CHOLMOD(analyze_p2)
 	    }
 	    else
 	    {
+		/* Alternative:
+		CHOLMOD(ccolamd) (A, fset, fsize, NULL, Perm, Common) ;
+		*/
 		/* do not postorder, it is done later, below */
 		/* workspace: Iwork (4*nrow+uncol), Flag (nrow), Head (nrow+1)*/
 		CHOLMOD(colamd) (A, fset, fsize, FALSE, Perm, Common) ;
@@ -705,6 +715,7 @@ cholmod_factor *CHOLMOD(analyze_p2)
 	    /* -------------------------------------------------------------- */
 
 	    Common->status = CHOLMOD_INVALID ;
+	    PRINT1 (("No such ordering: "ID"\n", ordering)) ;
 	}
 
 	ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, 0, Common)) ;
@@ -736,6 +747,7 @@ cholmod_factor *CHOLMOD(analyze_p2)
 	ASSERT (Common->fl >= 0 && Common->lnz >= 0) ;
 	Common->method [method].fl  = Common->fl ;
 	Common->method [method].lnz = Common->lnz ;
+	PRINT1 (("lnz %g fl %g\n", Common->lnz, Common->fl)) ;
 
 	/* ------------------------------------------------------------------ */
 	/* pick the best method */
@@ -745,6 +757,7 @@ cholmod_factor *CHOLMOD(analyze_p2)
 	if (Common->selected == EMPTY || Common->lnz < lnz_best)
 	{
 	    Common->selected = method ;
+	    PRINT1 (("this is best so far, method "ID"\n", method)) ;
 	    L->ordering = ordering ;
 	    lnz_best = Common->lnz ;
 	    for (k = 0 ; k < n ; k++)
@@ -782,8 +795,8 @@ cholmod_factor *CHOLMOD(analyze_p2)
 		 * L, or one with a fill-in ratio (nnz(L)/nnz(A)) of less than
 		 * 5.  This is pretty good, and it's unlikely that METIS will do
 		 * better (this heuristic is based on tests on all symmetric
-		 * positive definite matrices in the SuiteSparse Matrix
-		 * Collection, and it works well across a wide range of
+		 * positive definite matrices in the UF sparse matrix
+		 * collection, and it works well across a wide range of
 		 * problems).  METIS can take much more time than AMD. */
 		break ;
 	    }
@@ -910,6 +923,8 @@ cholmod_factor *CHOLMOD(analyze_p2)
 
 	/* workspace: Flag (nrow), Head (nrow), Iwork (5*nrow) */
 	CHOLMOD(super_symbolic2) (for_whom, S, F, Lparent, L, Common) ;
+	PRINT1 (("status %d\n", Common->status)) ;
+
 	CHOLMOD(free_sparse) (&A1, Common) ;
 	CHOLMOD(free_sparse) (&A2, Common) ;
     }

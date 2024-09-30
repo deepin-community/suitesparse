@@ -27,7 +27,6 @@ function [mtype, Ap, Ai, Ax, title, key, nrow] = RBraw (filename)	    %#ok
 %
 % See also RBfix, RBread, RBreade.
 
-% RBio, Copyright (c) 2009-2022, Timothy A. Davis.  All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2009, Timothy A. Davis
 
 error ('RBraw mexFunction not found') ;

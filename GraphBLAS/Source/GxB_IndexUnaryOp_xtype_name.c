@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-// GxB_IndexUnaryOp_xtype_name: return the type_name of x for z=f(x,i,j,y)
+// GxB_IndexUnaryOp_xtype_name: return the type_name of x for z=f(x,thunk)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------

@@ -1,18 +1,18 @@
-//------------------------------------------------------------------------------
-// AMD/Source/amd_post_tree: post-ordering of a single etree
-//------------------------------------------------------------------------------
+/* ========================================================================= */
+/* === AMD_post_tree ======================================================= */
+/* ========================================================================= */
 
-// AMD, Copyright (c) 1996-2022, Timothy A. Davis, Patrick R. Amestoy, and
-// Iain S. Duff.  All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
-//------------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
+/* AMD, Copyright (c) Timothy A. Davis,					     */
+/* Patrick R. Amestoy, and Iain S. Duff.  See ../README.txt for License.     */
+/* email: DrTimothyAldenDavis@gmail.com                                      */
+/* ------------------------------------------------------------------------- */
 
 /* Post-ordering of a supernodal elimination tree.  */
 
 #include "amd_internal.h"
 
-Int AMD_post_tree
+GLOBAL Int AMD_post_tree
 (
     Int root,			/* root of the tree */
     Int k,			/* start numbering at k */
@@ -41,7 +41,7 @@ Int AMD_post_tree
     /* recursive version (Stack [ ] is not used): */
     /* --------------------------------------------------------------------- */
 
-    /* this is simple, but can cause stack overflow if nn is large */
+    /* this is simple, but can caouse stack overflow if nn is large */
     i = root ;
     for (f = Child [i] ; f != EMPTY ; f = Sibling [f])
     {

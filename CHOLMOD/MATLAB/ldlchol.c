@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/MATLAB/ldlchol: MATLAB interface to CHOLMOD LDL' factorization
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === CHOLMOD/MATLAB/ldlchol mexFunction =================================== */
+/* ========================================================================== */
 
-// CHOLMOD/MATLAB Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/MATLAB Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * MATLAB(tm) is a Trademark of The MathWorks, Inc.
+ * -------------------------------------------------------------------------- */
 
 /* Numeric LDL' factorization.  Note that LL' and LDL' are faster than R'R
  * and use less memory.  The LDL' factorization methods use tril(A).
@@ -69,7 +69,7 @@ void mexFunction
     cholmod_sparse Amatrix, *A, *Lsparse ;
     cholmod_factor *L ;
     cholmod_common Common, *cm ;
-    int64_t n, minor ;
+    Long n, minor ;
 
     /* ---------------------------------------------------------------------- */
     /* start CHOLMOD and set parameters */ 

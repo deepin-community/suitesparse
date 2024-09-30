@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_apply_order: apply postordering of supernodal etree
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_apply_order ====================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     Apply post-ordering of supernodal elimination tree.
@@ -14,7 +14,7 @@
 #include "umf_internal.h"
 #include "umf_apply_order.h"
 
-void UMF_apply_order
+GLOBAL void UMF_apply_order
 (
     Int Front [ ],	    /* of size nn on input, size nfr on output */
     const Int Order [ ],    /* Order [i] = k, i in the range 0..nn-1,

@@ -2,10 +2,6 @@
 // === GPUQREngine/Include/Kernel/Apply/pipelined_rearrange.cu =================
 // =============================================================================
 
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
 //------------------------------------------------------------------------------
 // pipelined_rearrange
 //------------------------------------------------------------------------------

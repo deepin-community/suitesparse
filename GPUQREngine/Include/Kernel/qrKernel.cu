@@ -2,12 +2,6 @@
 // === GPUQREngine/Include/Kernel/qrKernel.cu ==================================
 // =============================================================================
 
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
 __global__ void qrKernel
 (
     TaskDescriptor* Queue,

@@ -2,12 +2,10 @@
 // GB_subassign_19: C(I,J)<!M,repl> += scalar ; using S
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: needed.
 
 // Method 19: C(I,J)<!M,repl> += scalar ; using S
 
@@ -22,7 +20,6 @@
 // M: not bitmap
 
 #include "GB_subassign_methods.h"
-#include "GB_assign_shared_definitions.h"
 
 GrB_Info GB_subassign_19
 (
@@ -42,8 +39,8 @@ GrB_Info GB_subassign_19
     const bool Mask_struct,
     const GrB_BinaryOp accum,
     const void *scalar,
-    const GrB_Type scalar_type,
-    GB_Werk Werk
+    const GrB_Type atype,
+    GB_Context Context
 )
 {
 
@@ -52,7 +49,7 @@ GrB_Info GB_subassign_19
     //--------------------------------------------------------------------------
 
     ASSERT (!GB_IS_BITMAP (C)) ; ASSERT (!GB_IS_FULL (C)) ;
-    ASSERT (!GB_any_aliased (C, M)) ;   // NO ALIAS of C==M
+    ASSERT (!GB_aliased (C, M)) ;   // NO ALIAS of C==M
 
     //--------------------------------------------------------------------------
     // S = C(I,J)
@@ -60,7 +57,7 @@ GrB_Info GB_subassign_19
 
     GB_EMPTY_TASKLIST ;
     GB_CLEAR_STATIC_HEADER (S, &S_header) ;
-    GB_OK (GB_subassign_symbolic (S, C, I, ni, J, nj, true, Werk)) ;
+    GB_OK (GB_subassign_symbolic (S, C, I, ni, J, nj, true, Context)) ;
 
     //--------------------------------------------------------------------------
     // get inputs
@@ -74,7 +71,6 @@ GrB_Info GB_subassign_19
     const bool C_is_hyper = (Ch != NULL) ;
     const int64_t Cnvec = C->nvec ;
     GB_GET_MASK ;
-    GB_GET_MASK_HYPER_HASH ;
     GB_GET_S ;
     GB_GET_ACCUM_SCALAR ;
 
@@ -125,8 +121,8 @@ GrB_Info GB_subassign_19
             // get S(iA_start:end,j) and M(iA_start:end,j)
             //------------------------------------------------------------------
 
-            GB_LOOKUP_VECTOR_FOR_IXJ (S, iA_start) ;
-            GB_LOOKUP_VECTOR_FOR_IXJ (M, iA_start) ;
+            GB_GET_VECTOR_FOR_IXJ (S, iA_start) ;
+            GB_GET_VECTOR_FOR_IXJ (M, iA_start) ;
 
             //------------------------------------------------------------------
             // C(I(iA_start,iA_end-1),jC)<!M,repl> += scalar
@@ -156,7 +152,7 @@ GrB_Info GB_subassign_19
                 if (i == iM)
                 { 
                     // mij = (bool) M [pM]
-                    mij = GBB (Mb, pM) && GB_MCAST (Mx, pM, msize) ;
+                    mij = GBB (Mb, pM) && GB_mcast (Mx, pM, msize) ;
                     GB_NEXT (M) ;
                 }
                 else
@@ -249,8 +245,8 @@ GrB_Info GB_subassign_19
             // get S(iA_start:end,j) and M(iA_start:end,j)
             //------------------------------------------------------------------
 
-            GB_LOOKUP_VECTOR_FOR_IXJ (S, iA_start) ;
-            GB_LOOKUP_VECTOR_FOR_IXJ (M, iA_start) ;
+            GB_GET_VECTOR_FOR_IXJ (S, iA_start) ;
+            GB_GET_VECTOR_FOR_IXJ (M, iA_start) ;
 
             //------------------------------------------------------------------
             // C(I(iA_start,iA_end-1),jC)<!M,repl> += scalar
@@ -280,7 +276,7 @@ GrB_Info GB_subassign_19
                 if (i == iM)
                 { 
                     // mij = (bool) M [pM]
-                    mij = GBB (Mb, pM) && GB_MCAST (Mx, pM, msize) ;
+                    mij = GBB (Mb, pM) && GB_mcast (Mx, pM, msize) ;
                     GB_NEXT (M) ;
                 }
                 else

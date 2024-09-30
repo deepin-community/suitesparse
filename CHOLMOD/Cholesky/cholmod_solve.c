@@ -1,12 +1,10 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Cholesky/cholmod_solve: solve a linear system
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Cholesky/cholmod_solve =============================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2013, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* Solve one of the following systems.  D is identity for an LL' factorization,
  * in which the D operation is skipped:
@@ -47,9 +45,15 @@
  * exist on output.
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCHOLESKY
+
+#include "cholmod_internal.h"
+#include "cholmod_cholesky.h"
+
+#ifndef NSUPERNODAL
+#include "cholmod_supernodal.h"
+#endif
+
 
 /* ========================================================================== */
 /* === TEMPLATE ============================================================= */
@@ -110,8 +114,7 @@ static void perm
 )
 {
     double *Yx, *Yz, *Bx, *Bz ;
-    Int k2, nk, p, k, j, nrow, ncol, d, dj, j2 ;
-    size_t dual ;
+    Int k2, nk, p, k, j, nrow, ncol, d, dual, dj, j2 ;
 
     /* ---------------------------------------------------------------------- */
     /* get inputs */
@@ -533,8 +536,7 @@ static void ptrans
 )
 {
     double *Yx, *Yz, *Bx, *Bz ;
-    Int k2, nk, p, k, j, nrow, ncol, d, dj, j2 ;
-    size_t dual ;
+    Int k2, nk, p, k, j, nrow, ncol, d, dual, dj, j2 ;
 
     /* ---------------------------------------------------------------------- */
     /* get inputs */
@@ -1155,12 +1157,13 @@ int CHOLMOD(solve2)         /* returns TRUE on success, FALSE on failure */
         /* convert a supernodal L to simplicial when using Bset */
         if (L->is_super)
         {
-            // Can only use Bset on a simplicial factorization.  The supernodal
-            // factor L is converted to simplicial, leaving the xtype unchanged
-            // (real, complex, or zomplex).  Since the supernodal factorization
-            // is already LL', it is left in that form.   This conversion uses
-            // the super_num_to_simplicial_num function in
-            // cholmod_change_factor.
+            /* Can only use Bset on a simplicial factorization.  The supernodal
+             * factor L is converted to simplicial, leaving the xtype unchanged
+             * (real, complex, or zomplex).  Since the supernodal factorization
+             * is already LL', it is left in that form.   This conversion uses
+             * the ll_super_to_simplicial_numeric function in
+             * cholmod_change_factor.
+             */
             CHOLMOD(change_factor) (
                 CHOLMOD_REAL,   /* ignored, since L is already numeric */
                 TRUE,           /* convert to LL' (no change to num. values) */
@@ -1545,17 +1548,10 @@ int CHOLMOD(solve2)         /* returns TRUE on success, FALSE on failure */
 #ifndef NSUPERNODAL
 	/* allocate workspace */
 	cholmod_dense *E ;
-	size_t dual ;
+	Int dual ;
         Common->blas_ok = TRUE ;
 	dual = (L->xtype == CHOLMOD_REAL && B->xtype != CHOLMOD_REAL) ? 2 : 1 ;
 	Y = CHOLMOD(ensure_dense) (Y_Handle, n, dual*nrhs, n, L->xtype, Common);
-
-	if (Common->status < CHOLMOD_OK)
-	{
-	    /* out of memory */
-            return (FALSE) ;
-	}
-
 	E = CHOLMOD(ensure_dense) (E_Handle, dual*nrhs, L->maxesize, dual*nrhs,
 		L->xtype, Common) ;
 
@@ -1583,13 +1579,15 @@ int CHOLMOD(solve2)         /* returns TRUE on success, FALSE on failure */
 
 	iperm (Y, Perm, 0, nrhs, X) ;			    /* X = P'*Y */
 
-	if (sizeof (SUITESPARSE_BLAS_INT) < sizeof (Int) && !Common->blas_ok)
+	if (CHECK_BLAS_INT && !Common->blas_ok)
 	{
 	    /* Integer overflow in the BLAS.  This is probably impossible,
 	     * since the BLAS were used to create the supernodal factorization.
 	     * It might be possible for the calls to the BLAS to differ between
 	     * factorization and forward/backsolves, however.  This statement
-	     * cannot be tested. */
+	     * is untested; it does not appear in the compiled code if
+             * CHECK_BLAS_INT is true (when the same integer is used in
+             * CHOLMOD and the BLAS. */
 	    return (FALSE) ;
 	}
 

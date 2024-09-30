@@ -1,80 +1,63 @@
 #-------------------------------------------------------------------------------
-# SuiteSparse/RBio/Makefile
+# RBio Makefile
 #-------------------------------------------------------------------------------
 
-# RBio, Copyright (c) 2009-2022, Timothy A. Davis.  All Rights Reserved.
-# SPDX-License-Identifier: GPL-2.0+
+SUITESPARSE ?= $(realpath $(CURDIR)/..)
+export SUITESPARSE
 
-#-------------------------------------------------------------------------------
+default: all
 
-# A simple Makefile for RBio, which relies on cmake to do the
-# actual build.  All the work is done in cmake so this Makefile is just for
-# convenience.
+include ../SuiteSparse_config/SuiteSparse_config.mk
 
-# To compile with an alternate compiler:
-#
-#       make CC=gcc CXX=g++
-#
-# To compile/install for system-wide usage:
-#
-#       make
-#       sudo make install
-#
-# To compile/install for local usage (SuiteSparse/lib and SuiteSparse/include):
-#
-#       make local
-#       make install
-#
-# To clean up the files:
-#
-#       make clean
+# Compile the C-callable libraries and the Demo programs.
+all:
+	( cd Lib ; $(MAKE) )
+	( cd Demo ; $(MAKE) )
 
-JOBS ?= 8
-
-default: library
-
-# default is to install only in /usr/local
+# Compile the C-callable libraries only.
 library:
-	( cd build && cmake $(CMAKE_OPTIONS) .. && cmake --build . --config Release -j${JOBS} )
+	( cd Lib ; $(MAKE) )
 
-# install only in SuiteSparse/lib and SuiteSparse/include
-local:
-	( cd build && cmake $(CMAKE_OPTIONS) -DLOCAL_INSTALL=1 .. && cmake --build . --config Release -j${JOBS} )
+# compile the static libraries only
+static:
+	( cd Lib    ; $(MAKE) static )
 
-# install only in /usr/local (default)
-global:
-	( cd build && cmake $(CMAKE_OPTIONS) -DLOCAL_INSTALL=0 .. && cmake --build . --config Release -j${JOBS} )
+# Remove all files not in the original distribution
+purge:
+	( cd Tcov ; $(MAKE) purge )
+	( cd Lib ; $(MAKE) purge )
+	( cd Demo ; $(MAKE) purge )
+	( cd RBio ; $(RM) $(CLEAN) private/temp.rb *.mex* )
 
-debug:
-	( cd build && cmake $(CMAKE_OPTIONS) -DCMAKE_BUILD_TYPE=Debug .. && cmake --build . --config Debug -j${JOBS} )
-
-all: library
-
-demos: library
-	( cd build && cmake $(CMAKE_OPTIONS) -DDEMO=1 .. && cmake --build . --config Release -j${JOBS} )
-	./build/RBdemo < ./RBio/private/west0479.rua
-
-# just compile after running cmake; do not run cmake again
-remake:
-	( cd build && cmake --build . -j${JOBS} )
-
-# just run cmake to set things up
-setup:
-	( cd build && cmake $(CMAKE_OPTIONS) .. )
-
-install:
-	( cd build && cmake --install . )
-
-# remove any installed libraries and #include files
-uninstall:
-	- xargs rm < build/install_manifest.txt
-
-# remove all files not in the distribution
+# Remove all files not in the original distribution, except keep the 
+# compiled libraries.
 clean:
-	- $(RM) -rf build/* Config/*.tmp RBio/*.o RBio/*.mex* timelog.m temp.rb
 	( cd Tcov ; $(MAKE) clean )
+	( cd Lib ; $(MAKE) clean )
+	( cd Demo ; $(MAKE) clean )
+	( cd RBio ; $(RM) $(CLEAN) private/temp.rb )
 
-purge: clean
+distclean: purge
 
-distclean: clean
+ccode: all
+
+# Run the test coverage suite.
+cov:
+	( cd Tcov ; $(MAKE) go )
+
+# Run the test coverage suite using Valgrind.
+valgrind:
+	( cd Valgrind ; $(MAKE) )
+
+# Compile the C-callable libraries and the Demo programs.
+demos:
+	( cd Demo ; $(MAKE) )
+
+# install RBio
+install:
+	( cd Lib ; $(MAKE) install )
+
+# uninstall RBio
+uninstall:
+	( cd Lib ; $(MAKE) uninstall )
 

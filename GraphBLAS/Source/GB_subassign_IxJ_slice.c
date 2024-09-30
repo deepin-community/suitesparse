@@ -2,7 +2,7 @@
 // GB_subassign_IxJ_slice: slice IxJ for subassign
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ GrB_Info GB_subassign_IxJ_slice
     const int64_t nJ,
 //  const int Jkind,
 //  const int64_t Jcolon [3],
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -95,8 +95,7 @@ GrB_Info GB_subassign_IxJ_slice
     // determine # of threads to use
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
 
     //--------------------------------------------------------------------------
     // allocate the initial TaskList

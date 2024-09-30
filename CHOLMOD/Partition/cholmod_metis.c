@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Partition/cholmod_metis: CHOLMOD interface to METIS
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Partition/cholmod_metis ============================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Partition Module.  Copyright (C) 2005-2022, University of Florida.
-// All Rights Reserved.  Author: Timothy A. Davis.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Partition Module.
+ * Copyright (C) 2005-2006, Univ. of Florida.  Author: Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* CHOLMOD interface to the METIS package (Version 5.1.0):
  *
@@ -50,78 +49,12 @@
  * Supports any xtype (pattern, real, complex, or zomplex).
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NPARTITION
 
-#undef ASSERT
-#include "cholmod_metis_wrapper.h"
-#include "SuiteSparse_metis/include/metis.h"
-#undef ASSERT
-#ifndef NDEBUG
-#define ASSERT(expr) assert (expr)
-#else
-#define ASSERT(expr)
-#endif
-#undef malloc
-#undef calloc
-#undef realloc
-#undef free
-
-//------------------------------------------------------------------------------
-// test coverage
-//------------------------------------------------------------------------------
-
-// SuiteSparse_metis has been modified from the original METIS 5.1.0.  It uses
-// the SuiteSparse_config function pointers for malloc/calloc/realloc/free, so
-// that it can use the same memory manager functions as the rest of
-// SuiteSparse.  However, during test coverage in CHOLMOD/Tcov, the call to
-// malloc inside SuiteSparse_metis pretends to fail, to test CHOLMOD's memory
-// handling.  This causes METIS to terminate the program.  To avoid this, METIS
-// is allowed to use the standard ANSI C11 malloc/calloc/realloc/free functions
-// during testing.
-
-#ifdef TEST_COVERAGE
-
-    //--------------------------------------------------------------------------
-    // CHOLMOD during test coverage in CHOLMOD/Tcov.
-    //--------------------------------------------------------------------------
-
-    void *(*save_malloc_func) (size_t) ;             // pointer to malloc
-    void *(*save_calloc_func) (size_t, size_t) ;     // pointer to calloc
-    void *(*save_realloc_func) (void *, size_t) ;    // pointer to realloc
-    void (*save_free_func) (void *) ;                // pointer to free
-
-    #define TEST_COVERAGE_PAUSE                                             \
-    {                                                                       \
-        save_malloc_func  = SuiteSparse_config_malloc_func_get ( ) ;        \
-        save_calloc_func  = SuiteSparse_config_calloc_func_get ( ) ;        \
-        save_realloc_func = SuiteSparse_config_realloc_func_get ( ) ;       \
-        save_free_func    = SuiteSparse_config_free_func_get ( ) ;          \
-        SuiteSparse_config_malloc_func_set (malloc) ;                       \
-        SuiteSparse_config_calloc_func_set (calloc) ;                       \
-        SuiteSparse_config_realloc_func_set (realloc) ;                     \
-        SuiteSparse_config_free_func_set (free) ;                           \
-    }
-
-    #define TEST_COVERAGE_RESUME                                            \
-    {                                                                       \
-        SuiteSparse_config_malloc_func_set (save_malloc_func) ;             \
-        SuiteSparse_config_calloc_func_set (save_calloc_func) ;             \
-        SuiteSparse_config_realloc_func_set (save_realloc_func) ;           \
-        SuiteSparse_config_free_func_set (save_free_func) ;                 \
-    }
-
-#else
-
-    //--------------------------------------------------------------------------
-    // CHOLMOD in production: no change to SuiteSparse_config
-    //--------------------------------------------------------------------------
-
-    #define TEST_COVERAGE_PAUSE
-    #define TEST_COVERAGE_RESUME
-
-#endif
+#include "cholmod_internal.h"
+#include "metis.h"
+#include "cholmod_partition.h"
+#include "cholmod_cholesky.h"
 
 /* ========================================================================== */
 /* === dumpgraph ============================================================ */
@@ -133,11 +66,12 @@
  */
 
 #ifdef DUMP_GRAPH
+#include <stdio.h>
 /* After dumping the graph with this routine, run "onmetis metisgraph" */
-static void dumpgraph (idx_t *Mp, idx_t *Mi, int64_t n,
+static void dumpgraph (idx_t *Mp, idx_t *Mi, SuiteSparse_long n,
     cholmod_common *Common)
 {
-    int64_t i, j, p, nz ;
+    SuiteSparse_long i, j, p, nz ;
     FILE *f ;
     nz = Mp [n] ;
     printf ("Dumping METIS graph n %ld nz %ld\n", n, nz) ;    /* DUMP_GRAPH */
@@ -211,7 +145,7 @@ static int metis_memory_ok
     s = GUESS ((double) nz, (double) n) ;
     s *= Common->metis_memory ;
 
-    if (s * sizeof (idx_t) >= ((double) SIZE_MAX))
+    if (s * sizeof (idx_t) >= ((double) Size_max))
     {
 	/* don't even attempt to malloc such a large block */
 	return (FALSE) ;
@@ -234,7 +168,6 @@ static int metis_memory_ok
     return (TRUE) ;
 }
 
-#endif
 
 /* ========================================================================== */
 /* === cholmod_metis_bisector =============================================== */
@@ -248,7 +181,7 @@ static int metis_memory_ok
  * checked.
  */
 
-int64_t CHOLMOD(metis_bisector)	/* returns separator size */
+SuiteSparse_long CHOLMOD(metis_bisector)	/* returns separator size */
 (
     /* ---- input ---- */
     cholmod_sparse *A,	/* matrix to bisect */
@@ -265,9 +198,6 @@ int64_t CHOLMOD(metis_bisector)	/* returns separator size */
     cholmod_common *Common
 )
 {
-
-#ifndef NPARTITION
-
     Int *Ap, *Ai ;
     idx_t *Mp, *Mi, *Mnw, *Mpart ;
     Int n, nleft, nright, j, p, csep, total_weight, lightest, nz ;
@@ -409,11 +339,8 @@ int64_t CHOLMOD(metis_bisector)	/* returns separator size */
                                 0:left, 1:right, 2:separator
     */
 
-
     nn = n ;
-    TEST_COVERAGE_PAUSE ;
-    ok = SuiteSparse_metis_METIS_ComputeVertexSeparator (&nn, Mp, Mi, Mnw, NULL, &csp, Mpart) ;
-    TEST_COVERAGE_RESUME ;
+    ok = METIS_ComputeVertexSeparator (&nn, Mp, Mi, Mnw, NULL, &csp, Mpart) ;
     csep = csp ;
 
     PRINT1 (("METIS csep "ID"\n", csep)) ;
@@ -549,10 +476,6 @@ int64_t CHOLMOD(metis_bisector)	/* returns separator size */
     /* ---------------------------------------------------------------------- */
 
     return (csep) ;
-#else
-    Common->status = CHOLMOD_NOT_INSTALLED ;
-    return (EMPTY) ;
-#endif
 }
 
 
@@ -582,9 +505,6 @@ int CHOLMOD(metis)
     cholmod_common *Common
 )
 {
-
-#ifndef NPARTITION
-
     double d ;
     Int *Iperm, *Iwork, *Bp, *Bi ;
     idx_t *Mp, *Mi, *Mperm, *Miperm ;
@@ -795,9 +715,7 @@ int CHOLMOD(metis)
         */
 
 	nn = n ;
-        TEST_COVERAGE_PAUSE ;
-	SuiteSparse_metis_METIS_NodeND (&nn, Mp, Mi, NULL, NULL, Mperm, Miperm) ;
-        TEST_COVERAGE_RESUME ;
+	METIS_NodeND (&nn, Mp, Mi, NULL, NULL, Mperm, Miperm) ;
 
 	PRINT0 (("METIS_NodeND done\n")) ;
     }
@@ -853,9 +771,5 @@ int CHOLMOD(metis)
     ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, 0, Common)) ;
     PRINT1 (("cholmod_metis done\n")) ;
     return (Common->status == CHOLMOD_OK) ;
-#else
-    Common->status = CHOLMOD_NOT_INSTALLED ;
-    return (false) ;
-#endif
 }
-
+#endif

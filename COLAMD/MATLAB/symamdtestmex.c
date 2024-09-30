@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// COLAMD/MATLAB/symamdtestmex.c: MATLAB test for SYMAMD
-//------------------------------------------------------------------------------
-
-// COLAMD, Copyright (c) 1998-2022, Timothy A. Davis and Stefan Larimore,
-// All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === symamdtest mexFunction =============================================== */
+/* ========================================================================== */
 
 /* SYMAMD test function
 
@@ -39,7 +33,7 @@
 
     Notice:
 
-	Copyright (c) 1998-2022, Timothy A. Davis.  All Rights Reserved.
+	Copyright (c) 1998-2007, Timothy A. Davis.  All Rights Reserved.
 	See COLAMD/Doc/License.txt for the License.
 
     Availability:
@@ -57,15 +51,16 @@
 #include "matrix.h"
 #include <stdlib.h>
 #include <string.h>
+#define Long SuiteSparse_long
 
 static void dump_matrix
 (
-    int64_t A [ ],
-    int64_t p [ ],
-    int64_t n_row,
-    int64_t n_col,
-    int64_t Alen,
-    int64_t limit
+    Long A [ ],
+    Long p [ ],
+    Long n_row,
+    Long n_col,
+    Long Alen,
+    Long limit
 ) ;
 
 /* ========================================================================== */
@@ -84,24 +79,23 @@ void mexFunction
 {
     /* === Local variables ================================================== */
 
-    int64_t *perm ;                /* column ordering of M and ordering of A */
-    int64_t *A ;                   /* row indices of input matrix A */
-    int64_t *p ;                   /* column pointers of input matrix A */
-    int64_t n_col ;                /* number of columns of A */
-    int64_t n_row ;                /* number of rows of A */
-    int full ;                 /* TRUE if input matrix full, FALSE if sparse */
+    Long *perm ;                /* column ordering of M and ordering of A */
+    Long *A ;                   /* row indices of input matrix A */
+    Long *p ;                   /* column pointers of input matrix A */
+    Long n_col ;                /* number of columns of A */
+    Long n_row ;                /* number of rows of A */
+    Long full ;                 /* TRUE if input matrix full, FALSE if sparse */
     double knobs [COLAMD_KNOBS] ; /* colamd user-controllable parameters */
     double *out_perm ;          /* output permutation vector */
     double *out_stats ;         /* output stats vector */
     double *in_knobs ;          /* input knobs vector */
-    int64_t i ;                    /* loop counter */
+    Long i ;                    /* loop counter */
     mxArray *Ainput ;           /* input matrix handle */
-    int64_t spumoni ;              /* verbosity variable */
-    int64_t stats2 [COLAMD_STATS] ;/* stats for symamd */
+    Long spumoni ;              /* verbosity variable */
+    Long stats2 [COLAMD_STATS] ;/* stats for symamd */
 
-    int64_t *cp, *cp_end, nnz, col, length ;
-    int64_t *stats ;
-    int result ;
+    Long *cp, *cp_end, result, nnz, col, length ;
+    Long *stats ;
     stats = stats2 ;
 
     /* === Check inputs ===================================================== */
@@ -133,7 +127,7 @@ void mexFunction
 	in_knobs = mxGetPr (prhs [1]) ;
 	i = mxGetNumberOfElements (prhs [1]) ;
 	if (i > 0) knobs [COLAMD_DENSE_ROW] = in_knobs [0] ;
-	if (i > 1) spumoni = (int) in_knobs [1] ;
+	if (i > 1) spumoni = (Long) in_knobs [1] ;
     }
 
     /* print knob settings if spumoni is set */
@@ -180,8 +174,8 @@ void mexFunction
     }
 
     /* p = mxGetJc (Ainput) ; */
-    p = (int64_t *) mxCalloc (n_col+1, sizeof (int64_t)) ;
-    (void) memcpy (p, mxGetJc (Ainput), (n_col+1)*sizeof (int64_t)) ;
+    p = (Long *) mxCalloc (n_col+1, sizeof (Long)) ;
+    (void) memcpy (p, mxGetJc (Ainput), (n_col+1)*sizeof (Long)) ;
 
     nnz = p [n_col] ;
     if (spumoni > 0)
@@ -190,10 +184,10 @@ void mexFunction
     }
 
     /* A = mxGetIr (Ainput) ; */
-    A = (int64_t *) mxCalloc (nnz+1, sizeof (int64_t)) ;
-    (void) memcpy (A, mxGetIr (Ainput), nnz*sizeof (int64_t)) ;
+    A = (Long *) mxCalloc (nnz+1, sizeof (Long)) ;
+    (void) memcpy (A, mxGetIr (Ainput), nnz*sizeof (Long)) ;
 
-    perm = (int64_t *) mxCalloc (n_col+1, sizeof (int64_t)) ;
+    perm = (Long *) mxCalloc (n_col+1, sizeof (Long)) ;
 
 /* === Jumble matrix ======================================================== */
 
@@ -218,7 +212,7 @@ void mexFunction
 */
 
     /* jumble appropriately */
-    switch ((int) in_knobs [2])
+    switch ((Long) in_knobs [2])
     {
 
 	case 0 :
@@ -309,7 +303,7 @@ void mexFunction
 		mexPrintf ("symamdtest: A not present\n") ;
 	    }
 	    result = 0 ;		/* A not present */
-	    A = (int64_t *) NULL ;
+	    A = (Long *) NULL ;
 	    break ;
 
 	case 8 :
@@ -318,7 +312,7 @@ void mexFunction
 		mexPrintf ("symamdtest: p not present\n") ;
 	    }
 	    result = 0 ;		/* p not present */
-	    p = (int64_t *) NULL ;
+	    p = (Long *) NULL ;
 	    break ;
 
 	case 9 :
@@ -406,7 +400,7 @@ void mexFunction
 		mexPrintf ("symamdtest: stats not present\n") ;
 	    }
 	    result = 0 ;		/* stats not present */
-	    stats = (int64_t *) NULL ;
+	    stats = (Long *) NULL ;
 	    break ;
 
 	case 13 :
@@ -501,15 +495,15 @@ void mexFunction
 
 static void dump_matrix
 (
-    int64_t A [ ],
-    int64_t p [ ],
-    int64_t n_row,
-    int64_t n_col,
-    int64_t Alen,
-    int64_t limit
+    Long A [ ],
+    Long p [ ],
+    Long n_row,
+    Long n_col,
+    Long Alen,
+    Long limit
 )
 {
-    int64_t col, k, row ;
+    Long col, k, row ;
 
     mexPrintf ("dump matrix: nrow %d ncol %d Alen %d\n", n_row, n_col, Alen) ;
 

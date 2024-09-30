@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// KLU/Source/klu_memory: memory management for KLU
-//------------------------------------------------------------------------------
-
-// KLU, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-// Authors: Timothy A. Davis and Ekanathan Palamadai.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === KLU_memory =========================================================== */
+/* ========================================================================== */
 
 /* KLU memory management routines:
  *
@@ -84,7 +78,7 @@ void *KLU_malloc        /* returns pointer to the newly malloc'd block */
         Common->status = KLU_INVALID ;
         p = NULL ;
     }
-    else if (sizeof (size_t) > sizeof (Int) && n >= Int_MAX)
+    else if (n >= Int_MAX)
     {
         /* object is too big to allocate; p[i] where i is an Int will not
          * be enough. */
@@ -195,7 +189,7 @@ void *KLU_realloc       /* returns pointer to reallocated block */
         /* A fresh object is being allocated. */
         p = KLU_malloc (nnew, size, Common) ;
     }
-    else if (sizeof (size_t) > sizeof (Int) && nnew >= Int_MAX)
+    else if (nnew >= Int_MAX)
     {
         /* failure: nnew is too big.  Do not change p */
         Common->status = KLU_TOO_LARGE ;

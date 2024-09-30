@@ -53,8 +53,7 @@ function [p, r, nc, G, xy] = find_components (A,sorted)
 %
 % See also LARGEST_COMPONENT, FIND_COMPONENTS_EXAMPLE, DMPERM, GPLOT
 
-% find_components, Copyright (c) 2008, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2008, Timothy A. Davis, http://www.suitesparse.com
 
 %-------------------------------------------------------------------------------
 % number the nodes

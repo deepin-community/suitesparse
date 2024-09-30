@@ -2,9 +2,6 @@
 // ssmult_transpose
 //==============================================================================
 
-// SFMULT, Copyright (c) 2009, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
 // C = A' or A.' where the input matrix A may have unsorted columns.  The output
 // C is always returned with sorted columns.
 

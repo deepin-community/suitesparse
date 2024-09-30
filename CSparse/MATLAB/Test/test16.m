@@ -5,8 +5,7 @@ function test16
 %   test16
 % See also: testall
 
-% CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 rand ('state', 0) ;
 randn ('state', 0) ;

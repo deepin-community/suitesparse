@@ -2,9 +2,6 @@
 // === qrdemo_gpu3.cpp =========================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
 // A simple C++ demo of SuiteSparseQR.  The comments give the MATLAB equivalent
 // statements.  See also qrdemo.m
 //
@@ -12,14 +9,14 @@
 // qrdemo_gpu3 matrixfile orderingoption
 
 #include "SuiteSparseQR.hpp"
+#include "SuiteSparseGPU_Runtime.hpp"
 #include <complex>
-#include <stdio.h>
 
 int main (int argc, char **argv)
 {
     cholmod_sparse *A, *R ;
     cholmod_dense *B, *C ;
-    int64_t *E ;
+    SuiteSparse_long *E ;
     int mtype ;
     long m, n, rnk ;
     size_t total_mem, available_mem ;
@@ -98,7 +95,7 @@ int main (int argc, char **argv)
     f = fopen ("E.txt", "w") ;
     for (long i = 0 ; i < n ; i++)
     {
-        fprintf (f, "%" PRId64 "\n", 1 + E [i]) ;
+        fprintf (f, "%ld\n", 1 + E [i]) ;
     }
     fclose (f) ;
 

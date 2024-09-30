@@ -1,0 +1,8 @@
+Document: sliplu
+Title: SuiteSparse/SLIP LU Userguide
+Author: Christopher Lourenco, Jinhao Chen, Erick Moreno-Centeno, Timothy A. Davis
+Abstract: SLIP LU is a library for solving sparse linear systems in exact arithmetic.
+Section: Programming
+
+Format: PDF
+Files: /usr/share/doc/libsuitesparse-dev/SLIP_LU_UserGuide.pdf

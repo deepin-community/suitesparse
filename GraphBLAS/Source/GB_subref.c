@@ -2,7 +2,7 @@
 // GB_subref: C = A(I,J)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -67,9 +67,6 @@
 //      detected in A.  Since pa = Cx [pc] holds the position of the entry in
 //      A, the entry is a zombie if Ai [pa] has been flipped.
 
-//      For symbolic extractionm, pending tuples can appear in the input matrix
-//      A.  These are ignored.
-
 #define GB_FREE_WORKSPACE                       \
 {                                               \
     GB_FREE_WORK (&TaskList, TaskList_size) ;   \
@@ -88,6 +85,7 @@
 
 #include "GB_subref.h"
 
+GB_PUBLIC
 GrB_Info GB_subref              // C = A(I,J): either symbolic or numeric
 (
     // output
@@ -101,7 +99,7 @@ GrB_Info GB_subref              // C = A(I,J): either symbolic or numeric
     const GrB_Index *J,         // index list for C = A(I,J), or GrB_ALL, etc.
     const int64_t nj,           // length of J, or special
     const bool symbolic,        // if true, construct C as symbolic
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -152,7 +150,7 @@ GrB_Info GB_subref              // C = A(I,J): either symbolic or numeric
     { 
         // C is constructed with same sparsity as A (bitmap or full)
         return (GB_bitmap_subref (C, C_iso, cscalar, C_is_csc, A, I, ni, J, nj,
-            symbolic, Werk)) ;
+            symbolic, Context)) ;
     }
 
     //--------------------------------------------------------------------------
@@ -175,9 +173,7 @@ GrB_Info GB_subref              // C = A(I,J): either symbolic or numeric
     // ensure A is unjumbled
     //--------------------------------------------------------------------------
 
-    // Ensure input matrix is not jumbled.  Zombies are OK.
-    // Pending tuples are OK (and ignored) for symbolic extraction.
-    // GB_subref_phase0 may build the hyper_hash.
+    // ensure input matrix is not jumbled.  Zombies are OK.
     GB_MATRIX_WAIT_IF_JUMBLED (A) ;
 
     //--------------------------------------------------------------------------
@@ -189,7 +185,7 @@ GrB_Info GB_subref              // C = A(I,J): either symbolic or numeric
         &Ch, &Ch_size, &Ap_start, &Ap_start_size, &Ap_end, &Ap_end_size,
         &Cnvec, &need_qsort, &Ikind, &nI, Icolon, &nJ,
         // original input:
-        A, I, ni, J, nj, Werk)) ;
+        A, I, ni, J, nj, Context)) ;
 
     //--------------------------------------------------------------------------
     // phase1: split C=A(I,J) into tasks for phase2 and phase3
@@ -204,7 +200,7 @@ GrB_Info GB_subref              // C = A(I,J): either symbolic or numeric
         // computed by phase0:
         Ap_start, Ap_end, Cnvec, need_qsort, Ikind, nI, Icolon,
         // original input:
-        A->vlen, GB_nnz (A), I, Werk)) ;
+        A->vlen, GB_nnz (A), I, Context)) ;
 
     //--------------------------------------------------------------------------
     // phase2: count the number of entries in each vector of C
@@ -218,7 +214,7 @@ GrB_Info GB_subref              // C = A(I,J): either symbolic or numeric
         // computed by phase0:
         Ap_start, Ap_end, Cnvec, need_qsort, Ikind, nI, Icolon,
         // original input:
-        A, I, symbolic, Werk)) ;
+        A, I, symbolic, Context)) ;
 
     //--------------------------------------------------------------------------
     // phase3: compute the entries (indices and values) in each vector of C
@@ -237,7 +233,7 @@ GrB_Info GB_subref              // C = A(I,J): either symbolic or numeric
         // from the iso test above:
         C_iso, cscalar,
         // original input:
-        C_is_csc, A, I, symbolic, Werk)) ;
+        C_is_csc, A, I, symbolic, Context)) ;
 
     // Cp and Ch have been imported into C->p and C->h, or freed if phase3
     // fails.  Either way, Cp and Ch are set to NULL so that they cannot be

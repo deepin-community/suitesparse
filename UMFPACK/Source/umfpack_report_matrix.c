@@ -1,20 +1,20 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umfpack_report_matrix: print a sparse matrix
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMFPACK_report_matrix ================================================ */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     User-callable.  Prints a column or row-oriented matrix.  See
-    umfpack.h for details.
+    umfpack_report_matrix.h for details.
 */
 
 #include "umf_internal.h"
 
-int UMFPACK_report_matrix
+GLOBAL Int UMFPACK_report_matrix
 (
     Int n_row,
     Int n_col,
@@ -24,7 +24,7 @@ int UMFPACK_report_matrix
 #ifdef COMPLEX
     const double Az [ ],
 #endif
-    int col_form,		/* 1: column form, 0: row form */
+    Int col_form,		/* 1: column form, 0: row form */
     const double Control [UMFPACK_CONTROL]
 )
 {

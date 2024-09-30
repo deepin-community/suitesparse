@@ -2,27 +2,23 @@
 // GB_helper.c: helper functions for @GrB interface
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed.  Only one variant possible.
 
 // These functions are only used by the @GrB interface for
 // SuiteSparse:GraphBLAS.
 
 #include "GB_helper.h"
 
-bool GB_factory_kernels_enabled = true ;
-
 //------------------------------------------------------------------------------
-// GB_NTHREADS_HELPER: determine the number of threads to use
+// GB_NTHREADS: determine the number of threads to use
 //------------------------------------------------------------------------------
 
-#define GB_NTHREADS_HELPER(work)                                \
-    int nthreads_max = GB_Context_nthreads_max ( ) ;            \
-    double chunk = GB_Context_chunk ( ) ;                       \
+#define GB_NTHREADS(work)                                       \
+    int nthreads_max = GB_Global_nthreads_max_get ( ) ;         \
+    double chunk = GB_Global_chunk_get ( ) ;                    \
     int nthreads = GB_nthreads (work, chunk, nthreads_max) ;
 
 //------------------------------------------------------------------------------
@@ -62,7 +58,7 @@ void GB_helper1              // convert zero-based indices to one-based
 )
 {
 
-    GB_NTHREADS_HELPER (nvals) ;
+    GB_NTHREADS (nvals) ;
 
     int64_t k ;
     #pragma omp parallel for num_threads(nthreads) schedule(static)
@@ -83,7 +79,7 @@ void GB_helper1i             // convert zero-based indices to one-based
 )
 {
 
-    GB_NTHREADS_HELPER (nvals) ;
+    GB_NTHREADS (nvals) ;
 
     int64_t k ;
     #pragma omp parallel for num_threads(nthreads) schedule(static)
@@ -97,16 +93,16 @@ void GB_helper1i             // convert zero-based indices to one-based
 // GB_helper3: convert 1-based indices to 0-based for gb_mxarray_to_list
 //------------------------------------------------------------------------------
 
-bool GB_helper3             // return true if OK, false on error
+bool GB_helper3              // return true if OK, false on error
 (
     int64_t *restrict List,             // size len, output array
     const double *restrict List_double, // size len, input array
     int64_t len,
-    int64_t *List_max       // also compute the max entry in the list (1-based)
+    int64_t *List_max               // also compute the max entry in the list
 )
 {
 
-    GB_NTHREADS_HELPER (len) ;
+    GB_NTHREADS (len) ;
 
     ASSERT (List != NULL) ;
     ASSERT (List_double != NULL) ;
@@ -155,16 +151,16 @@ bool GB_helper3             // return true if OK, false on error
 // GB_helper3i: convert 1-based indices to 0-based for gb_mxarray_to_list
 //------------------------------------------------------------------------------
 
-bool GB_helper3i        // return true if OK, false on error
+bool GB_helper3i             // return true if OK, false on error
 (
     int64_t *restrict List,             // size len, output array
     const int64_t *restrict List_int64, // size len, input array
     int64_t len,
-    int64_t *List_max   // also compute the max entry in the list (1-based)
+    int64_t *List_max               // also compute the max entry in the list
 )
 {
 
-    GB_NTHREADS_HELPER (len) ;
+    GB_NTHREADS (len) ;
 
     int64_t listmax = -1 ;
 
@@ -198,19 +194,18 @@ bool GB_helper3i        // return true if OK, false on error
 }
 
 //------------------------------------------------------------------------------
-// GB_helper4: find the max entry in a list of type GrB_Index
+// GB_helper4: find the max entry in an index list for gbbuild
 //------------------------------------------------------------------------------
 
-bool GB_helper4             // return true if OK, false on error
+bool GB_helper4              // return true if OK, false on error
 (
     const GrB_Index *restrict I,    // array of size len
     const int64_t len,
-    GrB_Index *List_max     // also compute the max entry in the list (1-based,
-                            // which is max(I)+1)
+    GrB_Index *List_max             // find max (I) + 1
 )
 {
 
-    GB_NTHREADS_HELPER (len) ;
+    GB_NTHREADS (len) ;
 
     GrB_Index listmax = 0 ;
 
@@ -260,7 +255,7 @@ void GB_helper5              // construct pattern of S
 )
 {
 
-    GB_NTHREADS_HELPER (anz) ;
+    GB_NTHREADS (anz) ;
     ASSERT (Mj != NULL) ;
     ASSERT (Si != NULL) ;
     ASSERT (Sj != NULL) ;
@@ -288,7 +283,7 @@ void GB_helper7              // Kx = uint64 (0:mnz-1)
 )
 {
 
-    GB_NTHREADS_HELPER (mnz) ;
+    GB_NTHREADS (mnz) ;
 
     int64_t k ;
     #pragma omp parallel for num_threads(nthreads) schedule(static)
@@ -313,7 +308,7 @@ void GB_helper8
 )
 {
 
-    GB_NTHREADS_HELPER (nvals) ;
+    GB_NTHREADS (nvals) ;
 
     int64_t k ;
     #pragma omp parallel for num_threads(nthreads) schedule(static)
@@ -367,11 +362,11 @@ double GB_helper10       // norm (x-y,p), or -1 on error
     // allocate workspace and determine # of threads to use
     //--------------------------------------------------------------------------
 
-    GB_NTHREADS_HELPER (n) ;
+    GB_NTHREADS (n) ;
     GB_ALLOCATE_WORK (double) ;
 
-    #define xx(k) x [x_iso ? 0 : k]
-    #define yy(k) y [y_iso ? 0 : k]
+    #define X(k) x [x_iso ? 0 : k]
+    #define Y(k) y [y_iso ? 0 : k]
 
     //--------------------------------------------------------------------------
     // each thread computes its partial norm
@@ -403,7 +398,7 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            float t = xx (k) ;
+                            float t = X (k) ;
                             my_s += (t*t) ;
                         }
                     }
@@ -411,7 +406,7 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            float t = (xx (k) - yy (k)) ;
+                            float t = (X (k) - Y (k)) ;
                             my_s += (t*t) ;
                         }
                     }
@@ -424,14 +419,14 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s += fabsf (xx (k)) ;
+                            my_s += fabsf (X (k)) ;
                         }
                     }
                     else
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s += fabsf (xx (k) - yy (k)) ;
+                            my_s += fabsf (X (k) - Y (k)) ;
                         }
                     }
                 }
@@ -443,14 +438,14 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s = fmaxf (my_s, fabsf (xx (k))) ;
+                            my_s = fmaxf (my_s, fabsf (X (k))) ;
                         }
                     }
                     else
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s = fmaxf (my_s, fabsf (xx (k) - yy (k))) ;
+                            my_s = fmaxf (my_s, fabsf (X (k) - Y (k))) ;
                         }
                     }
                 }
@@ -463,14 +458,14 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s = fminf (my_s, fabsf (xx (k))) ;
+                            my_s = fminf (my_s, fabsf (X (k))) ;
                         }
                     }
                     else
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s = fminf (my_s, fabsf (xx (k) - yy (k))) ;
+                            my_s = fminf (my_s, fabsf (X (k) - Y (k))) ;
                         }
                     }
                 }
@@ -500,7 +495,7 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            double t = xx (k) ;
+                            double t = X (k) ;
                             my_s += (t*t) ;
                         }
                     }
@@ -508,7 +503,7 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            double t = (xx (k) - yy (k)) ;
+                            double t = (X (k) - Y (k)) ;
                             my_s += (t*t) ;
                         }
                     }
@@ -521,14 +516,14 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s += fabs (xx (k)) ;
+                            my_s += fabs (X (k)) ;
                         }
                     }
                     else
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s += fabs (xx (k) - yy (k)) ;
+                            my_s += fabs (X (k) - Y (k)) ;
                         }
                     }
                 }
@@ -540,14 +535,14 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s = fmax (my_s, fabs (xx (k))) ;
+                            my_s = fmax (my_s, fabs (X (k))) ;
                         }
                     }
                     else
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s = fmax (my_s, fabs (xx (k) - yy (k))) ;
+                            my_s = fmax (my_s, fabs (X (k) - Y (k))) ;
                         }
                     }
                 }
@@ -560,14 +555,14 @@ double GB_helper10       // norm (x-y,p), or -1 on error
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s = fmin (my_s, fabs (xx (k))) ;
+                            my_s = fmin (my_s, fabs (X (k))) ;
                         }
                     }
                     else
                     {
                         for (int64_t k = k1 ; k < k2 ; k++)
                         {
-                            my_s = fmin (my_s, fabs (xx (k) - yy (k))) ;
+                            my_s = fmin (my_s, fabs (X (k) - Y (k))) ;
                         }
                     }
                 }
@@ -636,29 +631,5 @@ double GB_helper10       // norm (x-y,p), or -1 on error
 
     GB_FREE_WORKSPACE ;
     return (s) ;
-}
-
-//------------------------------------------------------------------------------
-// GB_make_shallow.c: force a matrix to have purely shallow components
-//------------------------------------------------------------------------------
-
-void GB_make_shallow (GrB_Matrix A)
-{
-    if (A == NULL) return ;
-    A->p_shallow = (A->p != NULL) ;
-    A->h_shallow = (A->h != NULL) ;
-    A->b_shallow = (A->b != NULL) ;
-    A->i_shallow = (A->i != NULL) ;
-    A->x_shallow = (A->x != NULL) ;
-    #ifdef GB_MEMDUMP
-    printf ("remove from memtable: Ap:%p Ah:%p Ab:%p Ai:%p Ax:%p\n", // MEMDUMP
-        A->p, A->h, A->b, A->i, A->x) ;
-    #endif
-    if (A->p != NULL) GB_Global_memtable_remove (A->p) ;
-    if (A->h != NULL) GB_Global_memtable_remove (A->h) ;
-    if (A->b != NULL) GB_Global_memtable_remove (A->b) ;
-    if (A->i != NULL) GB_Global_memtable_remove (A->i) ;
-    if (A->x != NULL) GB_Global_memtable_remove (A->x) ;
-    GB_make_shallow (A->Y) ;
 }
 

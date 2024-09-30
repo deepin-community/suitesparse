@@ -2,11 +2,6 @@
 // === SuiteSparseQR_qmult =====================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
 // Applies Q in Householder form to a sparse or dense matrix X.  These functions
 // use the Householder form in plain sparse column form, as returned by
 // the SuiteSparseQR function.
@@ -33,13 +28,13 @@
 #define HCHUNK_DENSE 32        // FUTURE: make this an input parameter
 
 // returns Y of size m-by-n, or NULL on failure
-template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
+template <typename Entry> cholmod_dense *SuiteSparseQR_qmult
 (
     // inputs, not modified
     int method,             // 0,1,2,3
     cholmod_sparse *H,      // either m-by-nh or n-by-nh
     cholmod_dense *HTau,    // size 1-by-nh
-    Int *HPinv,            // size mh, identity permutation if NULL
+    Long *HPinv,            // size mh, identity permutation if NULL
     cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
 
     // workspace and parameters
@@ -48,8 +43,8 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
 {
     cholmod_dense *Ydense ;
     Entry *X, *Y, *X1, *Y1, *Z1, *Hx, *C, *V, *Z, *CV, *Tau ;
-    Int *Hp, *Hi, *Wi, *Wmap ;
-    Int i, k, zsize, nh, mh, vmax, hchunk, vsize, csize, cvsize, wisize, ldx,
+    Long *Hp, *Hi, *Wi, *Wmap ;
+    Long i, k, zsize, nh, mh, vmax, hchunk, vsize, csize, cvsize, wisize, ldx,
         m, n ;
     int ok = TRUE ;
 
@@ -61,14 +56,14 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     RETURN_IF_NULL (H, NULL) ;
     RETURN_IF_NULL (HTau, NULL) ;
     RETURN_IF_NULL (Xdense, NULL) ;
-    int xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (H, NULL) ;
     RETURN_IF_XTYPE_INVALID (HTau, NULL) ;
     RETURN_IF_XTYPE_INVALID (Xdense, NULL) ;
     cc->status = CHOLMOD_OK ;
 
-    Hp = (Int *) H->p ;
-    Hi = (Int *) H->i ;
+    Hp = (Long *) H->p ;
+    Hi = (Long *) H->i ;
     Hx = (Entry *) H->x ;
     nh = H->ncol ;
     mh = H->nrow ;
@@ -107,7 +102,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     // allocate result Y
     // -------------------------------------------------------------------------
 
-    Ydense = spqr_allocate_dense <Int> (m, n, m, xtype, cc) ;
+    Ydense = cholmod_l_allocate_dense (m, n, m, xtype, cc) ;
     if (cc->status < CHOLMOD_OK)
     {
         // out of memory
@@ -130,7 +125,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     if (method == SPQR_QX || method ==  SPQR_XQT)
     {
         // Z is needed only for methods SPQR_QX and SPQR_XQT
-        Z = (Entry *) spqr_malloc <Int> (zsize, sizeof (Entry), cc) ;
+        Z = (Entry *) cholmod_l_malloc (zsize, sizeof (Entry), cc) ;
     }
 
     hchunk = MIN (HCHUNK_DENSE, nh) ;
@@ -139,15 +134,15 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     ASSERT (vmax <= mh) ;
 
     wisize = mh + vmax ;
-    Wi = (Int *) spqr_malloc <Int> (wisize, sizeof (Int), cc) ;
+    Wi = (Long *) cholmod_l_malloc (wisize, sizeof (Long), cc) ;
     Wmap = Wi + vmax ;              // Wmap is of size mh, Wi of size vmax
 
     if (cc->status < CHOLMOD_OK)
     {
         // out of memory; free workspace and result Y
-        spqr_free_dense <Int> (&Ydense, cc) ;
-        spqr_free <Int> (zsize,  sizeof (Entry), Z,  cc) ;
-        spqr_free <Int> (wisize, sizeof (Int), Wi, cc) ;
+        cholmod_l_free_dense (&Ydense, cc) ;
+        cholmod_l_free (zsize,  sizeof (Entry), Z,  cc) ;
+        cholmod_l_free (wisize, sizeof (Long), Wi, cc) ;
         return (NULL) ;
     }
 
@@ -182,7 +177,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
 
     if (ok)
     {
-        CV = (Entry *) spqr_malloc <Int> (cvsize, sizeof (Entry), cc) ;
+        CV = (Entry *) cholmod_l_malloc (cvsize, sizeof (Entry), cc) ;
     }
 
     // -------------------------------------------------------------------------
@@ -202,14 +197,14 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
         cvsize = spqr_add (csize, vsize, &ok) ;
         if (ok)
         {
-            CV = (Entry *) spqr_malloc <Int> (cvsize, sizeof (Entry), cc) ;
+            CV = (Entry *) cholmod_l_malloc (cvsize, sizeof (Entry), cc) ;
         }
         if (!ok || cc->status < CHOLMOD_OK)
         {
             // out of memory (or problem too large); free workspace and result Y
-            spqr_free_dense <Int> (&Ydense, cc) ;
-            spqr_free <Int> (zsize,  sizeof (Entry), Z,  cc) ;
-            spqr_free <Int> (wisize, sizeof (Int), Wi, cc) ;
+            cholmod_l_free_dense (&Ydense, cc) ;
+            cholmod_l_free (zsize,  sizeof (Entry), Z,  cc) ;
+            cholmod_l_free (wisize, sizeof (Long), Wi, cc) ;
             ERROR (CHOLMOD_OUT_OF_MEMORY, "out of memory") ;
             return (NULL) ;
         }
@@ -337,14 +332,14 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     // free workspace and return Y
     // -------------------------------------------------------------------------
 
-    spqr_free <Int> (cvsize, sizeof (Entry), CV, cc) ;
-    spqr_free <Int> (zsize,  sizeof (Entry), Z,  cc) ;
-    spqr_free <Int> (wisize, sizeof (Int), Wi, cc) ;
+    cholmod_l_free (cvsize, sizeof (Entry), CV, cc) ;
+    cholmod_l_free (zsize,  sizeof (Entry), Z,  cc) ;
+    cholmod_l_free (wisize, sizeof (Long), Wi, cc) ;
 
-    if (sizeof (SUITESPARSE_BLAS_INT) < sizeof (Int) && !cc->blas_ok)
+    if (CHECK_BLAS_INT && !cc->blas_ok)
     {
         ERROR (CHOLMOD_INVALID, "problem too large for the BLAS") ;
-        spqr_free_dense <Int> (&Ydense, cc) ;
+        cholmod_l_free_dense (&Ydense, cc) ;
         return (NULL) ;
     }
 
@@ -354,25 +349,13 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
 
 // =============================================================================
 
-template cholmod_dense *SuiteSparseQR_qmult <double, int64_t>
+template cholmod_dense *SuiteSparseQR_qmult <double>
 (
     // inputs, not modified
     int method,             // 0,1,2,3
     cholmod_sparse *H,      // either m-by-nh or n-by-nh
     cholmod_dense *HTau,    // size 1-by-nh
-    int64_t *HPinv,            // size mh
-    cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template cholmod_dense *SuiteSparseQR_qmult <double, int32_t>
-(
-    // inputs, not modified
-    int method,             // 0,1,2,3
-    cholmod_sparse *H,      // either m-by-nh or n-by-nh
-    cholmod_dense *HTau,    // size 1-by-nh
-    int32_t *HPinv,            // size mh
+    Long *HPinv,            // size mh
     cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
 
     // workspace and parameters
@@ -381,30 +364,19 @@ template cholmod_dense *SuiteSparseQR_qmult <double, int32_t>
 
 // =============================================================================
 
-template cholmod_dense *SuiteSparseQR_qmult <Complex, int64_t>
+template cholmod_dense *SuiteSparseQR_qmult <Complex>
 (
     // inputs, not modified
     int method,             // 0,1,2,3
     cholmod_sparse *H,      // either m-by-nh or n-by-nh
     cholmod_dense *HTau,    // size 1-by-nh
-    int64_t *HPinv,            // size mh
+    Long *HPinv,            // size mh
     cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
 
     // workspace and parameters
     cholmod_common *cc
 ) ;
-template cholmod_dense *SuiteSparseQR_qmult <Complex, int32_t>
-(
-    // inputs, not modified
-    int method,             // 0,1,2,3
-    cholmod_sparse *H,      // either m-by-nh or n-by-nh
-    cholmod_dense *HTau,    // size 1-by-nh
-    int32_t *HPinv,            // size mh
-    cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
 
-    // workspace and parameters
-    cholmod_common *cc
-) ;
 
 // =============================================================================
 // === SuiteSparseQR_qmult (sparse) ============================================
@@ -415,13 +387,13 @@ template cholmod_dense *SuiteSparseQR_qmult <Complex, int32_t>
 #define XCHUNK 4            // FUTURE: make a parameter
 #define HCHUNK_SPARSE 4     // FUTURE: make a parameter
 
-template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
+template <typename Entry> cholmod_sparse *SuiteSparseQR_qmult
 (
     // inputs, not modified
     int method,             // 0,1,2,3
     cholmod_sparse *H,      // size m-by-nh or n-by-nh
     cholmod_dense *HTau,    // size 1-by-nh
-    Int *HPinv,            // size mh, identity permutation if NULL
+    Long *HPinv,            // size mh, identity permutation if NULL
     cholmod_sparse *Xsparse,
 
     // workspace and parameters
@@ -430,8 +402,8 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
 {
     cholmod_sparse *Ysparse ;
     Entry *W, *W1, *Hx, *Xx, *C, *V, *CVW, *Tau ;
-    Int *Hp, *Hi, *Xp, *Xi, *Wi, *Wmap ;
-    Int i, k, ny, k1, xchunk, p, k2, m, n, nh, vmax, hchunk, vsize,
+    Long *Hp, *Hi, *Xp, *Xi, *Wi, *Wmap ;
+    Long i, k, ny, k1, xchunk, p, k2, m, n, nh, vmax, hchunk, vsize,
         csize, cvwsize, wsize, wisize ;
     int ok = TRUE ;
 
@@ -443,7 +415,7 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
     RETURN_IF_NULL (H, NULL) ;
     RETURN_IF_NULL (HTau, NULL) ;
     RETURN_IF_NULL (Xsparse, NULL) ;
-    Int xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (H, NULL) ;
     RETURN_IF_XTYPE_INVALID (HTau, NULL) ;
     RETURN_IF_XTYPE_INVALID (Xsparse, NULL) ;
@@ -480,12 +452,12 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
     if (method == SPQR_XQT || method == SPQR_XQ)
     {
         cholmod_sparse *XT, *YT ;
-        XT = spqr_transpose <Int> (Xsparse, 2, cc) ;
+        XT = cholmod_l_transpose (Xsparse, 2, cc) ;
         YT = SuiteSparseQR_qmult <Entry>
             ((method == SPQR_XQT) ? SPQR_QX : SPQR_QTX, H, HTau, HPinv, XT, cc);
-        spqr_free_sparse <Int> (&XT, cc) ;
-        Ysparse = spqr_transpose <Int> (YT, 2, cc) ;
-        spqr_free_sparse <Int> (&YT, cc) ;
+        cholmod_l_free_sparse (&XT, cc) ;
+        Ysparse = cholmod_l_transpose (YT, 2, cc) ;
+        cholmod_l_free_sparse (&YT, cc) ;
         return (Ysparse) ;
     }
 
@@ -493,21 +465,21 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
     // get H and X
     // -------------------------------------------------------------------------
 
-    Hp = (Int *) H->p ;
-    Hi = (Int *) H->i ;
+    Hp = (Long *) H->p ;
+    Hi = (Long *) H->i ;
     Hx = (Entry *) H->x ;
     m = H->nrow ;
     nh = H->ncol ;
 
-    Xp = (Int *) Xsparse->p ;
-    Xi = (Int *) Xsparse->i ;
+    Xp = (Long *) Xsparse->p ;
+    Xi = (Long *) Xsparse->i ;
     Xx = (Entry *) Xsparse->x ;
     n = Xsparse->ncol ;
 
     Tau = (Entry *) HTau->x ;
 
     // -------------------------------------------------------------------------
-    // allocate Int workspace
+    // allocate Long workspace
     // -------------------------------------------------------------------------
 
     xchunk = MIN (XCHUNK, n) ;
@@ -517,7 +489,7 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
         &vmax, &vsize, &csize) ;
 
     wisize = m + vmax ;
-    Wi = (Int *) spqr_malloc <Int> (wisize, sizeof (Int), cc) ;
+    Wi = (Long *) cholmod_l_malloc (wisize, sizeof (Long), cc) ;
     Wmap = Wi + vmax ;              // Wmap is of size m, Wi is of size vmax
 
     if (cc->status < CHOLMOD_OK)
@@ -545,7 +517,7 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
 
     if (ok)
     {
-        CVW = (Entry *) spqr_malloc <Int> (cvwsize, sizeof (Entry), cc) ;
+        CVW = (Entry *) cholmod_l_malloc (cvwsize, sizeof (Entry), cc) ;
     }
 
     // -------------------------------------------------------------------------
@@ -567,13 +539,13 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
         cvwsize = spqr_add (cvwsize, vsize, &ok) ;
         if (ok)
         {
-            CVW = (Entry *) spqr_malloc <Int> (cvwsize, sizeof (Entry), cc) ;
+            CVW = (Entry *) cholmod_l_malloc (cvwsize, sizeof (Entry), cc) ;
         }
         if (!ok || cc->status < CHOLMOD_OK)
         {
             // still out of memory (or problem too large)
             ERROR (CHOLMOD_OUT_OF_MEMORY, "out of memory") ;
-            spqr_free <Int> (wisize, sizeof (Int), Wi, cc) ;
+            cholmod_l_free (wisize, sizeof (Long), Wi, cc) ;
             return (NULL) ;
         }
     }
@@ -591,12 +563,12 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
     // -------------------------------------------------------------------------
 
     // Y is a sparse matrix of size m-ny-n with space for m+1 entries
-    Ysparse = spqr_allocate_sparse <Int> (m, n, m+1, TRUE, TRUE, 0, xtype, cc) ;
+    Ysparse = cholmod_l_allocate_sparse (m, n, m+1, TRUE, TRUE, 0, xtype, cc) ;
     if (cc->status < CHOLMOD_OK)
     {
         // out of memory
-        spqr_free <Int> (cvwsize, sizeof (Entry), CVW, cc) ;
-        spqr_free <Int> (wisize,  sizeof (Int),  Wi,  cc) ;
+        cholmod_l_free (cvwsize, sizeof (Entry), CVW, cc) ;
+        cholmod_l_free (wisize,  sizeof (Long),  Wi,  cc) ;
         return (NULL) ;
     }
     ny = 0 ;
@@ -642,14 +614,14 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
             W1 = W ;
             for (k = k1 ; k < k2 ; k++)
             {
-                spqr_append <Entry, Int> (W1, NULL, Ysparse, &ny, cc) ;
+                spqr_append (W1, NULL, Ysparse, &ny, cc) ;
 
                 if (cc->status < CHOLMOD_OK)
                 {
                     // out of memory
-                    spqr_free_sparse <Int> (&Ysparse, cc) ;
-                    spqr_free <Int> (cvwsize, sizeof (Entry), CVW, cc) ;
-                    spqr_free <Int> (wisize,  sizeof (Int),  Wi,  cc) ;
+                    cholmod_l_free_sparse (&Ysparse, cc) ;
+                    cholmod_l_free (cvwsize, sizeof (Entry), CVW, cc) ;
+                    cholmod_l_free (wisize,  sizeof (Long),  Wi,  cc) ;
                     return (NULL) ;
                 }
 
@@ -698,9 +670,9 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
                 if (cc->status < CHOLMOD_OK)
                 {
                     // out of memory
-                    spqr_free_sparse <Int> (&Ysparse, cc) ;
-                    spqr_free <Int> (cvwsize, sizeof (Entry), CVW, cc) ;
-                    spqr_free <Int> (wisize,  sizeof (Int),  Wi,  cc) ;
+                    cholmod_l_free_sparse (&Ysparse, cc) ;
+                    cholmod_l_free (cvwsize, sizeof (Entry), CVW, cc) ;
+                    cholmod_l_free (wisize,  sizeof (Long),  Wi,  cc) ;
                     return (NULL) ;
                 }
                 W1 += m ;
@@ -712,14 +684,14 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
     // free workspace and reduce Y in size so that nnz (Y) == nzmax (Y)
     // -------------------------------------------------------------------------
 
-    spqr_free <Int> (cvwsize, sizeof (Entry), CVW, cc) ;
-    spqr_free <Int> (wisize,  sizeof (Int),  Wi,  cc) ;
-    spqr_reallocate_sparse <Int> (spqr_nnz <Int> (Ysparse,cc), Ysparse, cc) ;
+    cholmod_l_free (cvwsize, sizeof (Entry), CVW, cc) ;
+    cholmod_l_free (wisize,  sizeof (Long),  Wi,  cc) ;
+    cholmod_l_reallocate_sparse (cholmod_l_nnz (Ysparse,cc), Ysparse, cc) ;
 
-    if (sizeof (SUITESPARSE_BLAS_INT) < sizeof (Int) && !cc->blas_ok)
+    if (CHECK_BLAS_INT && !cc->blas_ok)
     {
         ERROR (CHOLMOD_INVALID, "problem too large for the BLAS") ;
-        spqr_free_sparse <Int> (&Ysparse, cc) ;
+        cholmod_l_free_sparse (&Ysparse, cc) ;
         return (NULL) ;
     }
 
@@ -729,25 +701,13 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
 
 // =============================================================================
 
-template cholmod_sparse *SuiteSparseQR_qmult <double, int32_t>
+template cholmod_sparse *SuiteSparseQR_qmult <double>
 (
     // inputs, not modified
     int method,                 // 0,1,2,3
     cholmod_sparse *H,          // size m-by-nh or n-by-nh
     cholmod_dense *HTau,        // size 1-by-nh
-    int32_t *HPinv,                // size mh
-    cholmod_sparse *Xsparse,
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template cholmod_sparse *SuiteSparseQR_qmult <double, int64_t>
-(
-    // inputs, not modified
-    int method,                 // 0,1,2,3
-    cholmod_sparse *H,          // size m-by-nh or n-by-nh
-    cholmod_dense *HTau,        // size 1-by-nh
-    int64_t *HPinv,                // size mh
+    Long *HPinv,                // size mh
     cholmod_sparse *Xsparse,
 
     // workspace and parameters
@@ -756,25 +716,13 @@ template cholmod_sparse *SuiteSparseQR_qmult <double, int64_t>
 
 // =============================================================================
 
-template cholmod_sparse *SuiteSparseQR_qmult <Complex, int32_t>
+template cholmod_sparse *SuiteSparseQR_qmult <Complex>
 (
     // inputs, not modified
     int method,                 // 0,1,2,3
     cholmod_sparse *H,          // size m-by-nh or n-by-nh
     cholmod_dense *HTau,        // size 1-by-nh
-    int32_t *HPinv,                // size mh
-    cholmod_sparse *Xsparse,
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template cholmod_sparse *SuiteSparseQR_qmult <Complex, int64_t>
-(
-    // inputs, not modified
-    int method,                 // 0,1,2,3
-    cholmod_sparse *H,          // size m-by-nh or n-by-nh
-    cholmod_dense *HTau,        // size 1-by-nh
-    int64_t *HPinv,                // size mh
+    Long *HPinv,                // size mh
     cholmod_sparse *Xsparse,
 
     // workspace and parameters

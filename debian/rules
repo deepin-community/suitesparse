@@ -1,29 +1,22 @@
 #!/usr/bin/make -f
 
-export DEB_BUILD_MAINT_OPTIONS=optimize=+lto
-
 include /usr/share/dpkg/default.mk
 
 # NB: We do not build GraphBLAS, because it is provided by src:suitesparse-graphblas
 # (see do-not-build-graphblas.patch)
 
-# We can’t rely on dh_auto_*, because the build system uses a mix of traditional Makefiles and cmake
+# Flags for traditional Makefiles (all libs except Mongoose)
+COMMON_FLAGS := BLAS=-lblas LAPACK=-llapack MY_METIS_LIB=-lmetis
+PIC_FLAGS := $(COMMON_FLAGS) OPTIMIZATION=-fPIC
+NOPIC_FLAGS := $(COMMON_FLAGS) OPTIMIZATION=
 
-# Build type defined to “None”, as in /usr/share/perl5/Debian/Debhelper/Buildsystem/cmake.pm
-# Buildflags are taken from the environment
-CMAKE_OPTIONS := -DCMAKE_INSTALL_PREFIX=/usr \
-		-DCMAKE_BUILD_TYPE=None \
-		-DBLA_PREFER_PKGCONFIG=TRUE \
-		-DSUITESPARSE_CUDA=FALSE
-ifeq (,$(filter terse,$(DEB_BUILD_OPTIONS)))
-CMAKE_OPTIONS += -DCMAKE_VERBOSE_MAKEFILE=ON
-endif
+# Flags for cmake (only Mongoose)
+export CMAKE_OPTIONS := -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_C_FLAGS_RELEASE="$(CFLAGS) $(CPPFLAGS)" -DCMAKE_CXX_FLAGS_RELEASE="$(CXXFLAGS) $(CPPFLAGS)" -DCMAKE_SKIP_RPATH=TRUE -DCMAKE_BUILD_TYPE=Release
 
-# CMake does not use CPPFLAGS
-export CFLAGS := $(CFLAGS) $(CPPFLAGS)
-export CXXFLAGS := $(CXXFLAGS) $(CPPFLAGS)
+# All static libs (except Mongoose static which is handled by cmake)
+STATIC_LIBS := CAMD/Lib/libcamd.a BTF/Lib/libbtf.a CHOLMOD/Lib/libcholmod.a AMD/Lib/libamd.a RBio/Lib/librbio.a LDL/Lib/libldl.a SuiteSparse_config/libsuitesparseconfig.a KLU/Lib/libklu.a SPQR/Lib/libspqr.a UMFPACK/Lib/libumfpack.a COLAMD/Lib/libcolamd.a CXSparse/Lib/libcxsparse.a CCOLAMD/Lib/libccolamd.a SLIP_LU/Lib/libsliplu.a
 
-PDF_DOCS := AMD/Doc/AMD_UserGuide.pdf CAMD/Doc/CAMD_UserGuide.pdf CHOLMOD/Doc/CHOLMOD_UserGuide.pdf KLU/Doc/KLU_UserGuide.pdf Mongoose/Doc/Mongoose_UserGuide.pdf UMFPACK/Doc/UMFPACK_QuickStart.pdf UMFPACK/Doc/UMFPACK_UserGuide.pdf LDL/Doc/ldl_userguide.pdf SPQR/Doc/spqr_user_guide.pdf SPEX/Doc/SPEX_UserGuide.pdf
+PDF_DOCS := AMD/Doc/AMD_UserGuide.pdf CAMD/Doc/CAMD_UserGuide.pdf CHOLMOD/Doc/CHOLMOD_UserGuide.pdf KLU/Doc/KLU_UserGuide.pdf Mongoose/Doc/Mongoose_UserGuide.pdf UMFPACK/Doc/UMFPACK_QuickStart.pdf UMFPACK/Doc/UMFPACK_UserGuide.pdf LDL/Doc/ldl_userguide.pdf SPQR/Doc/spqr_user_guide.pdf SLIP_LU/Doc/SLIP_LU_UserGuide.pdf
 
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 JOBS := $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
@@ -31,51 +24,34 @@ else
 JOBS := 1
 endif
 
+
 %:
 	dh $@
 
-override_dh_auto_configure:
-
-# It’s necessary to build the libraries even in an indep-only build, because
-# otherwise CMake complains about missing libsuitesparseconfig when building
-# the docs.
-# What matters is that docs are not built in arch-only build (see #960766).
-build-stamp:
-	make CMAKE_OPTIONS='$(CMAKE_OPTIONS)' JOBS=$(JOBS)
-	touch build-stamp
-
-override_dh_auto_build-arch: build-stamp
-
-override_dh_auto_build-indep: build-stamp
+# LD_LIBRARY_PATH needed to make tests work (since buildflags.patch removes the -rpath)
+override_dh_auto_build:
+	# Docs must be rebuilt first, because the build system expect them for some libs
 	rm -f $(PDF_DOCS)
-ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
-	make CMAKE_OPTIONS='$(CMAKE_OPTIONS)' JOBS=$(JOBS) docs
-endif
+	make docs
 
-override_dh_auto_install-arch:
-	make install DESTDIR=$$(pwd)/debian/tmp
-	# Remove CUDA stuff that we don’t need
-	cd debian/tmp/usr/lib && \
-		rm */libgpuqrengine.* */libsuitesparse_gpuruntime.* \
-			*/pkgconfig/GPUQREngine.pc */pkgconfig/SuiteSparse_GPURuntime.pc
-	cd debian/tmp/usr/include && \
-		rm GPUQREngine.hpp SuiteSparse_GPURuntime.hpp
+	# Build static libraries (except Mongoose, see mongoose-build.patch)
+	make static $(NOPIC_FLAGS) JOBS=$(JOBS)
+	mkdir static_lib && cp $(STATIC_LIBS) static_lib/
+	make purge
 
-override_dh_auto_install-indep:
+	# Build dynamic libraries (and Mongoose static)
+	LD_LIBRARY_PATH=$$(pwd)/lib make $(PIC_FLAGS) JOBS=$(JOBS)
 
-override_dh_auto_test-arch:
-ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	make CMAKE_OPTIONS='$(CMAKE_OPTIONS)' JOBS=$(JOBS) demos
-endif
-
-override_dh_auto_test-indep:
+override_dh_auto_install:
+	# DESTDIR is used by cmake (for Mongoose), the INSTALL* vars are used by other libs
+	make install $(PIC_FLAGS) INSTALL=$$(pwd)/debian/tmp/usr INSTALL_LIB=$$(pwd)/debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/ INSTALL_INCLUDE=$$(pwd)/debian/tmp/usr/include/suitesparse INSTALL_DOC=$$(pwd)/debian/tmp/usr/share/doc/suitesparse DESTDIR=$$(pwd)/debian/tmp
+	# Install static libraries (except Mongoose)
+	cp static_lib/* debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/
 
 override_dh_auto_clean:
 	make purge
-	# Workaround for https://github.com/DrTimothyAldenDavis/SuiteSparse/issues/502
-	make -C CHOLMOD/Doc purge
+	rm -rf static_lib
 	rm -f $(PDF_DOCS)
-	rm -f build-stamp
 
 override_dh_compress:
 	dh_compress -X.pdf

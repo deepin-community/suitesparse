@@ -2,36 +2,33 @@
 /* ========================= CHOLMOD CUDA/C kernels ========================= */
 /* ========================================================================== */
 
-//------------------------------------------------------------------------------
-// CHOLMOD/GPU Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-//------------------------------------------------------------------------------
-
-#ifdef SUITESPARSE_CUDA
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/GPU Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 #include <stdio.h>
 #include "SuiteSparse_config.h"
-
 /* 64-bit version only */
+#define Int SuiteSparse_long
 
 extern "C" {
 
-  __global__ void kernelCreateMap ( int64_t *d_Map, int64_t *d_Ls, 
-				    int64_t psi, int64_t nsrow )
+  __global__ void kernelCreateMap ( Int *d_Map, Int *d_Ls, 
+				    Int psi, Int nsrow )
   /*
     Ls[supernode row] = Matrix Row
   */
   {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     if ( tid < nsrow ) {
-      d_Map[d_Ls[psi+tid]] = ((int64_t) (tid));
+      d_Map[d_Ls[psi+tid]] = ((Int) (tid));
     }
   }
   
-  __global__ void kernelCreateRelativeMap ( int64_t *d_Map, int64_t *d_Ls, 
-					    int64_t *d_RelativeMap, 
-					    int64_t pdi1, int64_t ndrow )
+  __global__ void kernelCreateRelativeMap ( Int *d_Map, Int *d_Ls, 
+					    Int *d_RelativeMap, 
+					    Int pdi1, Int ndrow )
   {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     if ( tid < ndrow ) {
@@ -40,27 +37,27 @@ extern "C" {
   }
   
   __global__ void kernelAddUpdate ( double *d_A, double *devPtrC, 
-				    int64_t *d_RelativeMap, 
-				    int64_t ndrow1, int64_t ndrow2, 
-				    int64_t nsrow )
+				    Int *d_RelativeMap, 
+				    Int ndrow1, Int ndrow2, 
+				    Int nsrow )
   {
     int idrow = blockIdx.x * blockDim.x + threadIdx.x;
     int idcol = blockIdx.y * blockDim.y + threadIdx.y;
     if ( idrow < ndrow2  && idcol < ndrow1 ) {
-      int64_t idx = d_RelativeMap[idrow] + d_RelativeMap[idcol] * nsrow;
+      Int idx = d_RelativeMap[idrow] + d_RelativeMap[idcol] * nsrow;
       d_A[idx] += devPtrC[idrow+ndrow2*idcol];
     }
   }
   
   __global__ void kernelAddComplexUpdate ( double *d_A, double *devPtrC, 
-					   int64_t *d_RelativeMap, 
-					   int64_t ndrow1, int64_t ndrow2, 
-					   int64_t nsrow )
+					   Int *d_RelativeMap, 
+					   Int ndrow1, Int ndrow2, 
+					   Int nsrow )
   {
     int idrow = blockIdx.x * blockDim.x + threadIdx.x;
     int idcol = blockIdx.y * blockDim.y + threadIdx.y;
     if ( idrow < ndrow2  && idcol < ndrow1 ) {
-      int64_t idx = d_RelativeMap[idrow] + d_RelativeMap[idcol] * nsrow;
+      Int idx = d_RelativeMap[idrow] + d_RelativeMap[idcol] * nsrow;
       d_A[idx*2] += devPtrC[(idrow+ndrow2*idcol)*2];
       d_A[idx*2+1] += devPtrC[(idrow+ndrow2*idcol)*2+1];
     }
@@ -71,7 +68,7 @@ extern "C" {
     int isrow = blockIdx.x * blockDim.x + threadIdx.x;
     int iscol = blockIdx.y * blockDim.y + threadIdx.y;
     if ( isrow < nsrow && iscol < nscol ) {
-      int64_t idx = iscol*nsrow + isrow;
+      Int idx = iscol*nsrow + isrow;
       a1[idx] += alpha * a2[idx];
     }
   }
@@ -82,7 +79,7 @@ extern "C" {
     int isrow = blockIdx.x * blockDim.x + threadIdx.x;
     int iscol = blockIdx.y * blockDim.y + threadIdx.y;
     if ( isrow < nsrow && iscol < nscol ) {
-      int64_t idx = iscol*nsrow + isrow;
+      Int idx = iscol*nsrow + isrow;
       a1[idx*2] += alpha * a2[idx*2];
       a1[idx*2+1] += alpha * a2[idx*2+1];
     }
@@ -91,8 +88,8 @@ extern "C" {
   /* ======================================================================== */
   /* using Ls and Lpi data already on the device, construct Map */
   /* ======================================================================== */
-  int createMapOnDevice ( int64_t *d_Map, int64_t *d_Ls, 
-			  int64_t  psi, int64_t nsrow ) 
+  int createMapOnDevice ( Int *d_Map, Int *d_Ls, 
+			  Int  psi, Int nsrow ) 
   {
     unsigned int kgrid = (nsrow+31)/32;
     unsigned int kblock = 32;
@@ -101,9 +98,9 @@ extern "C" {
   }
 
 
-  int createRelativeMapOnDevice ( int64_t *d_Map, int64_t *d_Ls, 
-				  int64_t *d_RelativeMap,int64_t  pdi1, 
-				  int64_t ndrow, cudaStream_t* astream )
+  int createRelativeMapOnDevice ( Int *d_Map, Int *d_Ls, 
+				  Int *d_RelativeMap,Int  pdi1, 
+				  Int ndrow, cudaStream_t* astream )
   {
     unsigned int kgrid = (ndrow+255)/256;
     unsigned int kblock = 256;
@@ -115,8 +112,8 @@ extern "C" {
 
   /* ======================================================================== */
   int addUpdateOnDevice ( double *d_A, double *devPtrC, 
-			  int64_t *d_RelativeMap, int64_t ndrow1, 
-			  int64_t ndrow2, int64_t nsrow, 
+			  Int *d_RelativeMap, Int ndrow1, 
+			  Int ndrow2, Int nsrow, 
 			  cudaStream_t* astream )
   /* ======================================================================== */
   /* Assemble the Schur complment from a descendant supernode into the current
@@ -141,8 +138,8 @@ extern "C" {
 
   /* ======================================================================== */
   int addComplexUpdateOnDevice ( double *d_A, double *devPtrC, 
-				 int64_t *d_RelativeMap, int64_t ndrow1, 
-				 int64_t ndrow2, int64_t nsrow, 
+				 Int *d_RelativeMap, Int ndrow1, 
+				 Int ndrow2, Int nsrow, 
 				 cudaStream_t* astream )
   /* ======================================================================== */
   /* Assemble the Schur complment from a descendant supernode into the current
@@ -194,5 +191,3 @@ extern "C" {
   }
 
 }
-
-#endif

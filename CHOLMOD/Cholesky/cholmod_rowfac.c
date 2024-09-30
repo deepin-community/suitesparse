@@ -1,12 +1,10 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Cholesky/cholmod_rowfac: row-wise numerical LDL' or LL' factorization
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Cholesky/cholmod_rowfac ============================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2013, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* Full or incremental numerical LDL' or LL' factorization (simplicial, not
  * supernodal) cholmod_factorize is the "easy" wrapper for this code, but it
@@ -99,9 +97,10 @@
  * factorized.
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCHOLESKY
+
+#include "cholmod_internal.h"
+#include "cholmod_cholesky.h"
 
 /* ========================================================================== */
 /* === subtree ============================================================== */
@@ -297,8 +296,7 @@ int CHOLMOD(row_subtree)
 
     Flag = Common->Flag ;	/* size nrow, Flag [i] < mark must hold */
     /* mark = CHOLMOD(clear_flag) (Common) ; */
-    CLEAR_FLAG (Common) ;
-    ASSERT (check_flag (Common)) ;
+    CHOLMOD_CLEAR_FLAG (Common) ;
     mark = Common->mark ;
 
     /* ---------------------------------------------------------------------- */

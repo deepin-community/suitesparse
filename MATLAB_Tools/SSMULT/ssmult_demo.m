@@ -6,8 +6,7 @@ function ssmult_demo
 %
 % See also ssmult, ssmult_unsorted, ssmultsym, sstest, sstest2.
 
-% SSMULT, Copyright (c) 2007-2011, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2007-2009, Timothy A. Davis, http://www.suitesparse.com
 
 type ssmult_demo
 load west0479

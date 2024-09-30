@@ -25,9 +25,7 @@ function fl = luflops (L, U)
 %
 %  See also symbfact
 
-% CCOLAMD, Copyright (c) 2005-2022, Univ. of Florida, All Rights Reserved.
-% Authors: Timothy A. Davis, Sivasankaran Rajamanickam, and Stefan Larimore.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 1998-2007, Timothy A. Davis
 
 Lnz = full (sum (spones (L))) - 1 ;	% off diagonal nz in cols of L
 Unz = full (sum (spones (U')))' - 1 ;	% off diagonal nz in rows of U

@@ -12,5 +12,4 @@ These warnings can be safely ignored.  They are parameters for functions that
 are passed to cs_fkeep, and all functions used in this manner must have the
 same calling sequence, even if some of the parameters are not used.
 
-CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-SPDX-License-Identifier: LGPL-2.1+
+Timothy A. Davis, http://www.suitesparse.com

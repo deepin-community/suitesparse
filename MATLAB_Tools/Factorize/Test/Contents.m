@@ -19,5 +19,4 @@
 %   test_performance - compare performance of factorization/solve methods.
 %   test_svd         - test factorize(A,'svd') and factorize(A,'cod') for a given matrix
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com

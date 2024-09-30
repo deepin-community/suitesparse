@@ -2,7 +2,7 @@
 // GB_AxB_dot: C<M>=A'*B using dot products
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -23,7 +23,7 @@
 // if C is m-by-n.  It is thus only suitable for cases when A and B are large,
 // and C is small.  GB_AxB_dot3 computes C<M>=A'*B, and it only needs to
 // examine entries in M, taking Omega(nnz(M)) time.  It can thus be used for
-// very large matrices C.  GB_AxB_dot4 computes C+=A'*B when C is full.
+// very large matrices C.  GB_AxB_dot4 computes C+=A'*B when C is dense.
 
 // The output matrix C has not been allocated.  It is an uninitialzed static
 // header on input.  The mask M is optional.
@@ -36,12 +36,11 @@
 // operator is applied.  If false, then fmult(aik,bkj) is computed.  If true,
 // then the operands are swapped, and fmult(bkj,aij) is done instead.
 
-// Werk: the GB_Werk containing a string of the user-callable function that is
-// calling this function (GrB_mxm, GrB_mxv, or GxB_vxm) and detailed error
-// reports.
+// Context: the GB_Context containing the # of threads to use, a string of the
+// user-callable function that is calling this function (GrB_mxm, GrB_mxv, or
+// GxB_vxm) and detailed error reports.
 
 #include "GB_mxm.h"
-#include "GB_stringify.h"
 #define GB_FREE_ALL ;
 
 GrB_Info GB_AxB_dot                 // dot product (multiple methods)
@@ -58,7 +57,7 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
     const bool flipxy,              // if true, do z=fmult(b,a) vs fmult(a,b)
     bool *mask_applied,             // if true, mask was applied
     bool *done_in_place,            // if true, C_in was computed in-place
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -96,8 +95,7 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
     GrB_Type ztype = semiring->add->op->ztype ;
     size_t zsize = ztype->size ;
     GB_void cscalar [GB_VLA(zsize)] ;
-    bool C_iso = GB_AxB_iso (cscalar, A, B, A->vlen, semiring, flipxy, false) ;
-
+    bool C_iso = GB_iso_AxB (cscalar, A, B, A->vlen, semiring, flipxy, false) ;
     if (C_iso)
     {
         // revise the method if A and B are both iso and full
@@ -114,7 +112,7 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
             // set C->iso = true    OK
             info = GB_new_bix (&C, // existing header
                 ztype, A->vdim, B->vdim, GB_Ap_null, true, GxB_FULL, false,
-                GB_HYPER_SWITCH_DEFAULT, -1, 1, true, true) ;
+                GB_HYPER_SWITCH_DEFAULT, -1, 1, true, true, Context) ;
             if (info == GrB_SUCCESS)
             { 
                 C->magic = GB_MAGIC ;
@@ -132,12 +130,12 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
 
     if (GB_AxB_dot4_control (C_iso, C_in, M, Mask_comp, accum, semiring))
     { 
-        // C_in must be full on input.  M must be NULL and not
+        // C_in must be as-if-full on input.  M must be NULL and not
         // complemented.  the C iso case is not handled (where C is iso on
         // output), but C_in might be iso on input.
-
         (*mask_applied) = false ;    // no mask to apply
-        info = GB_AxB_dot4 (C_in, A, B, semiring, flipxy, done_in_place, Werk) ;
+        info = GB_AxB_dot4 (C_in, A, B, semiring, flipxy, done_in_place,
+            Context) ;
         if (info != GrB_NO_VALUE)
         { 
             // return if dot4 has handled this case, otherwise fall through
@@ -157,7 +155,7 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
         if (C_in != NULL) return (GrB_SUCCESS) ;
         return (GB_new (&C, // auto sparsity, existing header
             ztype, A->vdim, B->vdim, GB_Ap_calloc, true, GxB_AUTO_SPARSITY,
-            GB_Global_hyper_switch_get ( ), 1)) ;
+            GB_Global_hyper_switch_get ( ), 1, Context)) ;
     }
 
     //--------------------------------------------------------------------------
@@ -172,45 +170,39 @@ GrB_Info GB_AxB_dot                 // dot product (multiple methods)
         GBURBLE ("(%sdot3) ", iso_kind) ;
         (*mask_applied) = true ;    // mask is always applied
         (*done_in_place) = false ;
-        GrB_Info info ;
 
-        // construct the hyper hashes for A and B
-        GB_OK (GB_hyper_hash_build (A, Werk)) ;
-        GB_OK (GB_hyper_hash_build (B, Werk)) ;
-
-        GBURBLE ("(%s%s%s%s = %s'*%s) ",
-            GB_sparsity_char_matrix (M),    // C has the same sparsity as M
-            Mask_struct ? "{" : "<",
-            GB_sparsity_char_matrix (M),
-            Mask_struct ? "}" : ">",
-            GB_sparsity_char_matrix (A),
-            GB_sparsity_char_matrix (B)) ;
-
-        #if defined ( SUITESPARSE_CUDA )
-        if (!C_iso &&   // fixme for CUDA, remove and create C iso on output
-            GB_AxB_dot3_cuda_branch (M, Mask_struct, A, B, semiring, flipxy))
+        #if defined ( GBCUDA )
+        if (!C_iso &&   // FIXME for CUDA, remove and create C iso on output
+            GB_AxB_dot3_cuda_branch (M, Mask_struct, A, B, semiring,
+            flipxy, Context))
         {
-            info = (GB_AxB_dot3_cuda (C, M, Mask_struct, A, B, semiring,
-                flipxy)) ;
+            // FIXME for CUDA: can M be jumbled for the CUDA kernel?
+            GB_MATRIX_WAIT (M) ;    // make sure it's not jumbled
+            if (GB_AxB_dot3_control (M, Mask_comp)
+                && !GB_IS_HYPERSPARSE (M)   // FIXME for CUDA, remove this
+            )
+            {
+                return (GB_AxB_dot3_cuda (C, M, Mask_struct, A, B, semiring,
+                    flipxy, Context)) ;
+            }
         }
         else
         #endif
         { 
             // use the CPU
-            info = (GB_AxB_dot3 (C, C_iso, cscalar, M, Mask_struct, A, B,
-                semiring, flipxy, Werk)) ;
+            return (GB_AxB_dot3 (C, C_iso, cscalar, M, Mask_struct, A, B,
+                semiring, flipxy, Context)) ;
         }
-        return (info) ;
     }
 
     //--------------------------------------------------------------------------
-    // general case: C<M>=A'*B, C<!M>=A'*B, or C=A'*B, not in-place
+    // general case: C<M>=A'*B, C<!M>=A'B*, or C=A'*B, not in-place
     //--------------------------------------------------------------------------
 
     GBURBLE ("(%sdot2) ", iso_kind) ;
     (*mask_applied) = (M != NULL) ; // mask applied if present
     (*done_in_place) = false ;      // TODO: allow dot2 to work in-place
     return (GB_AxB_dot2 (C, C_iso, cscalar, M, Mask_comp, Mask_struct,
-        false, A, B, semiring, flipxy, Werk)) ;
+        false, A, B, semiring, flipxy, Context)) ;
 }
 

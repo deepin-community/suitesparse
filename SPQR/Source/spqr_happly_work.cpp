@@ -2,35 +2,30 @@
 // === spqr_happly_work ========================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
 // Determines the workspace workspace needed by spqr-happly
 
 #include "spqr.hpp"
 
-template <typename Int> int spqr_happly_work
+int spqr_happly_work
 (
     // input
     int method,     // 0,1,2,3 
 
-    Int m,         // X is m-by-n
-    Int n,
+    Long m,         // X is m-by-n
+    Long n,
 
     // FUTURE : make H cholmod_sparse:
-    Int nh,        // number of Householder vectors
-    Int *Hp,       // size nh+1, column pointers for H
-    Int hchunk,
+    Long nh,        // number of Householder vectors
+    Long *Hp,       // size nh+1, column pointers for H
+    Long hchunk,
 
     // outputs; sizes of workspaces needed
-    Int *p_vmax, 
-    Int *p_vsize, 
-    Int *p_csize
+    Long *p_vmax, 
+    Long *p_vsize, 
+    Long *p_csize
 )
 {
-    Int maxhlen, h, hlen, vmax, mh, vsize, csize, vsize1, vsize2 ;
+    Long maxhlen, h, hlen, vmax, mh, vsize, csize, vsize1, vsize2 ;
     int ok = TRUE ;
 
     // -------------------------------------------------------------------------
@@ -65,7 +60,7 @@ template <typename Int> int spqr_happly_work
     // determine workspace sizes
     // -------------------------------------------------------------------------
 
-    // Int overflow cannot occur with vmax since H is already allocated
+    // Long overflow cannot occur with vmax since H is already allocated
     if (method == 0 || method == 3)
     {
         // apply H in the forward direction; H(0) first, H(nh-1) last
@@ -99,40 +94,3 @@ template <typename Int> int spqr_happly_work
     *p_csize = csize ;
     return (ok) ;
 }
-
-template int spqr_happly_work <int32_t>
-(
-    // input
-    int method,     // 0,1,2,3 
-
-    int32_t m,         // X is m-by-n
-    int32_t n,
-
-    // FUTURE : make H cholmod_sparse:
-    int32_t nh,        // number of Householder vectors
-    int32_t *Hp,       // size nh+1, column pointers for H
-    int32_t hchunk,
-
-    // outputs; sizes of workspaces needed
-    int32_t *p_vmax, 
-    int32_t *p_vsize, 
-    int32_t *p_csize
-) ;
-template int spqr_happly_work <int64_t>
-(
-    // input
-    int method,     // 0,1,2,3 
-
-    int64_t m,         // X is m-by-n
-    int64_t n,
-
-    // FUTURE : make H cholmod_sparse:
-    int64_t nh,        // number of Householder vectors
-    int64_t *Hp,       // size nh+1, column pointers for H
-    int64_t hchunk,
-
-    // outputs; sizes of workspaces needed
-    int64_t *p_vmax, 
-    int64_t *p_vsize, 
-    int64_t *p_csize
-) ;

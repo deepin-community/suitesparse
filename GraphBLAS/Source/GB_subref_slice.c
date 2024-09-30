@@ -2,12 +2,10 @@
 // GB_subref_slice: construct coarse/fine tasks for C = A(I,J)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed, but GB_subref_method has 6 or 7 variants.
 
 // Determine the tasks for computing C=A(I,J).  The matrix C has Cnvec vectors,
 // and these are divided into coarse and fine tasks.  A coarse task will
@@ -72,7 +70,7 @@ GrB_Info GB_subref_slice    // phase 1 of GB_subref
     const int64_t avlen,            // A->vlen
     const int64_t anz,              // nnz (A)
     const GrB_Index *I,
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -110,8 +108,7 @@ GrB_Info GB_subref_slice    // phase 1 of GB_subref
     // determine # of threads to use
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
 
     //--------------------------------------------------------------------------
     // allocate the initial TaskList
@@ -202,7 +199,7 @@ GrB_Info GB_subref_slice    // phase 1 of GB_subref
     // replace Cwork with its cumulative sum
     //--------------------------------------------------------------------------
 
-    GB_cumsum (Cwork, Cnvec, NULL, nthreads_for_Cwork, Werk) ;
+    GB_cumsum (Cwork, Cnvec, NULL, nthreads_for_Cwork, Context) ;
     double cwork = (double) Cwork [Cnvec] ;
 
     //--------------------------------------------------------------------------
@@ -223,7 +220,7 @@ GrB_Info GB_subref_slice    // phase 1 of GB_subref
     if (need_I_inverse)
     { 
         GB_OK (GB_I_inverse (I, nI, avlen, &Mark, &Mark_size,
-            &Inext, &Inext_size, &ndupl, Werk)) ;
+            &Inext, &Inext_size, &ndupl, Context)) ;
         ASSERT (Mark != NULL) ;
         ASSERT (Inext != NULL) ;
     }

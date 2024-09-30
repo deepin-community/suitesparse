@@ -2,7 +2,7 @@
 // GB_transpose_method: select method for GB_transpose
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -17,7 +17,8 @@ bool GB_transpose_method        // if true: use GB_builder, false: use bucket
 (
     const GrB_Matrix A,         // matrix to transpose
     int *nworkspaces_bucket,    // # of slices of A for the bucket method
-    int *nthreads_bucket        // # of threads to use for the bucket method
+    int *nthreads_bucket,       // # of threads to use for the bucket method
+    GB_Context Context
 )
 {
 
@@ -29,14 +30,13 @@ bool GB_transpose_method        // if true: use GB_builder, false: use bucket
     int64_t anvec = (A->nvec_nonempty < 0) ? A->nvec : A->nvec_nonempty ;
     int64_t anz = GB_nnz (A) ;
     int64_t avlen = A->vlen ;
-//  int64_t avdim = A->vdim ;
+    int64_t avdim = A->vdim ;
     int anzlog = (anz   == 0) ? 1 : (int) GB_CEIL_LOG2 (anz) ;
     int mlog   = (avlen == 0) ? 1 : (int) GB_CEIL_LOG2 (avlen) ;
     double bucket_factor ;
 
     // determine # of threads for bucket method
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
     int nthreads = GB_nthreads (anz + avlen, chunk, nthreads_max) ;
 
     //--------------------------------------------------------------------------

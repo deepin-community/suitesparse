@@ -2,7 +2,7 @@
 // GB_add.h: definitiions for GB_add and related functions
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -26,8 +26,7 @@ GrB_Info GB_add             // C=A+B, C<M>=A+B, or C<!M>=A+B
     const GrB_Scalar alpha, // alpha and beta ignored for eWiseAdd,
     const GrB_Scalar beta,  // nonempty scalars for GxB_eWiseUnion
     const GrB_BinaryOp op,  // op to perform C = op (A,B)
-    const bool A_and_B_are_disjoint,   // if true, A and B are disjoint
-    GB_Werk Werk
+    GB_Context Context
 ) ;
 
 GrB_Info GB_add_phase0          // find vectors in C for C=A+B or C<M>=A+B
@@ -46,7 +45,7 @@ GrB_Info GB_add_phase0          // find vectors in C for C=A+B or C<M>=A+B
     const GrB_Matrix M,         // optional mask, may be NULL; not complemented
     const GrB_Matrix A,         // first input matrix
     const GrB_Matrix B,         // second input matrix
-    GB_Werk Werk
+    GB_Context Context
 ) ;
 
 GrB_Info GB_add_phase1                  // count nnz in each C(:,j)
@@ -72,7 +71,7 @@ GrB_Info GB_add_phase1                  // count nnz in each C(:,j)
     const bool Mask_comp,           // if true, use !M
     const GrB_Matrix A,
     const GrB_Matrix B,
-    GB_Werk Werk
+    GB_Context Context
 ) ;
 
 GrB_Info GB_add_phase2      // C=A+B, C<M>=A+B, or C<!M>=A+B
@@ -80,8 +79,7 @@ GrB_Info GB_add_phase2      // C=A+B, C<M>=A+B, or C<!M>=A+B
     GrB_Matrix C,           // output matrix, static header
     const GrB_Type ctype,   // type of output matrix C
     const bool C_is_csc,    // format of output matrix C
-    const GrB_BinaryOp op,  // op to perform C = op (A,B)
-    const bool A_and_B_are_disjoint,    // if true, then A and B are disjoint
+    const GrB_BinaryOp op,  // op to perform C = op (A,B), or NULL if no op
     // from phase1:
     int64_t **Cp_handle,    // vector pointers for C
     size_t Cp_size,
@@ -108,22 +106,21 @@ GrB_Info GB_add_phase2      // C=A+B, C<M>=A+B, or C<!M>=A+B
     const bool is_eWiseUnion,   // if true, eWiseUnion, else eWiseAdd
     const GrB_Scalar alpha, // alpha and beta ignored for eWiseAdd,
     const GrB_Scalar beta,  // nonempty scalars for GxB_eWiseUnion
-    GB_Werk Werk
+    GB_Context Context
 ) ;
 
 int GB_add_sparsity         // return the sparsity structure for C
 (
     // output:
-    bool *apply_mask,       // if true then mask will be applied by GB_add
+    bool *apply_mask,       // if true then mask will be applied
     // input:
     const GrB_Matrix M,     // optional mask for C, unused if NULL
-    const bool Mask_struct, // if true, use only the structure of M
     const bool Mask_comp,   // if true, use !M
     const GrB_Matrix A,     // input A matrix
     const GrB_Matrix B      // input B matrix
 ) ;
 
-bool GB_add_iso             // c = op(a,b), return true if C is iso
+bool GB_iso_add             // c = op(a,b), return true if C is iso
 (
     // output
     GB_void *restrict c,    // output scalar of iso array
@@ -133,8 +130,7 @@ bool GB_add_iso             // c = op(a,b), return true if C is iso
     const GB_void *restrict alpha_scalar,   // of type op->xtype
     GrB_Matrix B,           // input matrix
     const GB_void *restrict beta_scalar,    // of type op->ytype
-    GrB_BinaryOp op,        // binary operator
-    const bool A_and_B_are_disjoint,
+    GrB_BinaryOp op,        // binary operator, if present
     const bool is_eWiseUnion
 ) ;
 

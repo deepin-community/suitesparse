@@ -36,8 +36,7 @@ function S = inverse (A, varargin)
 %
 % See also factorize, slash, inv, pinv.
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
 % This function is only called when A is a matrix.  If A is a factorize
 % object, then factorize.inverse is called instead.

@@ -1,11 +1,9 @@
-//------------------------------------------------------------------------------
-// RBio/RBio/RBraw.c: MATLAB interface for RBio: read raw contents of HB file
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === RBio/RBio/RBraw.c: MATLAB mexFunction to read raw contents of RB file  */
+/* ========================================================================== */
 
-// RBio, Copyright (c) 2009-2022, Timothy A. Davis.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* Copyright 2009, Timothy A. Davis, All Rights Reserved.
+   Refer to RBio/Doc/license.txt for the RBio license. */
 
 /*
 c-----------------------------------------------------------------------
@@ -43,6 +41,7 @@ c-----------------------------------------------------------------------
 
 #include "RBio.h"
 #define LEN 1024
+#define Long SuiteSparse_long
 
 void mexFunction
 (
@@ -52,9 +51,9 @@ void mexFunction
     const mxArray *pargin [ ]
 )
 {
-    int64_t *Ap, *Ai ;
+    Long *Ap, *Ai ;
     double *Ax ;
-    int64_t p, j, nrow, ncol, mkind, skind, xsize, status, nelnz, fem,
+    Long p, j, nrow, ncol, mkind, skind, xsize, status, nelnz, fem,
         iclass, nnz ;
     mwSize dims [2] = { 0, 1 } ;
     char filename [LEN+1], title [73], key [9], mtype [4] ;
@@ -102,7 +101,7 @@ void mexFunction
     /* return results to MATLAB */
     /* ---------------------------------------------------------------------- */
 
-    iclass = mxINT64_CLASS ;
+    iclass = (sizeof (Long) == 4) ? mxINT32_CLASS : mxINT64_CLASS ;
 
     /* return mtype */
     pargout [0] = mxCreateString (mtype) ;

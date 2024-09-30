@@ -2,64 +2,25 @@
 SuiteSparse:  A Suite of Sparse matrix packages at http://suitesparse.com
 -----------------------------------------------------------------------------
 
-Oct 31, 2023, SuiteSparse VERSION 7.3.1
+Apr 10, 2022.  SuiteSparse VERSION 5.12.0
 
-SuiteSparse is a set of sparse-matrix-related packages written or co-authored
-by Tim Davis, available at https://github.com/DrTimothyAldenDavis/SuiteSparse .
+    Now includes GraphBLAS, SLIP_LU, and a new interface to the SuiteSparse
+    Matrix Collection (ssget), via MATLAB and a Java GUI, to
+    http://sparse.tamu.edu.
 
 Primary author of SuiteSparse (codes and algorithms, excl. METIS): Tim Davis
 
 Code co-authors, in alphabetical order (not including METIS):
-    Patrick Amestoy, David Bateman, Jinhao Chen, Yanqing Chen, Iain Duff,
+
+    Patrick Amestoy, David Bateman, Jinhao Chen.  Yanqing Chen, Iain Duff,
     Les Foster, William Hager, Scott Kolodziej, Chris Lourenco, Stefan
     Larimore, Erick Moreno-Centeno, Ekanathan Palamadai, Sivasankaran
     Rajamanickam, Sanjay Ranka, Wissam Sid-Lakhdar, Nuri Yeralan.
 
-METIS is authored by George Karypis.
-
 Additional algorithm designers: Esmond Ng and John Gilbert.
 
-Refer to each package for license, copyright, and author information.
-
------------------------------------------------------------------------------
-SuiteSparse branches
------------------------------------------------------------------------------
-
-    * dev: the default branch, with recent updates of features to appear in
-        the next stable release.  The intent is to keep this branch in
-        fully working order at all times, but the features will not be
-        finalized at any given time.
-    * stable: the most recent stable release.
-    * dev2: working branch.  All submitted PRs should made to this branch.
-        This branch might not always be in working order.
-
------------------------------------------------------------------------------
-For distro maintainers (Linux, homebrew, spack, R, Octave, Trilinos, ...):
------------------------------------------------------------------------------
-
-Thanks for packaging SuiteSparse!  Here are some suggestions:
-
-    * GraphBLAS takes a long time to compile because it creates many fast
-        "FactoryKernels" at compile-time.  If you want to reduce the compile
-        time and library size, enable the COMPACT mode, but keep the JIT
-        enabled.  Then GraphBLAS will compile the kernels it needs at run-time,
-        via its JIT.  Performance will be the same as the FactoryKernels once
-        the JIT kernels are compiled.  User compiled kernels are placed in
-        ~/.SuiteSparse, by default.  You do not need to distribute the source
-        for GraphBLAS to enable the JIT: just libgraphblas.so and GraphBLAS.h
-        is enough.
-
-    * GraphBLAS needs OpenMP!  It's fundamentally a parallel code so please
-        distribute it with OpenMP enabled.  Performance will suffer
-        otherwise.
-
-    * CUDA acceleration:  CHOLMOD and SPQR can benefit from their CUDA
-        kernels.  If you do not have CUDA or do not want to include it in
-        your distro, this version of SuiteSparse skips the building of
-        the CHOLMOD_CUDA and SPQR_CUDA libraries, and does not link
-        against the GPUQREngine and SuiteSparse_GPURuntime libraries.
-        The latter can be excluded from your distro (the "make" command
-        will build them, but they will be empty).
+Refer to each package for license, copyright, and author information.  All
+codes are authored or co-authored by Timothy A. Davis.
 
 -----------------------------------------------------------------------------
 How to cite the SuiteSparse meta-package and its component packages:
@@ -77,14 +38,15 @@ list; if you want a shorter list, just cite the most recent "Algorithm XXX:"
 papers in ACM TOMS, for each package.
 
     * For the MATLAB x=A\b, see below for AMD, COLAMD, CHOLMOD, UMFPACK,
-        and SuiteSparseQR (SPQR).
+        and SuiteSparseQR.
 
     * for GraphBLAS, and `C=A*B` in MATLAB (sparse-times-sparse):
 
-        T. A. Davis. Algorithm 1037: SuiteSparse:GraphBLAS: Parallel Graph
-        Algorithms in the Language of Sparse Linear Algebra. ACM Trans. Math.
-        Softw. 49, 3, Article 28 (September 2023), 30 pages.
-        https://doi.org/10.1145/3577195
+        T. Davis, Algorithm 10xx: SuiteSparse:GraphBLAS: parallel graph
+        algorithms in the language of sparse linear algebra, ACM Trans on
+        Mathematical Software, submitted, under revision, 2022.
+        In GraphBLAS/Doc v7.0.1, to appear here shortly.  See:
+        https://github.com/DrTimothyAldenDavis/GraphBLAS/tree/stable/Doc
 
         T. Davis, Algorithm 1000: SuiteSparse:GraphBLAS: graph algorithms in
         the language of sparse linear algebra, ACM Trans on Mathematical
@@ -97,7 +59,7 @@ papers in ACM TOMS, for each package.
         the Fundamentals of Algorithms, SIAM, Philadelphia, PA, 2006.
         https://doi.org/10.1137/1.9780898718881
 
-    * for SuiteSparseQR (SPQR): (also cite AMD, COLAMD):
+    * for SuiteSparseQR: (also cite AMD, COLAMD):
 
         T. A. Davis, Algorithm 915: SuiteSparseQR: Multifrontal multithreaded
         rank-revealing sparse QR factorization, ACM Trans. on Mathematical
@@ -114,20 +76,20 @@ papers in ACM TOMS, for each package.
     * for CHOLMOD: (also cite AMD, COLAMD):
 
         Y. Chen, T. A. Davis, W. W. Hager, and S. Rajamanickam, Algorithm 887:
-        CHOLMOD, supernodal sparse Cholesky factorization and update/downdate,
-        ACM Trans. on Mathematical Software, 35(3), 2008, pp. 22:1--22:14.
+        CHOLMOD, supernodal sparse Cholesky factorization and update/downdate, ACM
+        Trans. on Mathematical Software, 35(3), 2008, pp. 22:1--22:14.
         https://dl.acm.org/doi/abs/10.1145/1391989.1391995
 
         T. A. Davis and W. W. Hager, Dynamic supernodes in sparse Cholesky
-        update/downdate and triangular solves, ACM Trans. on Mathematical
-        Software, 35(4), 2009, pp. 27:1--27:23.
+        update/downdate and triangular solves, ACM Trans. on Mathematical Software,
+        35(4), 2009, pp. 27:1--27:23.
         https://doi.org/10.1145/1462173.1462176
 
     * for CHOLMOD/Modify Module: (also cite AMD, COLAMD):
 
         T. A. Davis and William W. Hager, Row Modifications of a Sparse
         Cholesky Factorization SIAM Journal on Matrix Analysis and Applications
-        2005 26:3, 621-639
+        2005 26:3, 621-639 
         https://doi.org/10.1137/S089547980343641X
 
         T. A. Davis and William W. Hager, Multiple-Rank Modifications of a
@@ -222,7 +184,7 @@ papers in ACM TOMS, for each package.
 
         Kolodziej et al., (2019). The SuiteSparse Matrix Collection Website
         Interface. Journal of Open Source Software, 4(35), 1244,
-        https://doi.org/10.21105/joss.01244
+        https://doi.org/10.21105/joss.01244        
 
     * for `spqr_rank`:
 
@@ -237,79 +199,47 @@ papers in ACM TOMS, for each package.
         T. A. Davis, William W. Hager, Scott P. Kolodziej, and S. Nuri Yeralan.
         2020. Algorithm 1003: Mongoose, a Graph Coarsening and Partitioning
         Library. ACM Trans. Math. Softw. 46, 1, Article 7 (March 2020), 18
-        pages.
+        pages. 
         https://doi.org/10.1145/3337792
 
-    * for SPEX:
+    * for `SLIP_LU` and SPEX:
 
         Christopher Lourenco, Jinhao Chen, Erick Moreno-Centeno, and T. A.
-        Davis. 2022. Algorithm 1021: SPEX Left LU, Exactly Solving Sparse
+        Davis. 2022. Algorithm 1XXX: SPEX Left LU, Exactly Solving Sparse
         Linear Systems via a Sparse Left-Looking Integer-Preserving LU
-        Factorization. ACM Trans. Math. Softw. June 2022.
+        Factorization. ACM Trans. Math. Softw. Just Accepted (February 2022).
         https://doi.org/10.1145/3519024
 
 -----------------------------------------------------------------------------
 About the BLAS and LAPACK libraries
 -----------------------------------------------------------------------------
 
-NOTE: Use of the Intel MKL BLAS is strongly recommended.  In a 2019 test,
-OpenBLAS caused result in severe performance degradation.  The reason for this
-is being investigated, and this may be resolved in the near future.
+*NOTE: Use of the Intel MKL BLAS is strongly recommended.  A recent OpenBLAS
+can result in severe performance degradation.  The reason for this is being
+investigated, and this may be resolved in the near future.  Ignore the comments
+about OpenBLAS in the various user guides; those are out of date.*
 
-To select your BLAS/LAPACK, see the instructions in SuiteSparseBLAS.cmake in
-`SuiteSparse_config/cmake_modules`.  If `SuiteSparse_config` finds a BLAS with
-64-bit integers (such as the Intel MKL ilp64 BLAS), it configures
-`SuiteSparse_config.h` with the `SUITESPARSE_BLAS_INT` defined as `int64_t`.
-Otherwise, if a 32-bit BLAS is found, this type is defined as `int32_t`.  If
-later on, UMFPACK, CHOLMOD, or SPQR are compiled and linked  with a BLAS that
-has a different integer size, you must override the definition with -DBLAS64
-(to assert the use of 64-bit integers in the BLAS) or -DBLAS32, (to assert the
-use of 32-bit integers in the BLAS).
-
-When distributed in a binary form (such as a Debian, Ubuntu, Spack, or Brew
-package), SuiteSparse should probably be compiled to expect a 32-bit BLAS,
-since this is the most common case.  The default is to use a 32-bit BLAS, but
-this can be changed in SuiteSparseBLAS.cmake or by compiling with
-`-DALLOW_64BIT_BLAS=1`.
-
-By default, SuiteSparse hunts for a suitable BLAS library.  To enforce a
-particular BLAS library use either:
-
-    CMAKE_OPTIONS="-DBLA_VENDOR=OpenBLAS" make
-    cd Package ; cmake -DBLA_VENDOR=OpenBLAS .. make
-
-To use the default (hunt for a BLAS), do not set `BLA_VENDOR`, or set it to
-ANY.  In this case, if `ALLOW_64BIT_BLAS` is set, preference is given to a
-64-bit BLAS, but a 32-bit BLAS library will be used if no 64-bit library is
-found.
-
-When selecting a particular BLAS library, the `ALLOW_64BIT_BLAS` setting is
-strictly followed.  If set to true, only a 64-bit BLAS library will be used.
-If false (the default), only a 32-bit BLAS library will be used.  If no such
-BLAS is found, the build will fail.
-
------------------------------------------------------------------------------
-SuiteSparse Packages
------------------------------------------------------------------------------
+------------------
+SuiteSparse/README
+------------------
 
 Packages in SuiteSparse, and files in this directory:
 
     GraphBLAS   graph algorithms in the language of linear algebra.
                 https://graphblas.org
+                A stand-alone package that uses cmake to compile; see
+                GraphBLAS/README.txt.  The rest of SuiteSparse still uses
+                'make'.  A cmake setup for all of SuiteSparse is in progress.
                 author: Tim Davis
 
-    SPEX        solves sparse linear systems in exact arithmetic.
+    SLIP_LU     solves sparse linear systems in exact arithmetic.
                 Requires the GNU GMP and MPRF libraries.
-                This will be soon replaced by a more general package, SPEX v3
-                that includes this method (exact sparse LU) and others (sparse
-                exact Cholesky, and sparse exact update/downdate).  The API
-                of v3 will be changing significantly.
 
     AMD         approximate minimum degree ordering.  This is the built-in AMD
                 function in MATLAB.
                 authors: Tim Davis, Patrick Amestoy, Iain Duff
 
-    bin         where programs are placed when compiled
+    bin         where the metis-5.1.0 programs are placed when METIS is compiled
 
     BTF         permutation to block triangular form
                 authors: Tim Davis, Ekanathan Palamadai
@@ -328,7 +258,7 @@ Packages in SuiteSparse, and files in this directory:
     CHOLMOD     sparse Cholesky factorization.  Requires AMD, COLAMD, CCOLAMD,
                 the BLAS, and LAPACK.  Optionally uses METIS.  This is chol and
                 x=A\b in MATLAB.
-                author for all modules: Tim Davis
+                author for all modules: Tim Davis 
                 CHOLMOD/Modify module authors: Tim Davis and William W. Hager
 
     COLAMD      column approximate minimum degree ordering.  This is the
@@ -341,11 +271,17 @@ Packages in SuiteSparse, and files in this directory:
     CSparse     a concise sparse matrix package, developed for my
                 book, "Direct Methods for Sparse Linear Systems",
                 published by SIAM.  Intended primarily for teaching.
-                Note that the code is (c) Tim Davis, as stated in the book.
-                For production, use CXSparse instead.  In particular, both
-                CSparse and CXSparse have the same include filename: cs.h.
+                It does have a 'make install' but I recommend using
+                CXSparse instead.  In particular, both CSparse and CXSparse
+                have the same include filename: cs.h.
+
                 This package is used for the built-in DMPERM in MATLAB.
                 author: Tim Davis
+
+    CSparse_to_CXSparse
+                a Perl script to create CXSparse from CSparse and
+                CXSparse_newfiles
+                author: David Bateman, Motorola
 
     CXSparse    CSparse Extended.  Includes support for complex matrices
                 and both int or long integers.  Use this instead of CSparse
@@ -355,8 +291,13 @@ Packages in SuiteSparse, and files in this directory:
                 also be able to link against CXSparse instead.
                 author: Tim Davis, David Bateman
 
-    include     'make install' places user-visible include files for each
-                package here, after 'make local'
+    CXSparse_newfiles
+                Files unique to CXSparse
+                author: Tim Davis, David Bateman
+
+    share       'make' places documentation for each package here
+
+    include     'make' places user-visible include fomes for each package here
 
     KLU         sparse LU factorization, primarily for circuit simulation.
                 Requires AMD, COLAMD, and BTF.  Optionally uses CHOLMOD,
@@ -366,50 +307,33 @@ Packages in SuiteSparse, and files in this directory:
     LDL         a very concise LDL' factorization package
                 author: Tim Davis
 
-    lib         'make install' places shared libraries for each package
-                here, after 'make local'
+    lib         'make' places shared libraries for each package here
 
-    Makefile    optional, to compile all of SuiteSparse
-
-                make            compiles SuiteSparse libraries.
-                                Subsequent "make install" will install
-                                in just CMAKE_INSTALL_PATH (defaults to
-                                /usr/local/lib on Linux or Mac).
-
-                make local      compiles SuiteSparse.
-                                Subsequent "make install will install only
-                                in ./lib, ./include only.
-                                Does not install in CMAKE_INSTALL_PATH.
-
-                make global     compiles SuiteSparse libraries.
-                                Subsequent "make install" will install in
-                                just /usr/local/lib (or whatever your
-                                CMAKE_INSTALL_PREFIX is).
-                                Does not install in ./lib and ./include.
-
-                make install    installs in the current directory
-                                (./lib, ./include), and/or in
-                                /usr/local/lib and /usr/local/include,
-                                depending on whether "make", "make local",
-                                or "make global" has been done.
-
+    Makefile    to compile all of SuiteSparse
+                make            compiles SuiteSparse libraries and runs demos
+                make install    compiles SuiteSparse and installs in the
+                                current directory (./lib, ./include).
+                                Use "sudo make INSTALL=/usr/local" to install
+                                in /usr/local/lib and /usr/local/include.
                 make uninstall  undoes 'make install'
-
+                make library    compiles SuiteSparse libraries (not demos)
                 make distclean  removes all files not in distribution, including
                                 ./bin, ./share, ./lib, and ./include.
-
                 make purge      same as 'make distclean'
-
                 make clean      removes all files not in distribution, but
                                 keeps compiled libraries and demoes, ./lib,
                                 ./share, and ./include.
+                make config     displays parameter settings; does not compile
 
                 Each individual package also has each of the above 'make'
-                targets.
+                targets.  Doing 'make config' in each package */Lib directory
+                displays the exact shared and static library names.
 
                 Things you don't need to do:
+                make cx         creates CXSparse from CSparse
                 make docs       creates user guides from LaTeX files
                 make cov        runs statement coverage tests (Linux only)
+                make metis      compiles METIS (also done by 'make')
 
     MATLAB_Tools    various m-files for use in MATLAB
                 author: Tim Davis (all parts)
@@ -444,12 +368,12 @@ Packages in SuiteSparse, and files in this directory:
     Mongoose    graph partitioning.
                 authors: Nuri Yeralan, Scott Kolodziej, William Hager, Tim Davis
 
-    CHOLMOD/SuiteSparse_metis: a modified version of METIS, embedded into
-                the CHOLMOD library.  See the README.txt files
-                for details.  author: George Karypis.  This is a slightly
-                modified copy included with SuiteSparse via the open-source
-                license provided by George Karypis.  SuiteSparse cannot use
-                an unmodified copy METIS.
+    metis-5.1.0 a modified version of METIS.  See the README.txt files for
+                details.
+                author: George Karypis; not an integral component of
+                SuiteSparse, however.  This is just a copy included with
+                SuiteSparse via the open-source license provided by
+                George Karypis
 
     RBio        read/write sparse matrices in Rutherford/Boeing format
                 author: Tim Davis
@@ -457,22 +381,24 @@ Packages in SuiteSparse, and files in this directory:
     README.txt  this file
 
     SPQR        sparse QR factorization.  This the built-in qr and x=A\b in
-                MATLAB.  Also called SuiteSparseQR.
+                MATLAB.
                 author of the CPU code: Tim Davis
                 author of GPU modules: Tim Davis, Nuri Yeralan,
                     Wissam Sid-Lakhdar, Sanjay Ranka
 
-    GPUQREngine: GPU support package for SPQR
-                Not needed if CUDA is not enabled.
+                SPQR/GPUQREngine: GPU support package for SPQR
+                (not built into MATLAB, however)
                 authors: Tim Davis, Nuri Yeralan, Sanjay Ranka,
                     Wissam Sid-Lakhdar
 
-    SuiteSparse_config    configuration file for all the above packages.
-                CSparse and MATLAB_Tools do not use SuiteSparse_config.
+    SuiteSparse_config    configuration file for all the above packages.  The
+                SuiteSparse_config/SuiteSparse_config.mk is included in the
+                Makefile's of all packages.  CSparse and MATLAB_Tools do not
+                use SuiteSparse_config.
                 author: Tim Davis
 
     SuiteSparse_GPURuntime      GPU support package for SPQR and CHOLMOD
-                Not needed if CUDA is not enabled.
+                (not builtin to MATLAB, however).
 
     SuiteSparse_install.m       install SuiteSparse for MATLAB
     SuiteSparse_paths.m         set paths for SuiteSparse MATLAB mexFunctions
@@ -480,6 +406,8 @@ Packages in SuiteSparse, and files in this directory:
     SuiteSparse_test.m          exhaustive test for SuiteSparse in MATLAB
 
     ssget       MATLAB interface to the SuiteSparse Matrix Collection
+                (formerly called the UF Sparse Matrix Collection).
+                Includes a UFget function for backward compatibility.
                 author: Tim Davis
 
     UMFPACK     sparse LU factorization.  Requires AMD and the BLAS.
@@ -488,28 +416,63 @@ Packages in SuiteSparse, and files in this directory:
                 algorithm design collaboration: Iain Duff
 
 Some codes optionally use METIS 5.1.0.  This package is located in SuiteSparse
-in the `CHOLMOD/SuiteSparse_metis` directory.  Its use is optional.  To compile
-CHOLMOD without it, use the CMAKE_OPTIONS="-DNPARTITION=1" setting.  The use of
-METIS can improve ordering quality for some matrices, particularly large 3D
-discretizations.  METIS has been slightly modified for use in SuiteSparse; see
-the `CHOLMOD/SuiteSparse_metis/README.txt` file for details.
+in the metis-5.1.0 directory.  Its use is optional, so you can remove it before
+compiling SuiteSparse, if you desire.  The use of METIS will improve the
+ordering quality.  METIS has been slightly modified for use in SuiteSparse; see
+the metis-5.1.0/README.txt file for details.  SuiteSparse can use the
+unmodified METIS 5.1.0, however.  To use your own copy of METIS, or a
+pre-installed copy of METIS use 'make MY_METIS_LIB=-lmymetis' or
+'make MY_METIS_LIB=/my/stuff/metis-5.1.0/whereeveritis/libmetis.so 
+      MY_METIS_INC=/my/stuff/metis-5.1.0/include'.
+If you want to use METIS in MATLAB, however, you MUST use the version provided
+here, in SuiteSparse/metis-5.1.0.  The MATLAB interface to METIS required some
+small changes in METIS itself to get it to work.  The original METIS 5.1.0
+will segfault MATLAB.
 
 Refer to each package for license, copyright, and author information.  All
-codes are authored or co-authored by Timothy A. Davis (email: davis@tamu.edu),
-except for METIS (by George Karypis), GraphBLAS/cpu_features (by Google),
-GraphBLAS/lz4, zstd, and xxHash (by Yann Collet, now at Facebook), and
-GraphBLAS/CUDA/jitify.hpp (by NVIDIA).  Parts of GraphBLAS/CUDA are
-Copyright (c) by NVIDIA. Please refer to each of these licenses.
+codes are authored or co-authored by Timothy A. Davis.
+email: davis@tamu.edu
 
 Licenses for each package are located in the following files, all in
-PACKAGENAME/Doc/License.txt, and these files are also concatenated into
-the top-level LICENSE.txt file.
+PACKAGENAME/Doc/License.txt:
+
+    AMD/Doc/License.txt
+    BTF/Doc/License.txt
+    CAMD/Doc/License.txt
+    CCOLAMD/Doc/License.txt
+    CHOLMOD/Doc/License.txt
+    COLAMD/Doc/License.txt
+    CSparse/Doc/License.txt
+    CXSparse/Doc/License.txt
+    GPUQREngine/Doc/License.txt
+    KLU/Doc/License.txt
+    LDL/Doc/License.txt
+    MATLAB_Tools/Doc/License.txt
+    Mongoose/Doc/License.txt
+    RBio/Doc/License.txt
+    SPQR/Doc/License.txt
+    SuiteSparse_GPURuntime/Doc/License.txt
+    ssget/Doc/License.txt
+    UMFPACK/Doc/License.txt
+    GraphBLAS/Doc/License.txt
+
+These files are also present, but they are simply copies of the above license
+files for CXSparse and ssget:
+
+    CXSparse_newfiles/Doc/License.txt
+    CSparse/MATLAB/ssget/Doc/License.txt
+    CXSparse/MATLAB/ssget/Doc/License.txt
+
+METIS 5.0.1 is distributed with SuiteSparse, and is Copyright (c)
+by George Karypis.  Please refer to that package for its License.
 
 -----------------------------------------------------------------------------
 QUICK START FOR MATLAB USERS (Linux or Mac):
 -----------------------------------------------------------------------------
 
-Suppose you place SuiteSparse in the /home/me/SuiteSparse folder.
+Uncompress the SuiteSparse.zip or SuiteSparse.tar.gz archive file (they contain
+the same thing).  Suppose you place SuiteSparse in the /home/me/SuiteSparse
+folder.
 
 Add the SuiteSparse/lib folder to your run-time library path.  On Linux, add
 this to your ~/.bashrc script, assuming /home/me/SuiteSparse is the location of
@@ -524,93 +487,195 @@ SuiteSparse in /Users/me/SuiteSparse:
     DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/Users/me/SuiteSparse/lib
     export DYLD_LIBRARY_PATH
 
-Compile all of SuiteSparse with "make local".
-
-Next, compile the GraphBLAS MATLAB library.  In the system shell while in the
-SuiteSparse folder, type "make gbmatlab" if you want to install it system-wide
-with "make install", or "make gblocal" if you want to use the library in
-your own SuiteSparse/lib.
+Next, compile the GraphBLAS library.  In the system shell while in the
+SuiteSparse folder, type "make gbinstall" if you have MATLAB R2020b or earlier,
+or type "make gbrenamed" if you have MATLAB 9.10 (R2021a) or later.
 
 Then in the MATLAB Command Window, cd to the SuiteSparse directory and type
-`SuiteSparse_install`.  All packages will be compiled, and several demos will be
-run.  To run a (long!) exhaustive test, do `SuiteSparse_test`.
+SuiteSparse_install.  All packages will be compiled, and several demos will be
+run.  To run a (long!) exhaustive test, do SuiteSparse_test.
 
 Save your MATLAB path for future sessions with the MATLAB pathtool or savepath
 commands.  If those methods fail because you don't have system-wide permission,
 add the new paths to your startup.m file, normally in
-Documents/MATLAB/startup.m.  You can also use the `SuiteSparse_paths` m-file to
+Documents/MATLAB/startup.m.  You can also use the SuiteSparse_paths method to
 set all your paths at the start of each MATLAB session.
+
+For Windows:  My apologies, but I don't support Windows so you will need to
+revise the above instructions for Windows yourself.
 
 -----------------------------------------------------------------------------
 QUICK START FOR THE C/C++ LIBRARIES:
 -----------------------------------------------------------------------------
 
-For Linux and Mac: type the following in this directory (requires system
-priviledge to do the `sudo make install`):
+Type the following in this directory:
 
-    make
-    sudo make install
+    make ; make install
 
-All libraries will be created and copied into the default system-wide folder
-(/usr/local/lib on Linux).  All include files need by the applications that use
-SuiteSparse are copied into /usr/local/include (on Linux).
+or, if want to use GraphBLAS in recent versions of MATLAB, do:
 
-For Windows, import each `*/CMakeLists.txt` file into MS Visual Studio.
-A single top-level CMake script is being considered as a feature in the
-future.  Be sure to specify the build type as Release; for example, to
-build `SuiteSparse_config` on Windows in the command window:
+    make ; make gbrenamed ; make install
 
-    cd SuiteSparse_config/build
-    cmake ..
-    cmke --build . --config Release
+All libraries will be created and copied into SuiteSparse/lib.  All include
+files need by the applications that use SuiteSparse are copied into
+SuiteSparse/include.   All user documenation is copied into
+SuiteSparse/share/doc.
 
 Be sure to first install all required libraries:  BLAS and LAPACK for UMFPACK,
-CHOLMOD, and SPQR, and GMP and MPFR for SPEX.  Be sure to use the latest
-libraries; SPEX requires MPFR 4.0.2 and GMP 6.1.2 (these version numbers
-do NOT correspond to the X.Y.Z suffix of libgmp.so.X.Y.Z and libmpfr.so.X.Y.Z;
-see the SPEX user guide for details).
+CHOLMOD, and SPQR, and GMP and MPFR for SLIP_LU.  Be sure to use the latest
+libraries; SLIP_LU requires MPFR 4.0 for example.
 
-To compile the libraries and install them only in SuiteSparse/lib (not
-/usr/local/lib), do this instead in the top-level of SuiteSparse:
+When compiling the libraries, do NOT use the INSTALL=... options for
+installing. Just do:
 
-    make local
+    make
 
-If you add /home/me/SuiteSparse/lib to your library search path
-(`LD_LIBRARY_PATH` in Linux), you can do the following (for example):
+or to compile just the libraries without running the demos, do:
+
+    make library
+
+Any program that uses SuiteSparse can thus use a simpler rule as compared to
+earlier versions of SuiteSparse.  If you add /home/me/SuiteSparse/lib to
+your library search patch, you can do the following (for example):
 
     S = /home/me/SuiteSparse
     cc myprogram.c -I$(S)/include -lumfpack -lamd -lcholmod -lsuitesparseconfig -lm
 
 To change the C and C++ compilers, and to compile in parallel use:
 
-    CC=gcc CX=g++ JOBS=32 make
+    AUTOCC=no CC=gcc CX=g++ JOBS=32 make
 
 for example, which changes the compiler to gcc and g++, and runs make with
 'make -j32', in parallel with 32 jobs.
 
+Now you can install the libraries, if you wish, in a location other than
+SuiteSparse/lib, SuiteSparse/include, and SuiteSparse/share/doc, using
+'make install INSTALL=...'
+
+Do 'make install' if you want to install the libraries and include files in
+SuiteSparse/lib and SuiteSparse/include, and the documentation in
+SuiteSparse/doc/suitesparse-VERSION.
 This will work on Linux/Unix and the Mac.  It should automatically detect if
-you have the Intel compilers or not, and whether or not you have CUDA.
+you have the Intel compilers or not, and whether or not you have CUDA.  If this
+fails, see the SuiteSparse_config/SuiteSparse_config.mk file.  There are many
+options that you can either list on the 'make' command line, or you can just
+edit that file.  For example, to compile with your own BLAS:
+
+    make BLAS=-lmyblaslibraryhere
 
 NOTE: Use of the Intel MKL BLAS is strongly recommended.  The OpenBLAS can
-(rarely) result in severe performance degradation, in CHOLMOD in particular.
-The reason for this is still under investigation and might already be resolved
-in the current version of OpenBLAS.  See
-`SuiteSparse_config/cmake_modules/SuiteSparsePolicy.cmake` to select your BLAS.
+result in severe performance degradation, in CHOLMOD in particular.
+
+To list all configuration options (but not compile anything), do:
+
+    make config
+
+Any parameter you see in the output of 'make config' with an equal sign
+can be modified at the 'make' command line.
+
+If you do "make install" by itself, then the packages are all installed in
+SuiteSparse/lib (libraries), SuiteSparse/include (include .h files), and
+SuiteSparse/doc/suitesparse-VERSION (documentation).  To install in
+/usr/local, the default location for Linux, do:
+
+    make library
+    sudo make install INSTALL=/usr/local
+
+If you want to install elsewhere, say in /my/path, first ensure that /my/path
+is in your LD_LIBRARY_PATH.  How to do that depends on your system, but in the
+bash shell, add this to your ~/.bashrc file:
+
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/my/path
+    export LD_LIBRARY_PATH
 
 You may also need to add SuiteSparse/lib to your path.  If your copy of
 SuiteSparse is in /home/me/SuiteSparse, for example, then add this to your
 ~/.bashrc file:
 
-    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/me/SuiteSparse/lib
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/me/SuiteSparse/lib:/my/path
     export LD_LIBRARY_PATH
 
 For the Mac, use this instead:
 
-    DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/home/me/SuiteSparse/lib
+    DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/home/me/SuiteSparse/lib:/my/path
     export DYLD_LIBRARY_PATH
 
+Then do the following (use "sudo make ..." if needed):
+
+    make library
+    make install INSTALL=/my/path
+
+which puts the files in /my/path/lib, /my/path/include, and /my/path/doc.
+If you want to selectively put the libraries, include files, and doc files
+in different locations, do:
+
+    make install INSTALL_LIB=/my/libs INSTALL_INCLUDE=/myotherstuff/include INSTALL_DOC=/mydocs
+
+for example.  Any term not defined will be set to its default, so if you don't
+want to install the documentation, but wish to install the libraries and
+includes in /usr/local/lib and /usr/local/include, do:
+
+    make install INSTALL_DOC=/tmp/doc
+
+which copies the documentation to /tmp/doc where you can then remove it later.
+
+Both the static (.a) and shared (.so) libraries are compiled.  The lib.a
+libraries are left in the package Lib folder (AMD/Lib/libamd.a for example).
+The main exception to this rule is the SuiteSparse_config library, which is in
+SuiteSparse/libsuiteSparseconfig.a.  SuiteSparse_config is required by all
+packages.  The (extremely) optional xerbla library is also an exception, but it
+is highly unlikely that you need that library.
+
+The 'make uninstall' takes the same command-line arguments.
+
+----------------------------------
+Step-by-step details:
+----------------------------------
+
+(1) Use the right BLAS and LAPACK libraries.
+    Determine where your BLAS and LAPACK libraries are.  If the default
+    'make' does not find them, use
+    'make BLAS=-lmyblaslibraryhere LAPACK=-lmylapackgoeshere'
+
+(2) Install Intel's Threading Building Blocks (TBB).
+    This is optionally used by SuiteSparseQR.  Refer to the User Guide in 
+    SuiteSparse/SPQR/Doc/spqr_user_guide.pdf for details.
+
+(3) Determine what other command line options you need for 'make'.  All options
+    can be set at the 'make' command line without the need to edit this file.
+    Browse that file to see what options you can control.  If you choose
+    different options and wish to recompile, be sure to do 'make distclean' in
+    this directory first, to remove all files not in the original distribution.
+
+(4) Type "make" in this directory.  All packages will be be compiled.  METIS
+    5.1.0 will be compiled if you have it (note that METIS require CMake to
+    build it).  Several demos will be run.  To compile just the libraries,
+    without running any demos, use "make library".  The libraries will appear
+    in */Lib/*.so.* (*.dylib for the Mac).  Include files, as needed by user
+    programs that use CHOLMOD, AMD, CAMD, COLAMD, CCOLAMD, BTF, KLU, UMFPACK,
+    LDL, etc. are in */Include/*.h.  The include files required by user
+    programs are then copied into SuiteSparse/include, and the compiled
+    libraries are copied into SuiteSparse/lib.  Documentation is copied into
+    SuiteSparse/doc.  The GraphBLAS libraries are created by cmake and placed
+    in GraphBLAS/build.  NOTE: on Linux, you may see some errors when you
+    compile METIS ('make: *** No rule to make target 'w'.).  You can safely
+    ignore those errors.
+
+(6) To install, type "make install".  This will place copies of all
+    libraries in SuiteSparse/lib, and all include files in SuiteSparse/include,
+    and all documentation in SuiteSparse/doc/suitesparse-VERSION.  You can
+    change the install location by "make install INSTALL=/my/path" which puts
+    the libraries in /my/path/lib, the include files in /my/path/include, and
+    documentation in /my/path/doc.  These directories are created if they do
+    not already exist.
+
+(7) To uninstall, type "make uninstall", which reverses "make install"
+    by removing the SuiteSparse libraries, include files, and documentation
+    from the place they were installed.  If you pass INSTALL_***= options
+    to 'make install', you must pass the same to 'make uninstall'.
+
 -----------------------------------------------------------------------------
-Python and Rust interfaces
+Python interface
 -----------------------------------------------------------------------------
 
 See scikit-sparse and scikit-umfpack for the Python interface via SciPy:
@@ -618,107 +683,4 @@ See scikit-sparse and scikit-umfpack for the Python interface via SciPy:
 https://github.com/scikit-sparse/scikit-sparse
 
 https://github.com/scikit-umfpack/scikit-umfpack
-
-See russell for a Rust interface:
-
-https://github.com/cpmech/russell
-
------------------------------------------------------------------------------
-Compilation options
------------------------------------------------------------------------------
-
-You can set specific options for CMake with the command (for example):
-
-    CMAKE_OPTIONS="-DNPARTITION=1 -DNSTATIC=1 -DCMAKE_BUILD_TYPE=Debug" make
-
-That command will compile all of SuiteSparse except for CHOLMOD/Partition
-Module (because of -DNPARTITION=1).  Debug mode will be used (the build type).
-The static libraries will not be built (since -DNSTATIC=1 is set).
-
-    CMAKE_BUILD_TYPE:   Default: "Release", use "Debug" for debugging.
-
-    ENABLE_CUDA:        if set to true, CUDA is enabled for the project.
-                        Default: true for CHOLMOD and SPQR; false otherwise
-
-    LOCAL_INSTALL:      if true, "cmake --install" will install
-                        into SuiteSparse/lib and SuiteSparse/include.
-                        if false, "cmake --install" will install into the
-                        default prefix (or the one configured with
-                        CMAKE_INSTALL_PREFIX).
-                        Default: false
-
-    CMAKE_INSTALL_PREFIX:   defines the install location (default on Linux is
-                        /usr/local).  For example, this command in the top
-                        level SuiteSparse folder will set the install directory
-                        to "/stuff", used by the subsequent "sudo make install":
-
-                            CMAKE_OPTIONS="-DCMAKE_INSTALL_PREFIX=/stuff" make
-                            sudo make install
-
-    NSTATIC:            if true, static libraries are not built.
-                        Default: false, except for GraphBLAS, which
-                        takes a long time to compile so the default for
-                        GraphBLAS is true.  For Mongoose, the NSTATIC setting
-                        is treated as if it always false, since the mongoose
-                        program is built with the static library.
-
-    SUITESPARSE_CUDA_ARCHITECTURES:  a string, such as "all" or
-                        "35;50;75;80" that lists the CUDA architectures to use
-                        when compiling CUDA kernels with nvcc.  The "all"
-                        option requires cmake 3.23 or later.
-                        Default: "52;75;80".
-
-    BLA_VENDOR          a string.  Leave unset, or use "ANY" to select any BLAS
-                        library (the default).  Or set to the name of a
-                        BLA_VENDOR defined by FindBLAS.cmake.  See:
-                        https://cmake.org/cmake/help/latest/module/FindBLAS.html#blas-lapack-vendors
-
-    ALLOW_64BIT_BLAS    if true: look for a 64-bit BLAS.  If false: 32-bit only.
-                        Default: false.
-
-    NOPENMP             if true: OpenMP is not used.  Default: false.
-                        UMFPACK, CHOLMOD, SPQR, and GraphBLAS will be slow.
-                        Note that BLAS and LAPACK may still use OpenMP
-                        internally; if you wish to disable OpenMP in an entire
-                        application, select a single-threaded BLAS/LAPACK.
-                        WARNING: GraphBLAS may not be thread-safe if built
-                        without OpenMP (see the User Guide for details).
-
-    DEMO                if true: build the demo programs for each package.
-                        Default: false.
-
-Additional options are available within specific packages:
-
-    NCHOLMOD            if true, UMFPACK and KLU do not use CHOLMOD for
-                        additional (optional) ordering options
-
-CHOLMOD is composed of a set of Modules that can be independently selected;
-all options default to false:
-
-    NGL                 if true: do not build any GPL-licensed module
-                        (MatrixOps, Modify, Supernodal, and GPU modules)
-    NCHECK              if true: do not build the Check module.
-    NMATRIXOPS          if true: do not build the MatrixOps module.
-    NCHOLESKY           if true: do not build the Cholesky module.
-                        This also disables the Supernodal and Modify modules.
-    NMODIFY             if true: do not build the Modify module.
-    NCAMD               if true: do not link against CAMD and CCOLAMD.
-                        This also disables the Partition module.
-    NPARTITION          if true: do not build the Partition module.
-    NSUPERNODAL         if true: do not build the Supernodal module.
-
------------------------------------------------------------------------------
-Acknowledgements
------------------------------------------------------------------------------
-
-I would like to thank François Bissey, Sebastien Villemot, Erik Welch, Jim
-Kitchen, Markus Mützel, and Fabian Wein for their valuable feedback on the
-SuiteSparse build system and how it works with various Linux / Python distros
-and other package managers.  If you are a maintainer of a SuiteSparse packaging
-for a Linux distro, conda-forge, R, spack, brew, vcpkg, etc, please feel free
-to contact me if there's anything I can do to make your life easier.
-I would also like to thank Raye Kimmerer for adding support for 32-bit
-row/column indices in SPQR v4.2.0.
-
-See also the various Acknowledgements within each package.
 

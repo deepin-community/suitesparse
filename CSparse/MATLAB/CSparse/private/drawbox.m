@@ -5,8 +5,7 @@ function drawbox (r1,r2,c1,c2,color,w,e)
 %       drawbox (r1,r2,c1,c2,color,w,e)
 %   See also drawboxes, plot
 
-% CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 if (r1 == r2 | c1 == c2)                                                    %#ok
     return

@@ -2,7 +2,7 @@
 // GB_AxB_saxpy3_fineGus_notM_phase2: C<!M>=A*B, fine Gustavson, phase2
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -34,13 +34,11 @@
             GB_MULT_A_ik_B_kj ;     // t = A(i,k) * B(k,j)
             int8_t f ;
 
-            #if GB_IS_ANY_MONOID && GB_Z_HAS_ATOMIC_WRITE
+            #if GB_IS_ANY_MONOID
 
                 //--------------------------------------------------------------
-                // ANY monoid with atomic write
+                // ANY monoid
                 //--------------------------------------------------------------
-
-                // the double complex ANY monoid cannot use this method
 
                 // lock state (3) not needed
                 // 0: not seen: update with new value, f becomes 2
@@ -50,10 +48,10 @@
                 GB_ATOMIC_READ
                 f = Hf [i] ;
                 if (!f)
-                { 
+                {
                     GB_ATOMIC_WRITE
                     Hf [i] = 2 ;
-                    GB_Z_ATOMIC_WRITE_HX (i, t) ;   // Hx [i] = t
+                    GB_ATOMIC_WRITE_HX (i, t) ;    // Hx [i] = t
                 }
 
 
@@ -66,12 +64,12 @@
                 GB_ATOMIC_READ
                 f = Hf [i] ;            // grab the entry
 
-                #if GB_Z_HAS_ATOMIC_UPDATE
+                #if GB_HAS_ATOMIC
                 {
                     // the monoid can be done with a single atomic update
                     if (f == 2)             // if true, update C(i,j)
                     { 
-                        GB_Z_ATOMIC_UPDATE_HX (i, t) ;  // Hx [i] += t
+                        GB_ATOMIC_UPDATE_HX (i, t) ;   // Hx [i] += t
                         continue ;          // C(i,j) has been updated
                     }
                 }
@@ -87,12 +85,12 @@
                 if (f == 0)
                 { 
                     // C(i,j) is a new entry
-                    GB_Z_ATOMIC_WRITE_HX (i, t) ;   // Hx [i] = t
+                    GB_ATOMIC_WRITE_HX (i, t) ;    // Hx [i] = t
                 }
                 else // f == 2
                 { 
                     // C(i,j) already seen
-                    GB_Z_ATOMIC_UPDATE_HX (i, t) ;  // Hx [i] += t
+                    GB_ATOMIC_UPDATE_HX (i, t) ;   // Hx [i] += t
                 }
                 GB_ATOMIC_WRITE
                 Hf [i] = 2 ;                // unlock the entry

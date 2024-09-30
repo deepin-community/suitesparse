@@ -2,19 +2,17 @@
 // GB_concat_hyper: concatenate an array of matrices into a hypersparse matrix
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed.  Only one variant possible.
 
 #define GB_FREE_ALL                 \
 {                                   \
     GB_FREE (&Wi, Wi_size) ;        \
     GB_FREE_WORK (&Wj, Wj_size) ;   \
     GB_FREE_WORK (&Wx, Wx_size) ;   \
-    GB_phybix_free (C) ;            \
+    GB_phbix_free (C) ;             \
 }
 
 #include "GB_concat.h"
@@ -30,7 +28,7 @@ GrB_Info GB_concat_hyper            // concatenate into a hypersparse matrix
     const GrB_Index n,
     const int64_t *restrict Tile_rows,  // size m+1
     const int64_t *restrict Tile_cols,  // size n+1
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -57,7 +55,7 @@ GrB_Info GB_concat_hyper            // concatenate into a hypersparse matrix
     float bitmap_switch = C->bitmap_switch ;
     int sparsity_control = C->sparsity_control ;
 
-    GB_phybix_free (C) ;
+    GB_phbix_free (C) ;
 
     Wi = GB_MALLOC (cnz, int64_t, &Wi_size) ;               // becomes C->i
     Wj = GB_MALLOC_WORK (cnz, int64_t, &Wj_size) ;          // freed below
@@ -72,8 +70,7 @@ GrB_Info GB_concat_hyper            // concatenate into a hypersparse matrix
         return (GrB_OUT_OF_MEMORY) ;
     }
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
 
     int64_t nouter = csc ? n : m ;
     int64_t ninner = csc ? m : n ;
@@ -132,7 +129,7 @@ GrB_Info GB_concat_hyper            // concatenate into a hypersparse matrix
                 (GrB_Index *) ((csc ? Wi : Wj) + pC),
                 (GrB_Index *) ((csc ? Wj : Wi) + pC),
                 (C_iso) ? NULL : (Wx + pC * csize),
-                (GrB_Index *) (&anz), ccode, A, Werk)) ;
+                (GrB_Index *) (&anz), ccode, A, Context)) ;
 
             //------------------------------------------------------------------
             // adjust the indices to reflect their new place in C
@@ -208,8 +205,7 @@ GrB_Info GB_concat_hyper            // concatenate into a hypersparse matrix
         cnz,                    // # of tuples
         NULL,                   // no duplicates, so dup is NUL
         ctype,                  // the type of Wx (no typecasting)
-        true,                   // burble is allowed
-        Werk
+        Context
     )) ;
 
     C->hyper_switch = hyper_switch ;

@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/BucketList.cpp =======================================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // This file contains logic to construct and destroy a BucketList.
 //
@@ -21,21 +15,23 @@
 // the constructor is responsible for memory management AND initialization.
 // =============================================================================
 
-#define FREE_EVERYTHING_BUCKET \
+#include "GPUQREngine_BucketList.hpp"
+
+
+#define FREE_EVERYTHING \
     head = (Int *) SuiteSparse_free(head); \
     idleTileCount = (Int *) SuiteSparse_free(idleTileCount); \
     bundleCount = (Int *) SuiteSparse_free(bundleCount); \
     prev = (Int *) SuiteSparse_free(prev); \
     next = (Int *) SuiteSparse_free(next); \
     triu = (bool *) SuiteSparse_free(triu); \
-    Bundles = (LLBundle <Int> *) SuiteSparse_free(Bundles); \
+    Bundles = (LLBundle *) SuiteSparse_free(Bundles); \
     gpuVT = (double **) SuiteSparse_free(gpuVT); \
     wsMongoVT = Workspace::destroy(wsMongoVT);
-#include "GPUQREngine_BucketList.hpp"
-template <typename Int>
-BucketList<Int>::BucketList
+
+BucketList::BucketList
 (
-    Front <Int> *F,
+    Front *F,
     Int minApplyGranularity
 )
 {
@@ -66,7 +62,7 @@ BucketList<Int>::BucketList
     next = (Int*) SuiteSparse_calloc(numRowTiles, sizeof(Int));
     prev = (Int*) SuiteSparse_calloc(numRowTiles, sizeof(Int));
     triu = (bool*) SuiteSparse_calloc(numRowTiles, sizeof(bool));
-    Bundles = (LLBundle <Int>*) SuiteSparse_calloc(numRowTiles, sizeof(LLBundle <Int>));
+    Bundles = (LLBundle*) SuiteSparse_calloc(numRowTiles, sizeof(LLBundle));
     gpuVT = (double**) SuiteSparse_calloc(numRowTiles, sizeof(double*));
 
     // malloc wsMongoVT on the GPU
@@ -77,7 +73,7 @@ BucketList<Int>::BucketList
     if(!head || !idleTileCount || !bundleCount || !next || !prev || !triu
        || !Bundles || !gpuVT || !wsMongoVT)
     {
-        FREE_EVERYTHING_BUCKET ;
+        FREE_EVERYTHING ;
         memory_ok = false ;
         return;
     }
@@ -103,30 +99,13 @@ BucketList<Int>::BucketList
     }
 }
 
-template BucketList<int32_t>::BucketList
-(
-    Front <int32_t> *F,
-    int32_t minApplyGranularity
-) ;
-template BucketList<int64_t>::BucketList
-(
-    Front <int64_t> *F,
-    int64_t minApplyGranularity
-) ;
-
-template <typename Int>
-BucketList<Int>::~BucketList()
+BucketList::~BucketList()
 {
-    FREE_EVERYTHING_BUCKET ;
+    FREE_EVERYTHING ;
 
 }
 
-template BucketList<int32_t>::~BucketList() ;
-template BucketList<int64_t>::~BucketList() ;
-
-
-template <typename Int>
-void BucketList<Int>::Initialize()
+void BucketList::Initialize()
 {
     int fm = front->fm;
     int fn = front->fn;
@@ -148,6 +127,3 @@ void BucketList<Int>::Initialize()
         }
     }
 }
-
-template void BucketList<int32_t>::Initialize() ;
-template void BucketList<int64_t>::Initialize() ;

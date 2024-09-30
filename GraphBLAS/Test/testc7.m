@@ -1,16 +1,11 @@
-function testc7(use_builtin)
+function testc7
 %TESTC7 test complex assign
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 % SPDX-License-Identifier: Apache-2.0
 
 fprintf ('\ntestc7: all complex assign C(I,J)=A --------------------------\n') ;
 rng ('default')
-
-if (nargin < 1)
-    use_builtin = true ;
-end
-GB_builtin_complex_set (use_builtin) ;
 
 dclear.outp = 'replace' ;
 dclear.mask = 'complement' ;
@@ -83,6 +78,4 @@ for m = [1 5 10 50]
 end
 
 fprintf ('\ntestc7: all complex assign C(I,J)=A tests passed\n') ;
-
-GB_builtin_complex_set (true) ;
 

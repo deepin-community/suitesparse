@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/BucketList_GrowBundles.cpp ===========================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // GrowBundles looks for row tiles (or bundles) involved in a factorization
 // and attempts to add those bundles or row tiles to a task currently set
@@ -15,10 +9,10 @@
 // =============================================================================
 
 #include "GPUQREngine_BucketList.hpp"
-/* Grow existing bundles and advance the task type to APPLY_FACTORIZE. */
 #ifdef GPUQRENGINE_PIPELINING
-template <typename Int>
-void BucketList<Int>::GrowBundles
+
+/* Grow existing bundles and advance the task type to APPLY_FACTORIZE. */
+void BucketList::GrowBundles
 (
     void
 )
@@ -26,7 +20,7 @@ void BucketList<Int>::GrowBundles
     //Console.WriteLine("=== GrowBundles");
     for (int i = 0; i < numBundles; i++ )
     {
-        LLBundle <Int>& bundle = Bundles[i];
+        LLBundle& bundle = Bundles[i];
 
         /* The bundle is a phantom bundle if it only has a shadow entry.
          * In this case, we choose not to grow the bundle. */
@@ -73,12 +67,4 @@ void BucketList<Int>::GrowBundles
     }
 }
 
-template void BucketList<int32_t>::GrowBundles
-(
-    void
-) ;
-template void BucketList<int64_t>::GrowBundles
-(
-    void
-) ;
 #endif

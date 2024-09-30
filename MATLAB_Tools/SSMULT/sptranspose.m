@@ -10,8 +10,7 @@ function C = sptranspose (A,conj)                                           %#ok
 %
 % See also transpose, ctranspose.
 
-% SSMULT, Copyright (c) 2007-2011, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2009, Timothy A. Davis, http://www.suitesparse.com
 
 error ('sptranspose mexFunction not found') ;
 

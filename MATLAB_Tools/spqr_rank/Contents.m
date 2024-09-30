@@ -40,6 +40,4 @@
 % in SuiteSparse/MATLAB_TOOLS/spqr_rank will be installed, along with
 % SuiteSparseQR (spqr) and all its dependent packages.
 
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2012, Leslie Foster and Timothy A Davis.

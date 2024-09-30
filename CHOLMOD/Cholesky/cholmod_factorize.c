@@ -1,12 +1,10 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Cholesky/cholmod_factorize: numerical Cholesky factorization
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Cholesky/cholmod_factorize =========================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* Computes the numerical factorization of a symmetric matrix.  The primary
  * inputs to this routine are a sparse matrix A and the symbolic factor L from
@@ -54,9 +52,15 @@
  * real, or complex if A is complex or zomplex.
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCHOLESKY
+
+#include "cholmod_internal.h"
+#include "cholmod_cholesky.h"
+
+#ifndef NSUPERNODAL
+#include "cholmod_supernodal.h"
+#endif
+
 
 /* ========================================================================== */
 /* === cholmod_factorize ==================================================== */
@@ -386,7 +390,7 @@ int CHOLMOD(factorize_p)
 	if (Common->status == CHOLMOD_OK)
 	{
 	    grow2 = Common->grow2 ;
-	    L->is_ll = (Common->final_ll) ? 1 : 0 ;
+	    L->is_ll = BOOLEAN (Common->final_ll) ;
 	    if (L->xtype == CHOLMOD_PATTERN && Common->final_pack)
 	    {
 		/* allocate a factor with exactly the space required */

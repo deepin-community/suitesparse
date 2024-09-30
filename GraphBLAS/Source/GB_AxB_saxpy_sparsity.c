@@ -2,7 +2,7 @@
 // GB_AxB_saxpy_sparsity: determine the sparsity structure for C<M or !M>=A*B
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -27,7 +27,8 @@ void GB_AxB_saxpy_sparsity          // determine C_sparsity and method to use
     const GrB_Matrix M,             // optional mask for C, unused if NULL
     const bool Mask_comp,           // if true, use !M
     const GrB_Matrix A,             // input A matrix
-    const GrB_Matrix B              // input B matrix
+    const GrB_Matrix B,             // input B matrix
+    GB_Context Context
 )
 {
 
@@ -38,14 +39,14 @@ void GB_AxB_saxpy_sparsity          // determine C_sparsity and method to use
     if (B->nvec_nonempty < 0)
     { 
         // B->nvec_nonempty is used to select the method
-        B->nvec_nonempty = GB_nvec_nonempty (B) ;
+        B->nvec_nonempty = GB_nvec_nonempty (B, Context) ;
     }
     double bnvec = B->nvec_nonempty ;
 
     double m = (double) A->vlen ;
     double n = (double) B->vdim ;
     double anz = (double) GB_nnz_held (A) ;
-//  double bnz = (double) GB_nnz_held (B) ;
+    double bnz = (double) GB_nnz_held (B) ;
 
     int M_sparsity = (M == NULL) ? 0 : GB_sparsity (M) ;
     int B_sparsity = GB_sparsity (B) ;
@@ -225,11 +226,11 @@ void GB_AxB_saxpy_sparsity          // determine C_sparsity and method to use
         }
 
         if ((*C_sparsity) == GxB_HYPERSPARSE || (*C_sparsity) == GxB_SPARSE)
-        { 
+        {
             (*saxpy_method) = GB_SAXPY_METHOD_3 ;
         }
         else
-        { 
+        {
             (*saxpy_method) = GB_SAXPY_METHOD_BITMAP ;
         }
     }

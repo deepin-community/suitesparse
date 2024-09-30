@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// BTF/Include/maxtrans.c: MATLAB interface for btf_maxtrans
-//------------------------------------------------------------------------------
-
-// BTF, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-// Author: Timothy A. Davis.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === maxtrans mexFunction ================================================= */
+/* ========================================================================== */
 
 #define MIN(a,b) (((a) < (b)) ?  (a) : (b))
 
@@ -24,12 +18,16 @@
  * An optional second output [q,work] = maxtrans (...) returns the amount of
  * work performed, or -1 if the maximum work limit is reached (in which case
  * the maximum matching might not have been found).
+ *
+ * By Tim Davis.  Copyright (c) 2004-2007, University of Florida.
+ * with support from Sandia National Laboratories.  All Rights Reserved.
  */
 
 /* ========================================================================== */
 
 #include "mex.h"
 #include "btf.h"
+#define Long SuiteSparse_long
 
 void mexFunction
 (
@@ -40,7 +38,7 @@ void mexFunction
 )
 {
     double maxwork, work ;
-    int64_t nrow, ncol, i, *Ap, *Ai, *Match, nmatch, *Work ;
+    Long nrow, ncol, i, *Ap, *Ai, *Match, nmatch, *Work ;
     double *Matchx, *w ;
 
     /* ---------------------------------------------------------------------- */
@@ -59,14 +57,14 @@ void mexFunction
     }
 
     /* get sparse matrix A */
-    Ap = (int64_t *) mxGetJc (pargin [0]) ;
-    Ai = (int64_t *) mxGetIr (pargin [0]) ;
+    Ap = (Long *) mxGetJc (pargin [0]) ;
+    Ai = (Long *) mxGetIr (pargin [0]) ;
 
     /* get output array */
-    Match = mxMalloc (nrow * sizeof (int64_t)) ;
+    Match = mxMalloc (nrow * sizeof (Long)) ;
 
     /* get workspace of size 5n (recursive version needs only 2n) */
-    Work = mxMalloc (5*ncol * sizeof (int64_t)) ;
+    Work = mxMalloc (5*ncol * sizeof (Long)) ;
 
     maxwork = 0 ;
     if (nargin > 1)

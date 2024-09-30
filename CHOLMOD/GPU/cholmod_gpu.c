@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/GPU/cholmod_gpu: GPU utilities for CHOLMOD
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === GPU/cholmod_gpu -===================================================== */
+/* ========================================================================== */
 
-// CHOLMOD/GPU Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/GPU Module.  Copyright (C) 2014, Timothy A. Davis.
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* Primary routines:
  * -----------------
@@ -17,11 +16,15 @@
  */
 
 #include "cholmod_internal.h"
-
-#ifdef SUITESPARSE_CUDA
+#include "cholmod_core.h"
+#include "cholmod_gpu.h"
+#include "stdio.h"
+#ifdef GPU_BLAS
 #include <cuda.h>
 #include <cuda_runtime.h>
 #endif
+
+// #define HACK
 
 #define MINSIZE (64 * 1024 * 1024)
 
@@ -39,31 +42,31 @@
  *  Returns 1 if GPU requested but not available, 0 otherwise
  */
 
+#ifdef GPU_BLAS
+
 static int poll_gpu (size_t s)          /* TRUE if OK, FALSE otherwise */
 {
-#ifdef SUITESPARSE_CUDA
     /* Returns TRUE if the GPU has a block of memory of size s,
        FALSE otherwise.  The block of memory is immediately freed. */
     void *p = NULL ;
-    // double t = SuiteSparse_time ( ) ;
+    /* double t = SuiteSparse_time ( ) ; */
     if (s == 0)
     {
         return (FALSE) ;
     }
     if (cudaMalloc (&p, s) != cudaSuccess)
     {
-        // t = SuiteSparse_time ( ) - t ;
-        // printf ("poll s %lu failed, time %g\n", s, t) ;
+        /* t = SuiteSparse_time ( ) - t ; */
+        /* printf ("s %lu failed, time %g\n", s, t) ; */
         return (FALSE) ;
     }
     cudaFree (p) ;
-    // t = SuiteSparse_time ( ) - t ;
-    // printf ("poll s %lu OK time %g\n", s, t) ;
+    /* t = SuiteSparse_time ( ) - t ; */
+    /* printf ("s %lu OK time %g\n", s, t) ; */
     return (TRUE) ;
-#else
-    return (FALSE) ;
-#endif
 }
+
+#endif
 
 int CHOLMOD(gpu_memorysize)      /* returns 1 on error, 0 otherwise */
 (
@@ -78,7 +81,7 @@ int CHOLMOD(gpu_memorysize)      /* returns 1 on error, 0 otherwise */
 
     *total_mem = 0;
     *available_mem = 0;
-#ifndef CHOLMOD_INT64
+#ifndef DLONG
     return 0;
 #endif
 
@@ -87,13 +90,13 @@ int CHOLMOD(gpu_memorysize)      /* returns 1 on error, 0 otherwise */
         return (0) ;                    /* not using the GPU at all */
     }
 
-#ifdef SUITESPARSE_CUDA
+#ifdef GPU_BLAS
 
     /* find the total amount of free memory */
     t = SuiteSparse_time ( ) ;
     cudaMemGetInfo (&total_free, &total_memory) ;
     t = SuiteSparse_time ( ) - t ;
-    // printf ("free %lu tot %lu time %g\n", total_free, total_memory, t) ;
+    /* printf ("free %lu tot %lu time %g\n", total_free, total_memory, t) ; */
 
     *total_mem = total_memory;
 
@@ -106,8 +109,12 @@ int CHOLMOD(gpu_memorysize)      /* returns 1 on error, 0 otherwise */
     s = MAX (MINSIZE, total_free*0.98) ;
     if (poll_gpu (s))
     {
-        // printf ("quick %lu\n", s) ;
+        /* printf ("quick %lu\n", s) ; */
         *available_mem = s;
+#ifdef HACK
+        *total_mem     /= 2;
+        *available_mem /= 2;
+#endif
         return (0) ;  /* no error */
     }
 
@@ -133,11 +140,15 @@ int CHOLMOD(gpu_memorysize)      /* returns 1 on error, 0 otherwise */
         }
     }
 
-    // printf ("final %lu\n", good) ;
+    /* printf ("final %lu\n", good) ; */
     *available_mem = good;
 
 #endif
 
+#ifdef HACK
+        *total_mem     /= 2;
+        *available_mem /= 2;
+#endif
     return (0) ; /* no error */
 }
 
@@ -159,7 +170,7 @@ int CHOLMOD(gpu_memorysize)      /* returns 1 on error, 0 otherwise */
 int CHOLMOD(gpu_probe) ( cholmod_common *Common )
 {
 
-#ifdef SUITESPARSE_CUDA
+#ifdef GPU_BLAS
     int ngpus, idevice;
     double tstart, tend;
     struct cudaDeviceProp gpuProp;
@@ -170,7 +181,6 @@ int CHOLMOD(gpu_probe) ( cholmod_common *Common )
     }
 
     cudaGetDeviceCount(&ngpus);
-    // printf ("# gpus: %d\n", ngpus) ;
 
     if ( ngpus ) {
         cudaGetDevice ( &idevice );
@@ -201,7 +211,7 @@ int CHOLMOD(gpu_deallocate)
 )
 {
 
-#ifdef SUITESPARSE_CUDA
+#ifdef GPU_BLAS
     cudaError_t cudaErr;
 
     if ( Common->dev_mempool )
@@ -247,7 +257,7 @@ void CHOLMOD(gpu_end)
     cholmod_common *Common
 )
 {
-#ifdef SUITESPARSE_CUDA
+#ifdef GPU_BLAS
     int k ;
 
     /* ------------------------------------------------------------------ */
@@ -354,7 +364,7 @@ void CHOLMOD(gpu_end)
 int CHOLMOD(gpu_allocate) ( cholmod_common *Common )
 {
 
-#ifdef SUITESPARSE_CUDA
+#ifdef GPU_BLAS
 
     int k;
     size_t fdm, tdm;

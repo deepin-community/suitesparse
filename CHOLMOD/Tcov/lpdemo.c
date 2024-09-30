@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Tcov/lpdemo: test program with an LP-style operations in CHOLMOD
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Tcov/lpdemo ========================================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Tcov Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Tcov Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* A rectangular matrix is being tested (# nrows < # cols).  This is a
  * linear programming problem.  Process the system using the same kind of

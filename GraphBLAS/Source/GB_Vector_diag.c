@@ -2,7 +2,7 @@
 // GB_Vector_diag: extract a diagonal from a matrix, as a vector
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -15,19 +15,18 @@
 #define GB_FREE_ALL         \
 {                           \
     GB_FREE_WORKSPACE ;     \
-    GB_phybix_free (V) ;    \
+    GB_phbix_free (V) ;     \
 }
 
 #include "GB_diag.h"
 #include "GB_select.h"
-#include "GB_scalar_wrap.h"
 
 GrB_Info GB_Vector_diag     // extract a diagonal from a matrix, as a vector
 (
     GrB_Matrix V,                   // output vector (as an n-by-1 matrix)
     const GrB_Matrix A,             // input matrix
     int64_t k,
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -39,7 +38,7 @@ GrB_Info GB_Vector_diag     // extract a diagonal from a matrix, as a vector
     ASSERT_MATRIX_OK (A, "A input for GB_Vector_diag", GB0) ;
     ASSERT_MATRIX_OK (V, "V input for GB_Vector_diag", GB0) ;
     ASSERT (GB_VECTOR_OK (V)) ;             // V is a vector on input
-    ASSERT (!GB_any_aliased (A, V)) ;           // A and V cannot be aliased
+    ASSERT (!GB_aliased (A, V)) ;           // A and V cannot be aliased
     ASSERT (!GB_IS_HYPERSPARSE (V)) ;       // vectors cannot be hypersparse
 
     struct GB_Matrix_opaque T_header ;
@@ -84,7 +83,7 @@ GrB_Info GB_Vector_diag     // extract a diagonal from a matrix, as a vector
     //--------------------------------------------------------------------------
 
     GB_MATRIX_WAIT (A) ;
-    GB_phybix_free (V) ;
+    GB_phbix_free (V) ;
 
     //--------------------------------------------------------------------------
     // handle the CSR/CSC format of A
@@ -103,13 +102,18 @@ GrB_Info GB_Vector_diag     // extract a diagonal from a matrix, as a vector
     // extract the kth diagonal of A into the temporary hypersparse matrix T
     //--------------------------------------------------------------------------
 
-    struct GB_Scalar_opaque Thunk_header ;
-    GrB_Scalar Thunk = GB_Scalar_wrap (&Thunk_header, GrB_INT64, &k) ;
-
     GB_CLEAR_STATIC_HEADER (T, &T_header) ;
-    GB_OK (GB_selector (T, GrB_DIAG, false, A, Thunk, Werk)) ;
+    GB_OK (GB_selector (
+        T,                      // output matrix
+        GB_DIAG_selop_code,     // just use the DIAG opcode
+        NULL,                   // do not use the GB_Operator
+        false,                  // flipij is false
+        A,                      // input matrix
+        k,                      // ithunk = k
+        NULL,                   // no GrB_Scalar Thunk
+        Context)) ;
 
-    GB_OK (GB_convert_any_to_hyper (T, Werk)) ;
+    GB_OK (GB_convert_any_to_hyper (T, Context)) ;
     GB_MATRIX_WAIT (T) ;
     ASSERT_MATRIX_OK (T, "T = diag (A,k)", GB0) ;
 
@@ -123,7 +127,7 @@ GrB_Info GB_Vector_diag     // extract a diagonal from a matrix, as a vector
 
     GB_OK (GB_new (&V, // existing header
         vtype, n, 1, GB_Ap_malloc, true, GxB_SPARSE,
-        GxB_NEVER_HYPER, 1)) ;
+        GxB_NEVER_HYPER, 1, Context)) ;
 
     V->sparsity_control = sparsity_control ;
     V->bitmap_switch = bitmap_switch ;
@@ -135,20 +139,19 @@ GrB_Info GB_Vector_diag     // extract a diagonal from a matrix, as a vector
 
     V->p [0] = 0 ;
     V->p [1] = vnz ;
-    V->nvals = vnz ;
     if (k >= 0)
     { 
         // transplant T->i into V->i
         V->i = T->i ;
         V->i_size = T->i_size ;
-        T->i_shallow = true ;
+        T->i = NULL ;
     }
     else
     { 
         // transplant T->h into V->i
         V->i = T->h ;
         V->i_size = T->h_size ;
-        T->h_shallow = true ;
+        T->h = NULL ;
     }
 
     //--------------------------------------------------------------------------
@@ -168,14 +171,14 @@ GrB_Info GB_Vector_diag     // extract a diagonal from a matrix, as a vector
     {
         // V->x = (vtype) T->x
         // V is sparse so malloc is OK
-        V->x = GB_XALLOC (false, V->iso, vnz, vtype->size, &(V->x_size)) ;
+        V->x = GB_XALLOC (false, V->iso, vnz, vtype->size, &(V->x_size)) ; // x:OK
         if (V->x == NULL)
         { 
             // out of memory
             GB_FREE_ALL ;
             return (GrB_OUT_OF_MEMORY) ;
         }
-        GB_OK (GB_cast_matrix (V, T)) ;
+        GB_cast_matrix (V, T, Context) ;
     }
 
     //--------------------------------------------------------------------------
@@ -192,7 +195,7 @@ GrB_Info GB_Vector_diag     // extract a diagonal from a matrix, as a vector
 
     GB_FREE_WORKSPACE ;
     ASSERT_MATRIX_OK (V, "V before conform for GB_Vector_diag", GB0) ;
-    GB_OK (GB_conform (V, Werk)) ;
+    GB_OK (GB_conform (V, Context)) ;
     ASSERT_MATRIX_OK (V, "V output for GB_Vector_diag", GB0) ;
     return (GrB_SUCCESS) ;
 }

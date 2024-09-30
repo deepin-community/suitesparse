@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Partition/cholmod_ccolamd: CHOLMOD interface to CCOLAMD
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Partition/cholmod_ccolamd ============================================ */
+/* ========================================================================== */
 
-// CHOLMOD/Partition Module.  Copyright (C) 2005-2022, University of Florida.
-// All Rights Reserved.  Author: Timothy A. Davis.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Partition Module. 
+ * Copyright (C) 2005-2013, Univ. of Florida.  Author: Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* CHOLMOD interface to the CCOLAMD ordering routine.  Finds a permutation
  * p such that the Cholesky factorization of PAA'P' is sparser than AA'.
@@ -20,11 +19,12 @@
  * Supports any xtype (pattern, real, complex, or zomplex).
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCAMD
 
+#include "cholmod_internal.h"
 #include "ccolamd.h"
+#include "cholmod_camd.h"
+
 #if (CCOLAMD_VERSION < CCOLAMD_VERSION_CODE (2,5))
 #error "CCOLAMD v2.0 or later is required"
 #endif
@@ -67,7 +67,7 @@ static int ccolamd_interface
     /* ---------------------------------------------------------------------- */
 
     /* get parameters */
-#if defined ( CHOLMOD_INT64 )
+#ifdef LONG
     ccolamd_l_set_defaults (knobs) ;
 #else
     ccolamd_set_defaults (knobs) ;
@@ -90,7 +90,7 @@ static int ccolamd_interface
     if (ok)
     {
 
-#if defined ( CHOLMOD_INT64 )
+#ifdef LONG
 	ccolamd_l (ncol, nrow, alen, C->i, C->p, knobs, stats, Cmember) ;
 #else
 	ccolamd (ncol, nrow, alen, C->i, C->p, knobs, stats, Cmember) ;
@@ -164,7 +164,7 @@ int CHOLMOD(ccolamd)
     /* allocate workspace */
     /* ---------------------------------------------------------------------- */
 
-#if defined ( CHOLMOD_INT64 )
+#ifdef LONG
     alen = ccolamd_l_recommended (A->nzmax, ncol, nrow) ;
 #else
     alen = ccolamd_recommended (A->nzmax, ncol, nrow) ;

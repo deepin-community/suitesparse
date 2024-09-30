@@ -1,19 +1,19 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_version.h: definitions that depend on entry/int types
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === umf_version.h ======================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
    Define routine names, depending on version being compiled.
 
-   DINT:	double precision, int32_t integers
-   DLONG:	double precision, int64_t integers
-   ZLONG:	complex double precision, int64_t integers
-   ZINT:	complex double precision, int32_t integers
+   DINT:	double precision, int's as integers
+   DLONG:	double precision, SuiteSparse_long's as integers
+   ZLONG:	complex double precision, SuiteSparse_long's as integers
+   ZINT:	complex double precision, int's as integers
 */
 
 /* Set DINT as the default, if nothing is defined */
@@ -27,7 +27,7 @@
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* integer type (Int is int32_t or int64_t) defined in amd_internal.h */
+/* integer type (Int is int or SuiteSparse_long) defined in amd_internal.h */
 /* -------------------------------------------------------------------------- */
 
 #if defined (DLONG) || defined (ZLONG)
@@ -159,10 +159,10 @@ SCALAR_IS_LTZERO(x):
     that possibility.  ANSI C *does* guarantee that an array of structs has
     the same size as n times the size of one struct.
 
-    The ANSI C11 version of the C language includes a "double complex" type.
+    The ANSI C99 version of the C language includes a "double _Complex" type.
     It should be possible in that case to do the following:
 
-    #define Entry double complex
+    #define Entry double _Complex
 
     and remove the DoubleComplex struct.  The macros, below, could then be
     replaced with instrinsic operators.  Note that the #define Real and
@@ -210,7 +210,7 @@ typedef struct
 /* -------------------------------------------------------------------------- */
 
 /* c = (s1) + (s2)*i, if s2 is null, then X is in "packed" format (compatible
- * with Entry and ANSI C11 double complex type).  */
+ * with Entry and ANSI C99 double _Complex type).  */
 #define ASSIGN(c,s1,s2,p,split)	\
 { \
     if (split) \
@@ -352,7 +352,7 @@ typedef struct
 /* c = a/b, using function pointer */
 #define DIV(c,a,b) \
 { \
-    (void) SuiteSparse_config_divcomplex \
+    (void) SuiteSparse_config.divcomplex_func \
         ((a).Real, (a).Imag, (b).Real, (b).Imag, \
 	&((c).Real), &((c).Imag)) ; \
 }
@@ -362,7 +362,7 @@ typedef struct
 /* c = a/conjugate(b), using function pointer */
 #define DIV_CONJ(c,a,b) \
 { \
-    (void) SuiteSparse_config_divcomplex \
+    (void) SuiteSparse_config.divcomplex_func \
         ((a).Real, (a).Imag, (b).Real, (-(b).Imag), \
 	&((c).Real), &((c).Imag)) ; \
 }
@@ -380,7 +380,7 @@ typedef struct
 /* exact absolute value, s = sqrt (a.real^2 + a.imag^2) */
 #define ABS(s,a) \
 { \
-    (s) = SuiteSparse_config_hypot ((a).Real, (a).Imag) ; \
+    (s) = SuiteSparse_config.hypot_func ((a).Real, (a).Imag) ; \
 }
 
 /* -------------------------------------------------------------------------- */
@@ -415,7 +415,7 @@ typedef struct
 #endif	/* #ifndef COMPLEX */
 
 /* -------------------------------------------------------------------------- */
-/* Double precision, with int32_t integers */
+/* Double precision, with int's as integers */
 /* -------------------------------------------------------------------------- */
 
 #ifdef DINT
@@ -489,8 +489,6 @@ typedef struct
 #define UMFPACK_numeric		 umfpack_di_numeric
 #define UMFPACK_qsymbolic	 umfpack_di_qsymbolic
 #define UMFPACK_fsymbolic	 umfpack_di_fsymbolic
-#define UMFPACK_paru_symbolic	 umfpack_di_paru_symbolic
-#define UMFPACK_paru_free_sw     umfpack_di_paru_free_sw
 #define UMFPACK_report_control	 umfpack_di_report_control
 #define UMFPACK_report_info	 umfpack_di_report_info
 #define UMFPACK_report_matrix	 umfpack_di_report_matrix
@@ -510,16 +508,6 @@ typedef struct
 #define UMFPACK_transpose	 umfpack_di_transpose
 #define UMFPACK_triplet_to_col	 umfpack_di_triplet_to_col
 #define UMFPACK_wsolve		 umfpack_di_wsolve
-
-// added in v6.1.0
-#define UMFPACK_serialize_symbolic      umfpack_di_serialize_symbolic
-#define UMFPACK_deserialize_symbolic    umfpack_di_deserialize_symbolic
-#define UMFPACK_serialize_symbolic_size umfpack_di_serialize_symbolic_size
-#define UMFPACK_serialize_numeric       umfpack_di_serialize_numeric
-#define UMFPACK_deserialize_numeric     umfpack_di_deserialize_numeric
-#define UMFPACK_serialize_numeric_size  umfpack_di_serialize_numeric_size
-#define UMFPACK_copy_symbolic	        umfpack_di_copy_symbolic
-#define UMFPACK_copy_numeric	        umfpack_di_copy_numeric
 
 /* for debugging only: */
 #define UMF_malloc_count	 umf_i_malloc_count
@@ -543,7 +531,7 @@ typedef struct
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* Double precision, with int64_t integers */
+/* Double precision, with SuiteSparse_long's as integers */
 /* -------------------------------------------------------------------------- */
 
 #ifdef DLONG
@@ -617,8 +605,6 @@ typedef struct
 #define UMFPACK_numeric		 umfpack_dl_numeric
 #define UMFPACK_qsymbolic	 umfpack_dl_qsymbolic
 #define UMFPACK_fsymbolic	 umfpack_dl_fsymbolic
-#define UMFPACK_paru_symbolic	 umfpack_dl_paru_symbolic
-#define UMFPACK_paru_free_sw     umfpack_dl_paru_free_sw
 #define UMFPACK_report_control	 umfpack_dl_report_control
 #define UMFPACK_report_info	 umfpack_dl_report_info
 #define UMFPACK_report_matrix	 umfpack_dl_report_matrix
@@ -638,16 +624,6 @@ typedef struct
 #define UMFPACK_transpose	 umfpack_dl_transpose
 #define UMFPACK_triplet_to_col	 umfpack_dl_triplet_to_col
 #define UMFPACK_wsolve		 umfpack_dl_wsolve
-
-// added in v6.1.0
-#define UMFPACK_serialize_symbolic      umfpack_dl_serialize_symbolic
-#define UMFPACK_deserialize_symbolic    umfpack_dl_deserialize_symbolic
-#define UMFPACK_serialize_symbolic_size umfpack_dl_serialize_symbolic_size
-#define UMFPACK_serialize_numeric       umfpack_dl_serialize_numeric
-#define UMFPACK_deserialize_numeric     umfpack_dl_deserialize_numeric
-#define UMFPACK_serialize_numeric_size  umfpack_dl_serialize_numeric_size
-#define UMFPACK_copy_symbolic	        umfpack_dl_copy_symbolic
-#define UMFPACK_copy_numeric	        umfpack_dl_copy_numeric
 
 /* for debugging only: */
 #define UMF_malloc_count	 umf_l_malloc_count
@@ -671,7 +647,7 @@ typedef struct
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* Complex double precision, with int32_t integers */
+/* Complex double precision, with int's as integers */
 /* -------------------------------------------------------------------------- */
 
 #ifdef ZINT
@@ -745,8 +721,6 @@ typedef struct
 #define UMFPACK_numeric		 umfpack_zi_numeric
 #define UMFPACK_qsymbolic	 umfpack_zi_qsymbolic
 #define UMFPACK_fsymbolic	 umfpack_zi_fsymbolic
-#define UMFPACK_paru_symbolic	 umfpack_zi_paru_symbolic
-#define UMFPACK_paru_free_sw     umfpack_zi_paru_free_sw
 #define UMFPACK_report_control	 umfpack_zi_report_control
 #define UMFPACK_report_info	 umfpack_zi_report_info
 #define UMFPACK_report_matrix	 umfpack_zi_report_matrix
@@ -766,16 +740,6 @@ typedef struct
 #define UMFPACK_transpose	 umfpack_zi_transpose
 #define UMFPACK_triplet_to_col	 umfpack_zi_triplet_to_col
 #define UMFPACK_wsolve		 umfpack_zi_wsolve
-
-// added in v6.1.0
-#define UMFPACK_serialize_symbolic      umfpack_zi_serialize_symbolic
-#define UMFPACK_deserialize_symbolic    umfpack_zi_deserialize_symbolic
-#define UMFPACK_serialize_symbolic_size umfpack_zi_serialize_symbolic_size
-#define UMFPACK_serialize_numeric       umfpack_zi_serialize_numeric
-#define UMFPACK_deserialize_numeric     umfpack_zi_deserialize_numeric
-#define UMFPACK_serialize_numeric_size  umfpack_zi_serialize_numeric_size
-#define UMFPACK_copy_symbolic	        umfpack_zi_copy_symbolic
-#define UMFPACK_copy_numeric	        umfpack_zi_copy_numeric
 
 /* for debugging only: */
 #define UMF_malloc_count	 umf_i_malloc_count
@@ -799,7 +763,7 @@ typedef struct
 #endif
 
 /* -------------------------------------------------------------------------- */
-/* Complex double precision, with int64_t integers */
+/* Complex double precision, with SuiteSparse_long's as integers */
 /* -------------------------------------------------------------------------- */
 
 #ifdef ZLONG
@@ -873,8 +837,6 @@ typedef struct
 #define UMFPACK_numeric		 umfpack_zl_numeric
 #define UMFPACK_qsymbolic	 umfpack_zl_qsymbolic
 #define UMFPACK_fsymbolic	 umfpack_zl_fsymbolic
-#define UMFPACK_paru_symbolic	 umfpack_zl_paru_symbolic
-#define UMFPACK_paru_free_sw     umfpack_zl_paru_free_sw
 #define UMFPACK_report_control	 umfpack_zl_report_control
 #define UMFPACK_report_info	 umfpack_zl_report_info
 #define UMFPACK_report_matrix	 umfpack_zl_report_matrix
@@ -894,16 +856,6 @@ typedef struct
 #define UMFPACK_transpose	 umfpack_zl_transpose
 #define UMFPACK_triplet_to_col	 umfpack_zl_triplet_to_col
 #define UMFPACK_wsolve		 umfpack_zl_wsolve
-
-// added in v6.1.0
-#define UMFPACK_serialize_symbolic      umfpack_zl_serialize_symbolic
-#define UMFPACK_deserialize_symbolic    umfpack_zl_deserialize_symbolic
-#define UMFPACK_serialize_symbolic_size umfpack_zl_serialize_symbolic_size
-#define UMFPACK_serialize_numeric       umfpack_zl_serialize_numeric
-#define UMFPACK_deserialize_numeric     umfpack_zl_deserialize_numeric
-#define UMFPACK_serialize_numeric_size  umfpack_zl_serialize_numeric_size
-#define UMFPACK_copy_symbolic	        umfpack_zl_copy_symbolic
-#define UMFPACK_copy_numeric	        umfpack_zl_copy_numeric
 
 /* for debugging only: */
 #define UMF_malloc_count	 umf_l_malloc_count

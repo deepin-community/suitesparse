@@ -2,10 +2,6 @@
 // === GPUQREngine/Include/Kernel/Factorize/factorize_vt_3_by_1_edge.cu ========
 // =============================================================================
 
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
 //------------------------------------------------------------------------------
 // 3-by-1 factorize, with VT and tiles, edge case.  384 threads
 //------------------------------------------------------------------------------

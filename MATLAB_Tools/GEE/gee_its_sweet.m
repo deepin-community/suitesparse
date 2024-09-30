@@ -23,7 +23,6 @@ function x = gee_its_sweet (A, b)
 % thousands because I haven't seen the code for mldivide (aka backslash), just
 % LAPACK, the BLAS, and my codes.
 
-% GEE, Copyright (c) 2006-2007, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2007, Timothy A. Davis, http://www.suitesparse.com
 
 x = A\b ;   % I hearby call upon 250k lines of code (or so) to solve Ax=b

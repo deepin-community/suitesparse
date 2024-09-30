@@ -10,6 +10,7 @@
 %   ldldemo     - demo program for LDL
 %   ldlrow      - an m-file description of the algorithm used by LDL
 %   ldltest     - test program for LDL
+%   ldlmain2    - compiles and runs a longer test program for LDL
 %   ldl_install - compile and install the LDL package for use in MATLAB.
 %   ldl_make    - compile LDL
 %
@@ -17,8 +18,7 @@
 %
 %       [L, D, Parent, fl] = ldlsparse (A)
 
-% LDL, Copyright (c) 2005-2022 by Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2007 by Timothy A. Davis, http://www.suitesparse.com
 
 % LDL License:  see LDL/Doc/License.txt
 %

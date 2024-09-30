@@ -58,8 +58,7 @@ function [result, t] = linfactor (arg1, arg2)
 %
 % Requires MATLAB 7.3 (R2006b) or later.
 
-% LINFACTOR, Copyright (c) 2008, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2008, Timothy A. Davis, http://www.suitesparse.com
 
 if (nargin < 1 | nargin > 2 | nargout > 2)          %#ok
     error ('Usage: F=linfactor(A) or x=linfactor(F,b)') ;

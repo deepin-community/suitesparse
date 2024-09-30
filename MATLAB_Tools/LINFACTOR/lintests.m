@@ -8,8 +8,7 @@ function lintests
 %
 % See also lintest, linfactor, mldivide.
 
-% LINFACTOR, Copyright (c) 2008, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2007, Timothy A. Davis
 
 rand ('state', 0) ;
 help linfactor

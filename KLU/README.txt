@@ -1,12 +1,11 @@
-KLU, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-Authors: Timothy A. Davis and Ekanathan Palamadai.
-SPDX-License-Identifier: LGPL-2.1+
-
+KLU, Copyright (C) 2004-2013, University of Florida
+by Timothy A. Davis and Ekanathan Palamadai.
 KLU is also available under other licenses; contact authors for details.
 http://www.suitesparse.com
 
 Requires the AMD, COLAMD, and BTF libraries, in ../AMD, ../COLAMD, and ../BTF,
-respectively.  Optionally uses CHOLMOD (KLU/User example ordering).  The
+respectively.  Requires the ../SuiteSparse_config/SuiteSparse_config.mk
+configuration file.  Optionally uses CHOLMOD (KLU/User example ordering).  The
 Tcov tests and the one of the programs in the Demo require CHOLMOD.
 
 To compile the libklu.a library, type "make".  The compiled library is located
@@ -28,6 +27,7 @@ Files in this distribution:
     Demo                example programs that use KLU (requires CHOLMOD)
     Doc                 documentation
     Include             include files
+    Lib                 compiled library
     Makefile            top-level Makefile
     MATLAB              MATLAB interface
     Matrix              test matrices
@@ -35,8 +35,6 @@ Files in this distribution:
     Source              source code
     Tcov                exhaustive test of KLU and BTF
     User                example user ordering function (interface to CHOLMOD)
-    build               where the compiled libraries and demos are placed
-    Config              source file to construct klu.h
 
 ./Demo:
     klu_simple.c        a simple demo (does not require CHOLMOD)
@@ -44,7 +42,7 @@ Files in this distribution:
     klu_simple.out      output of klu_simple
     kludemo.c           KLU demo (int version)
     kludemo.out         output of "make" in this directory
-    kluldemo.c          KLU demo (int64_t version)
+    kluldemo.c          KLU demo (SuiteSparse_long version)
     Makefile            Makefile for compiling the demo
 
 ./Doc:
@@ -60,6 +58,10 @@ Files in this distribution:
     klu.h               user include file
     klu_internal.h      internal include file, not needed by the user
     klu_version.h       internal include file, not needed by the user
+
+./Lib:
+    Makefile            Makefile for compiling the KLU C-callable library
+                        (with or without CHOLMOD)
 
 ./MATLAB:
     Contents.m          list of MATLAB functions in KLU
@@ -113,17 +115,17 @@ Files in this distribution:
 
 ./Tcov:                 exhaustive test suite; requires Linux/Unix
     coverage            determine statement coverage
-    klultests           KLU int64_t tests
+    klultests           KLU SuiteSparse_long tests
     klutest.c           KLU test program
     klutests            KLU int tests
     Makefile            Makefile for compiling and running the tests
     README.txt          README file for Tcov
     vklutests           KLU int tests, using valgrind
-    vklultests          KLU int64_t tests, using valgrind
+    vklultests          KLU SuiteSparse_long tests, using valgrind
 
 ./User:
     klu_cholmod.c       sample KLU user ordering function (int version)
     klu_cholmod.h       include file for klu_cholmod and klu_l_cholmod
-    klu_l_cholmod.c     sample KLU user ordering function (int64_t) 
+    klu_l_cholmod.c     sample KLU user ordering function (SuiteSparse_long) 
     Makefile            Makefile for compiling the user ordering functions
     README.txt          README for User directory

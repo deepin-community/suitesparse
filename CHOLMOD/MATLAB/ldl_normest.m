@@ -11,9 +11,7 @@ function rho = ldl_normest (A, L, D)
 %
 % See also condest, normest
 
-% Copyright 2006-2022, William W. Hager and Timothy A. Davis,
-% All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2006-2007, William W. Hager and Timothy A. Davis
 
 [m n] = size (A) ;
 

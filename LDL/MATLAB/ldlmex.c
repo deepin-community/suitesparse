@@ -1,11 +1,6 @@
-//------------------------------------------------------------------------------
-// LDL/MATLAB/ldlmex.c: MATLAB interface for LDL
-//------------------------------------------------------------------------------
-
-// LDL, Copyright (c) 2005-2022 by Timothy A. Davis. All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === ldlmex.c:  LDL mexFunction =========================================== */
+/* ========================================================================== */
 
 /* MATLAB interface for numerical LDL' factorization using the LDL sparse matrix
  * package.
@@ -55,10 +50,18 @@
  *
  * That is, the LDL' factorization of B (1:d,1:d) is in the first d rows and
  * columns of L and D.  The rest of L and D are zero.
+ *
+ * Copyright (c) by Timothy A Davis, http://www.suitesparse.com.
+ * All Rights Reserved.  See LDL/Doc/License.txt for the License.
  */
+
+#ifndef LDL_LONG
+#define LDL_LONG
+#endif
 
 #include "ldl.h"
 #include "mex.h"
+#define Long SuiteSparse_long
 
 /* ========================================================================== */
 /* === LDL mexFunction ====================================================== */
@@ -72,11 +75,10 @@ void mexFunction
     const mxArray *pargin[ ]
 )
 {
-    int64_t i, n, *Pattern, *Flag, *Li, *Lp, *Ap, *Ai, *Lnz, *Parent,
+    Long i, n, *Pattern, *Flag, *Li, *Lp, *Ap, *Ai, *Lnz, *Parent, do_chol,
 	nrhs = 0, lnz, do_solve, *P, *Pinv, nn, k, j, permute, *Dp = NULL, *Di,
-	d, psrc, pdst ;
+	d, do_flops, psrc, pdst ;
     double *Y, *D, *Lx, *Ax, flops, *X = NULL, *B = NULL, *p ;
-    int do_chol, do_flops ;
 
     /* ---------------------------------------------------------------------- */
     /* get inputs and allocate workspace */
@@ -111,8 +113,8 @@ void mexFunction
     nn = (n == 0) ? 1 : n ;
 
     /* get sparse matrix A */
-    Ap = (int64_t *) mxGetJc (pargin [0]) ;
-    Ai = (int64_t *) mxGetIr (pargin [0]) ;
+    Ap = (Long *) mxGetJc (pargin [0]) ;
+    Ai = (Long *) mxGetIr (pargin [0]) ;
     Ax = mxGetPr (pargin [0]) ;
 
     /* get fill-reducing ordering, if present */
@@ -124,8 +126,8 @@ void mexFunction
 	{
 	    mexErrMsgTxt ("ldl: invalid input permutation\n") ;
 	}
-	P    = (int64_t *) mxMalloc (nn * sizeof (int64_t)) ;
-	Pinv = (int64_t *) mxMalloc (nn * sizeof (int64_t)) ;
+	P    = (Long *) mxMalloc (nn * sizeof (Long)) ;
+	Pinv = (Long *) mxMalloc (nn * sizeof (Long)) ;
 	p = mxGetPr (pargin [1]) ;
 	for (k = 0 ; k < n ; k++)
 	{
@@ -134,19 +136,19 @@ void mexFunction
     }
     else
     {
-	P    = (int64_t *) NULL ;
-	Pinv = (int64_t *) NULL ;
+	P    = (Long *) NULL ;
+	Pinv = (Long *) NULL ;
     }
 
     /* allocate first part of L */
-    Lp      = (int64_t *) mxMalloc ((n+1) * sizeof (int64_t)) ;
-    Parent  = (int64_t *) mxMalloc (nn * sizeof (int64_t)) ;
+    Lp      = (Long *) mxMalloc ((n+1) * sizeof (Long)) ;
+    Parent  = (Long *) mxMalloc (nn * sizeof (Long)) ;
 
     /* get workspace */
     Y       = (double *)  mxMalloc (nn * sizeof (double)) ;
-    Flag    = (int64_t *) mxMalloc (nn * sizeof (int64_t)) ;
-    Pattern = (int64_t *) mxMalloc (nn * sizeof (int64_t)) ;
-    Lnz     = (int64_t *) mxMalloc (nn * sizeof (int64_t)) ;
+    Flag    = (Long *) mxMalloc (nn * sizeof (Long)) ;
+    Pattern = (Long *) mxMalloc (nn * sizeof (Long)) ;
+    Lnz     = (Long *) mxMalloc (nn * sizeof (Long)) ;
 
     /* make sure the input P is valid */
     if (permute && !ldl_l_valid_perm (n, P, Flag))
@@ -173,15 +175,15 @@ void mexFunction
 	pargout [0] = mxCreateSparse (n, n, lnz+1, mxREAL) ;
 	mxFree (mxGetJc (pargout [0])) ;
 	mxSetJc (pargout [0], (void *) Lp) ;	/* Lp is not mxFree'd */
-	Li = (int64_t *) mxGetIr (pargout [0]) ;
+	Li = (Long *) mxGetIr (pargout [0]) ;
 	Lx = mxGetPr (pargout [0]) ;
 
 	/* create sparse diagonal matrix D */
 	if (nargout > 1)
 	{
 	    pargout [1] = mxCreateSparse (n, n, nn, mxREAL) ;
-	    Dp = (int64_t *) mxGetJc (pargout [1]) ;
-	    Di = (int64_t *) mxGetIr (pargout [1]) ;
+	    Dp = (Long *) mxGetJc (pargout [1]) ;
+	    Di = (Long *) mxGetIr (pargout [1]) ;
 	    for (j = 0 ; j < n ; j++)
 	    {
 		Dp [j] = j ;
@@ -211,7 +213,7 @@ void mexFunction
     else
     {
 	/* create L and D as temporary matrices */
-	Li = (int64_t *)    mxMalloc ((lnz+1) * sizeof (int64_t)) ;
+	Li = (Long *)    mxMalloc ((lnz+1) * sizeof (Long)) ;
 	Lx = (double *) mxMalloc ((lnz+1) * sizeof (double)) ;
 	D  = (double *) mxMalloc (nn * sizeof (double)) ;
 

@@ -4,8 +4,7 @@ function drawboxes (nb, e, r, s)
 %   drawboxes (nb, e, r, s)
 %   See also drawbox, plot
 
-% CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 if (nb > 1)
     if (e == 1)

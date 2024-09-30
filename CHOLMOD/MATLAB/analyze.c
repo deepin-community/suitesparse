@@ -1,14 +1,12 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/MATLAB/analyze: MATLAB interface to CHOLMOD symbolic analysis
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === CHOLMOD/MATLAB/analyze mexFunction =================================== */
+/* ========================================================================== */
 
-// CHOLMOD/MATLAB Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
-// MATLAB(tm) is a Trademark of The MathWorks, Inc.
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/MATLAB Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * MATLAB(tm) is a Trademark of The MathWorks, Inc.
+ * -------------------------------------------------------------------------- */
 
 /* Order a matrix and then analyze it, using CHOLMOD's best-effort ordering.
  * Returns the count of the number of nonzeros in each column of L for the
@@ -46,7 +44,7 @@ void mexFunction
     cholmod_factor *L ;
     cholmod_sparse *A, Amatrix, *C, *S ;
     cholmod_common Common, *cm ;
-    int64_t n, transpose, c ;
+    Long n, transpose, c ;
     char buf [LEN] ;
 
     /* ---------------------------------------------------------------------- */
@@ -71,7 +69,7 @@ void mexFunction
     if (nargin == 3)
     {
 	cm->nmethods = mxGetScalar (pargin [2]) ;
-	if (cm->nmethods == -1 || cm->nmethods == 1 || cm->nmethods == 2)
+	if (cm->nmethods == -1)
 	{
 	    /* use AMD only */
 	    cm->nmethods = 1 ;

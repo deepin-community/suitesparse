@@ -2,7 +2,7 @@
 // GxB_IndexUnaryOp_new: create a new user-defined index_unary operator
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -15,18 +15,15 @@
 // and then it must recast its inputs (x and thunk) and output (z) arguments
 // internally as needed.  When used with a GrB_Vector, j is zero.
 
-// If the function pointer is NULL, the function is compiled with the JIT.
-
 #include "GB.h"
-#include "GB_stringify.h"
 
-GrB_Info GxB_IndexUnaryOp_new   // create a named user-created IndexUnaryOp
+GrB_Info GxB_IndexUnaryOp_new       // create a new user-defined index_unary op
 (
-    GrB_IndexUnaryOp *op_handle,    // handle for the new IndexUnary operator
-    GxB_index_unary_function function,    // pointer to index_unary function
+    GrB_IndexUnaryOp *op,           // handle for the new GrB_IndexUnaryOp
+    GxB_index_unary_function function,   // pointer to the index_unary function
     GrB_Type ztype,                 // type of output z
-    GrB_Type xtype,                 // type of input x (the A(i,j) entry)
-    GrB_Type ytype,                 // type of input y (the scalar)
+    GrB_Type xtype,                 // type of input x
+    GrB_Type ttype,                 // type of input thunk
     const char *idxop_name,         // name of the user function
     const char *idxop_defn          // definition of the user function
 )
@@ -36,90 +33,52 @@ GrB_Info GxB_IndexUnaryOp_new   // create a named user-created IndexUnaryOp
     // check inputs
     //--------------------------------------------------------------------------
 
-    GB_WHERE1 ("GxB_IndexUnaryOp_new (op, function, ztype, xtype, ytype"
+    GB_WHERE1 ("GxB_IndexUnaryOp_new (op, function, ztype, xtype, ttype"
         ", name, defn)") ;
-    GB_RETURN_IF_NULL (op_handle) ;
-    (*op_handle) = NULL ;
+    GB_RETURN_IF_NULL (op) ;
+    (*op) = NULL ;
+    GB_RETURN_IF_NULL (function) ;
     GB_RETURN_IF_NULL_OR_FAULTY (ztype) ;
     GB_RETURN_IF_NULL_OR_FAULTY (xtype) ;
-    GB_RETURN_IF_NULL_OR_FAULTY (ytype) ;
+    GB_RETURN_IF_NULL_OR_FAULTY (ttype) ;
 
     //--------------------------------------------------------------------------
     // allocate the index_unary op
     //--------------------------------------------------------------------------
 
     size_t header_size ;
-    GrB_IndexUnaryOp op = GB_MALLOC (1, struct GB_IndexUnaryOp_opaque,
-        &header_size) ;
-    if (op == NULL)
+    (*op) = GB_MALLOC (1, struct GB_IndexUnaryOp_opaque, &header_size) ;
+    if (*op == NULL)
     { 
         // out of memory
         return (GrB_OUT_OF_MEMORY) ;
     }
-    op->header_size = header_size ;
+    (*op)->header_size = header_size ;
 
     //--------------------------------------------------------------------------
     // initialize the index_unary operator
     //--------------------------------------------------------------------------
 
-    op->magic = GB_MAGIC ;
-    op->ztype = ztype ;
-    op->xtype = xtype ;
-    op->ytype = ytype ;      // thunk type
+    (*op)->magic = GB_MAGIC ;
+    (*op)->ztype = ztype ;
+    (*op)->xtype = xtype ;
+    (*op)->ytype = ttype ;      // thunk type
 
-    op->unop_function = NULL ;
-    op->idxunop_function = function ;
-    op->binop_function = NULL ;
+    (*op)->unop_function = NULL ;
+    (*op)->idxunop_function = function ;
+    (*op)->binop_function = NULL ;
+    (*op)->selop_function = NULL ;
 
-    op->opcode = GB_USER_idxunop_code ;
-
-    //--------------------------------------------------------------------------
+    (*op)->opcode = GB_USER_idxunop_code ;
     // get the index_unary op name and defn
-    //--------------------------------------------------------------------------
-
-    // the index_unary op is JIT'able only if all its types are jitable
-    bool jitable =
-        (ztype->hash != UINT64_MAX) &&
-        (xtype->hash != UINT64_MAX) &&
-        (ytype->hash != UINT64_MAX) ;
-
-    GrB_Info info = GB_op_name_and_defn (
-        // output:
-        op->name, &(op->name_len), &(op->hash), &(op->defn), &(op->defn_size),
-        // input:
-        idxop_name, idxop_defn, "GxB_index_unary_function", 24, true, jitable) ;
-    if (info != GrB_SUCCESS)
-    { 
-        // out of memory
-        GB_FREE (&op, header_size) ;
-        return (info) ;
-    }
-
-    //--------------------------------------------------------------------------
-    // create the function pointer, if NULL
-    //--------------------------------------------------------------------------
-
-    if (function == NULL)
-    {
-        GB_BURBLE_START ("GxB_IndexUnaryOp_new") ;
-        void *user_function ;
-        info = GB_user_op_jit (&user_function, (GB_Operator) op) ;
-        if (info != GrB_SUCCESS)
-        {
-            // unable to construct the function pointer
-            GB_Op_free ((GB_Operator *) &op) ;
-            return (GrB_NULL_POINTER) ;
-        }
-        op->idxunop_function = (GxB_index_unary_function) user_function ;
-        GB_BURBLE_END ;
-    }
+    GB_op_name_and_defn ((*op)->name, &((*op)->defn), idxop_name, idxop_defn,
+        "GxB_index_unary_function", 24) ;
 
     //--------------------------------------------------------------------------
     // return result
     //--------------------------------------------------------------------------
 
-    ASSERT_INDEXUNARYOP_OK (op, "new user-defined index_unary op", GB0) ;
-    (*op_handle) = op ;
+    ASSERT_INDEXUNARYOP_OK ((*op), "new user-defined index_unary op", GB0) ;
     return (GrB_SUCCESS) ;
 }
 

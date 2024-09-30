@@ -83,8 +83,7 @@ function F = factorize (A,strategy,burble)
 %
 % See also inverse, slash, linsolve, spqr.
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
 assert (ndims (A) == 2, 'Matrix must be 2D.') ;
 

@@ -1,13 +1,9 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_set_stats.h
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
-void UMF_set_stats
+GLOBAL void UMF_set_stats
 (
     double Info [ ],
     SymbolicType *Symbolic,

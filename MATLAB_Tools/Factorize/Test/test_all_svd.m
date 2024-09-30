@@ -6,8 +6,7 @@ function err = test_all_svd
 %
 % See also test_all.
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
 reset_rand ;
 err = test_svd ;

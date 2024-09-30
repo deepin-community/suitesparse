@@ -7,36 +7,48 @@ Last-Update: 2021-11-26
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/Makefile
 +++ b/Makefile
-@@ -39,7 +39,6 @@ library:
- 	( cd SuiteSparse_GPURuntime && $(MAKE) )
+@@ -34,7 +34,6 @@ ifneq ($(GPU_CONFIG),)
  	( cd GPUQREngine && $(MAKE) )
+ endif
  	( cd SPQR && $(MAKE) )
--	( cd GraphBLAS && $(MAKE) )
- 	( cd SPEX && $(MAKE) )
- 
- # compile; "make install" only in  SuiteSparse/lib and SuiteSparse/include
-@@ -105,7 +104,6 @@ install:
- 	( cd SuiteSparse_GPURuntime && $(MAKE) install )
+-	( cd GraphBLAS && $(MAKE) JOBS=$(JOBS) CMAKE_OPTIONS='$(CMAKE_OPTIONS)' )
+ 	( cd SLIP_LU && $(MAKE) )
+ #	( cd PIRO_BAND && $(MAKE) )
+ #	( cd SKYLINE_SVD && $(MAKE) )
+@@ -44,7 +43,7 @@ endif
+ #       sudo make install INSTALL=/usr/local
+ # See SuiteSparse/README.md for more details.
+ # (note that CSparse is not installed; CXSparse is installed instead)
+-install: metisinstall gbinstall moninstall
++install: metisinstall moninstall
+ 	( cd SuiteSparse_config && $(MAKE) install )
+ 	# ( cd Mongoose  && $(MAKE) CMAKE_OPTIONS='$(CMAKE_OPTIONS)' install )
+ 	( cd AMD && $(MAKE) install )
+@@ -63,7 +62,6 @@ ifneq (,$(GPU_CONFIG))
  	( cd GPUQREngine && $(MAKE) install )
+ endif
  	( cd SPQR && $(MAKE) install )
--	( cd GraphBLAS && $(MAKE) install )
- 	( cd SPEX && $(MAKE) install )
- 
- # uninstall all packages
-@@ -154,7 +152,6 @@ purge:
- 	- $(RM) MATLAB_Tools/*/*.mex* MATLAB_Tools/*/*/*.mex*
- 	- $(RM) MATLAB_Tools/*/*.o    MATLAB_Tools/*/*/*.o
- 	- $(RM) -r Example/build/*
+-	# ( cd GraphBLAS && $(MAKE) JOBS=$(JOBS) CMAKE_OPTIONS='$(CMAKE_OPTIONS)' install )
+ #	( cd PIRO_BAND && $(MAKE) install )
+ #	( cd SKYLINE_SVD && $(MAKE) install )
+ 	( cd SLIP_LU && $(MAKE) install )
+@@ -171,7 +169,6 @@ ifneq (,$(GPU_CONFIG))
+ 	( cd GPUQREngine && $(MAKE) static )
+ endif
+ 	( cd SPQR && $(MAKE) static )
+-	( cd GraphBLAS && $(MAKE) JOBS=$(JOBS) CMAKE_OPTIONS='$(CMAKE_OPTIONS)' static )
+ 	( cd SLIP_LU && $(MAKE) static )
+ #	( cd PIRO_BAND && $(MAKE) static )
+ #	( cd SKYLINE_SVD && $(MAKE) static )
+@@ -181,7 +178,6 @@ purge:
+ 	- ( cd SuiteSparse_config && $(MAKE) purge )
+ 	- ( cd metis-5.1.0 && $(MAKE) distclean )
+ 	- ( cd AMD && $(MAKE) purge )
 -	- ( cd GraphBLAS && $(MAKE) purge )
- 	- ( cd SPEX && $(MAKE) purge )
- 	- $(RM) -r include/* bin/* lib/*
- 
-@@ -177,12 +174,10 @@ demos:
- 	- ( cd CXSparse && $(MAKE) demos )
- 	- ( cd RBio && $(MAKE) demos )
- 	- ( cd SPQR && $(MAKE) demos )
--	- ( cd GraphBLAS && $(MAKE) demos )
- 	- ( cd SPEX && $(MAKE) demos )
+ 	- ( cd Mongoose  && $(MAKE) purge )
+ 	- ( cd CAMD && $(MAKE) purge )
+ 	- ( cd COLAMD && $(MAKE) purge )
+@@ -232,7 +228,6 @@ clean:
  
  # Create the PDF documentation
  docs:

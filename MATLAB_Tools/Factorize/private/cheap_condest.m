@@ -1,8 +1,7 @@
 function c = cheap_condest (d, fail_if_singular)
 %CHEAP_CONDEST checks the diagonal of a triangular matrix
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
 if (isempty (d))
     dmin = 1 ;

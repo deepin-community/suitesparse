@@ -2,14 +2,18 @@
 /* === qrdemo.c ============================================================= */
 /* ========================================================================== */
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
 /* A simple C demo of SuiteSparseQR.  The comments give the MATLAB equivalent
    statements.  See also qrdemo.m
  */
 
 #include "SuiteSparseQR_C.h"
+
+/* SuiteSparseQR uses an integer defined in SuiteSparse_config.h called
+ * SuiteSparse_long.  It is a 32-bit integer on a 32-bit platform, and a 64-bit
+ * integer on a 64-bit platform.  For most platforms (except Windows),
+ * SuiteSparse_long is just "long". */
+
+#define Long SuiteSparse_long
 
 int main (int argc, char **argv)
 {
@@ -18,7 +22,7 @@ int main (int argc, char **argv)
     cholmod_dense *X, *B, *Residual ;
     double anorm, xnorm, rnorm, one [2] = {1,0}, minusone [2] = {-1,0} ;
     int mtype ;
-    int64_t m, n, rnk ;
+    Long m, n, rnk ;
 
     /* start CHOLMOD */
     cc = &Common ;
@@ -39,8 +43,7 @@ int main (int argc, char **argv)
     /* anorm = norm (A,1) ; */
     anorm = cholmod_l_norm_sparse (A, 1, cc) ;
 
-    printf ("Matrix %6" PRId64 "-by-%-6" PRId64 " nnz: %6" PRId64 " ",
-        m, n, cholmod_l_nnz (A, cc)) ;
+    printf ("Matrix %6ld-by-%-6ld nnz: %6ld ", m, n, cholmod_l_nnz (A, cc)) ;
 
     /* B = ones (m,1), a dense right-hand-side of the same type as A */
     B = cholmod_l_ones (m, 1, A->xtype, cc) ;
@@ -65,7 +68,7 @@ int main (int argc, char **argv)
         /* find the relative residual, except for least-squares systems */
         rnorm /= (anorm * xnorm) ;
     }
-    printf ("residual: %8.1e rank: %6" PRId64 "\n", rnorm, rnk) ;
+    printf ("residual: %8.1e rank: %6ld\n", rnorm, rnk) ;
 
     /* free everything */
     cholmod_l_free_dense (&Residual, cc) ;

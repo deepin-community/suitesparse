@@ -1,12 +1,12 @@
 function test200
 %TEST200 test iso full matrix multiply
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 % SPDX-License-Identifier: Apache-2.0
 
 rng ('default') ;
 
-% GB_mex_burble (1) ;
+% GrB.burble (1) ;
 n = 10 ;
 A.matrix = pi * sparse (ones (n)) ;
 A.sparsity = 8 ;    % full
@@ -95,6 +95,6 @@ for op = { 'plus', 'pair', 'first', 'second' }  % pair == oneb
     end
 end
 
-% GB_mex_burble (0) ;
+% GrB.burble (0) ;
 fprintf ('\ntest200: all tests passed\n') ;
 

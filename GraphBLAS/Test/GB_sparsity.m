@@ -1,5 +1,5 @@
 function s = GB_sparsity (d)
-%GB_SPARSITY a string describing the sparsity
+%s = GB_sparsity (d) returns a string describing the sparsity
 
 if (d == 1)
     s = 'hypersparse' ;
@@ -10,5 +10,4 @@ elseif (d == 4)
 elseif (d == 8)
     s = 'full' ;
 end
-
 

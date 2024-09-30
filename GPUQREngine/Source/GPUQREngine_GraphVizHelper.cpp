@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/GPUQREngine_GraphVisHelper.cpp =======================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 // === This is used for development and debugging only. ========================
 // =============================================================================
 //
@@ -22,8 +16,6 @@
 //
 // =============================================================================
 
-#ifdef SUITESPARSE_CUDA
-
 #include "GPUQREngine_Internal.hpp"
 
 #ifdef GPUQRENGINE_RENDER
@@ -33,21 +25,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-template <typename Int>
 void GraphVizHelper_ComputeBundleLabel
 (
-    LLBundle <Int>& bundle,   // C++ Reference to the bundle
+    LLBundle& bundle,   // C++ Reference to the bundle
     char *label         // (output) The label to use for the bundle
 );
 
 static int DotSID = 1;
 
-template <typename Int>
-void GPUQREngine_RenderBuckets(BucketList <Int> *buckets)
+void GPUQREngine_RenderBuckets(BucketList *buckets)
 {
     // if(!RENDER_DENSE_FACTORIZATION) return;
 
-    LLBundle <Int> *bundles = buckets->Bundles;
+    LLBundle *bundles = buckets->Bundles;
 
     int numBundles = buckets->numBundles;
     char bundleNames[numBundles][64];
@@ -141,7 +131,7 @@ void GPUQREngine_RenderBuckets(BucketList <Int> *buckets)
         }
         for(int i=0; i<numBundles; i++)
         {
-            LLBundle <Int>& bundle = bundles[i];
+            LLBundle& bundle = bundles[i];
             if (bundle.NativeBucket == colBucket)
             {
                 sprintf(bundleNames[bbc], "CB_%d_HB_%d", colBucket, bbc);
@@ -193,10 +183,9 @@ void GPUQREngine_RenderBuckets(BucketList <Int> *buckets)
     fclose(output);
 }
 
-template <typename Int>
 void GraphVizHelper_ComputeBundleLabel
 (
-    LLBundle <Int>& bundle,   // C++ Reference to the bundle
+    LLBundle& bundle,   // C++ Reference to the bundle
     char *label         // (output) The label to use for the bundle
 )
 {
@@ -224,6 +213,4 @@ void GraphVizHelper_ComputeBundleLabel
         strcat(label, temp);
     }
 }
-#endif
-
 #endif

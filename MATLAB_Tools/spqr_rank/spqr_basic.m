@@ -49,9 +49,7 @@ function [x,stats,NT] = spqr_basic (A, varargin)
 %
 % See also spqr_cod, spqr_null, spqr_pinv, spqr_ssi, spqr_ssp
 
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2012, Leslie Foster and Timothy A Davis.
 
 % Algorithm:  First spqr is used to construct a QR factorization of the
 %    m by n matrix A: A*P1 = Q1*R where R' = [ R1' 0 ] + E1, R1 is a

@@ -1,8 +1,8 @@
 function gbtest118
 %GBTEST118 test GrB.argsort
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
-% SPDX-License-Identifier: Apache-2.0
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 rng ('default') ;
 
@@ -64,9 +64,6 @@ for d = [0.2 inf]
         a = Ai (p) ;
         assert (isequal (Pk, a)) ;
     end
-
-    C2 = GrB.argsort (A) ;
-    assert (isequal (C, C2)) ;
 
     [C, P] = GrB.argsort (A, 'descend') ;
     for k = 1:n

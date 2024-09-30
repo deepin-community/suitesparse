@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/Scheduler_Front.cpp ==================================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // This file contains code to manage fronts within the scheduler.
 //
@@ -29,12 +23,15 @@
 //    to not accidentally free a front whose R factor is still in transit.
 //
 // =============================================================================
+
 #include "GPUQREngine_Scheduler.hpp"
+
+
 // -----------------------------------------------------------------------------
 // Scheduler::activateFront
 // -----------------------------------------------------------------------------
-template <typename Int>
-void Scheduler <Int>::activateFront
+
+void Scheduler::activateFront
 (
     Int f                                          // The front id to manipulate
 )
@@ -42,7 +39,7 @@ void Scheduler <Int>::activateFront
     /* If the front has already been activated, exit early. */
     if(afPinv[f] != EMPTY) return;
 
-    Front <Int> *front = (&frontList[f]);
+    Front *front = (&frontList[f]);
 
     /* Add this front to the list of active fronts. */
     afPerm[numActiveFronts] = f;
@@ -69,25 +66,18 @@ void Scheduler <Int>::activateFront
         }
     }
 }
-template void Scheduler <int32_t>::activateFront
-(
-    int32_t f                                      // The front id to manipulate
-) ;
-template void Scheduler <int64_t>::activateFront
-(
-    int64_t f                                      // The front id to manipulate
-) ;
+
 // -----------------------------------------------------------------------------
 // Scheduler::pullFrontData
 // -----------------------------------------------------------------------------
-template <typename Int>
-bool Scheduler <Int>::pullFrontData
+
+bool Scheduler::pullFrontData
 (
     Int f                                          // The front id to manipulate
 )
 {
     /* Grab the front descriptor. */
-    Front <Int> *front = (&frontList[f]);
+    Front *front = (&frontList[f]);
 
     /* If we're only doing a push assembly then there's nothing to pull. */
     if(front->isPushOnly()) return true;
@@ -131,19 +121,11 @@ bool Scheduler <Int>::pullFrontData
     return (FrontDataPulled[f] = true);
 }
 
-template bool Scheduler <int32_t>::pullFrontData
-(
-    int32_t f                                      // The front id to manipulate
-) ;
-template bool Scheduler <int64_t>::pullFrontData
-(
-    int64_t f                                      // The front id to manipulate
-) ;
 // -----------------------------------------------------------------------------
 // Scheduler::finishFront
 // -----------------------------------------------------------------------------
-template <typename Int>
-bool Scheduler <Int>::finishFront
+
+bool Scheduler::finishFront
 (
     Int f                                          // The front id to manipulate
 )
@@ -151,7 +133,7 @@ bool Scheduler <Int>::finishFront
     /* If we've already freed the front, return early. */
     if(afPinv[f] == EMPTY) return true;
 
-    Front <Int> *front = (&frontList[f]);
+    Front *front = (&frontList[f]);
 
     /* If we're doing more than a push, we need to get the data off the GPU. */
     if(!front->isPushOnly())
@@ -179,23 +161,13 @@ bool Scheduler <Int>::finishFront
     /* If we got through this method, we have successfully freed the front. */
     return true;
 }
-template bool Scheduler <int32_t>::finishFront
-(
-    int32_t f                                     // The front id to manipulate
-) ;
-template bool Scheduler <int64_t>::finishFront
-(
-    int64_t f                                     // The front id to manipulate
-) ;
 
-#include "GPUQREngine.hpp"
 // -----------------------------------------------------------------------------
 // debugDumpFront
 // -----------------------------------------------------------------------------
 
 #if 1
-template <typename Int>
-void Scheduler <Int>::debugDumpFront(Front <Int> *front)
+void Scheduler::debugDumpFront(Front *front)
 {
     Workspace *wsFront =
         Workspace::allocate (front->getNumFrontValues(),     // CPU, DEBUG ONLY
@@ -216,10 +188,10 @@ void Scheduler <Int>::debugDumpFront(Front <Int> *front)
 //      printf("\n");
 //  }
 
-    for (int64_t j = 0 ; j < fn ; j++)
+    for (Int j = 0 ; j < fn ; j++)
     {
-        printf ("   --- column %ld of %ld\n", (int64_t) j, (int64_t) fn) ;
-        for (int64_t i = 0 ; i < fm ; i++)
+        printf ("   --- column %ld of %ld\n", j, fn) ;
+        for (Int i = 0 ; i < fm ; i++)
         {
             if (i == j) printf ("      [ diag:     ") ;
             else        printf ("      row %4ld    ", i) ;
@@ -230,11 +202,8 @@ void Scheduler <Int>::debugDumpFront(Front <Int> *front)
         printf ("\n") ;
     }
 
-    printf("----------\n");
+    printf("----------\n", front->fidg);
     wsFront->assign(wsFront->cpu(), NULL);
     wsFront = Workspace::destroy(wsFront);
 }
-template void Scheduler <int32_t>::debugDumpFront(Front <int32_t> *front) ;
-template void Scheduler <int64_t>::debugDumpFront(Front <int64_t> *front) ;
-
 #endif

@@ -2,7 +2,7 @@
 // GB_masker: R = masker (C, M, Z) constructs R for C<M>=Z
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -62,7 +62,7 @@ GrB_Info GB_masker          // R = masker (C, M, Z)
     const bool Mask_struct, // if true, use the only structure of M
     const GrB_Matrix C,     // input C matrix
     const GrB_Matrix Z,     // input Z matrix
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -94,7 +94,6 @@ GrB_Info GB_masker          // R = masker (C, M, Z)
 
     ASSERT (C->vdim == Z->vdim && C->vlen == Z->vlen) ;
     ASSERT (C->vdim == M->vdim && C->vlen == M->vlen) ;
-    ASSERT (GB_IMPLIES (M->iso, Mask_struct)) ;
 
     //--------------------------------------------------------------------------
     // determine the sparsity of R
@@ -130,7 +129,7 @@ GrB_Info GB_masker          // R = masker (C, M, Z)
         &R_to_C, &R_to_C_size,
         &R_to_Z, &R_to_Z_size, NULL, &R_sparsity,
         // original input:
-        M, C, Z, Werk) ;
+        M, C, Z, Context) ;
     if (info != GrB_SUCCESS)
     { 
         // out of memory
@@ -164,7 +163,7 @@ GrB_Info GB_masker          // R = masker (C, M, Z)
             // computed by phase0:
             Rnvec, Rh, R_to_M, R_to_C, R_to_Z, false,
             // original input:
-            M, C, Z, Werk) ;
+            M, C, Z, Context) ;
         if (info != GrB_SUCCESS)
         { 
             // out of memory; free everything allocated by GB_add_phase0
@@ -184,7 +183,7 @@ GrB_Info GB_masker          // R = masker (C, M, Z)
             // from phase0:
             Rnvec, Rh, R_to_M, R_to_C, R_to_Z,
             // original input:
-            M, Mask_comp, Mask_struct, C, Z, Werk) ;
+            M, Mask_comp, Mask_struct, C, Z, Context) ;
         if (info != GrB_SUCCESS)
         { 
             // out of memory; free everything allocated by GB_add_phase0
@@ -204,8 +203,7 @@ GrB_Info GB_masker          // R = masker (C, M, Z)
         // R is bitmap or full: only determine how many threads to use
         //----------------------------------------------------------------------
 
-        int nthreads_max = GB_Context_nthreads_max ( ) ;
-        double chunk = GB_Context_chunk ( ) ;
+        GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
         R_nthreads = GB_nthreads (M->vlen * M->vdim, chunk, nthreads_max) ;
     }
 
@@ -226,7 +224,7 @@ GrB_Info GB_masker          // R = masker (C, M, Z)
         // from phase0:
         Rnvec, &Rh, Rh_size, R_to_M, R_to_C, R_to_Z, R_sparsity,
         // original input:
-        M, Mask_comp, Mask_struct, C, Z, Werk) ;
+        M, Mask_comp, Mask_struct, C, Z, Context) ;
 
     // if successful, Rh and Rp must not be freed; they are now R->h and R->p
 

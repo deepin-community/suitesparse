@@ -4,8 +4,7 @@ function [A, keep, ii, jj, xx] = mesh3d1 (n)
 %   A = mesh3d1 (10) ;  % a 10-by-10-by-10 mesh
 % See also: cs_demo
 
-% CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 ii = zeros (7*n^3, 1) ;
 jj = zeros (7*n^3, 1) ;

@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// KLU/Source/klu_tsolve: solve x=A'\b using the KLU factorization
-//------------------------------------------------------------------------------
-
-// KLU, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-// Authors: Timothy A. Davis and Ekanathan Palamadai.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === KLU_tsolve =========================================================== */
+/* ========================================================================== */
 
 /* Solve A'x=b using the symbolic and numeric objects from KLU_analyze
  * (or KLU_analyze_given) and KLU_factor.  Note that no iterative refinement is
@@ -17,7 +11,7 @@
 
 #include "klu_internal.h"
 
-int KLU_tsolve
+Int KLU_tsolve
 (
     /* inputs, not modified */
     KLU_symbolic *Symbolic,
@@ -29,7 +23,7 @@ int KLU_tsolve
     double B [ ],           /* size n*nrhs, in column-oriented form, with
                              * leading dimension d. */
 #ifdef COMPLEX
-    int conj_solve,         /* TRUE for conjugate transpose solve, FALSE for
+    Int conj_solve,         /* TRUE for conjugate transpose solve, FALSE for
                              * array transpose solve.  Used for the complex
                              * case only. */
 #endif

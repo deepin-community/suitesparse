@@ -2,12 +2,10 @@
 // GB_transpose_bucket: transpose and optionally typecast and/or apply operator
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed.  Only one variant possible.
 
 // C = A' or op(A').  Optionally typecasts from A->type to the new type ctype,
 // and/or optionally applies a unary operator.
@@ -53,7 +51,7 @@
 
 #define GB_FREE_ALL                                                     \
 {                                                                       \
-    GB_phybix_free (C) ;                                                \
+    GB_phbix_free (C) ;                                                 \
     GB_FREE_WORKSPACE ;                                                 \
 }
 
@@ -70,7 +68,7 @@ GrB_Info GB_transpose_bucket    // bucket transpose; typecast and apply op
         bool binop_bind1st,         // if true, binop(x,A) else binop(A,y)
     const int nworkspaces,      // # of workspaces to use
     const int nthreads,         // # of threads to use
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -109,8 +107,7 @@ GrB_Info GB_transpose_bucket    // bucket transpose; typecast and apply op
     //--------------------------------------------------------------------------
 
     // # of threads to use in the O(vlen) loops below
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
     int nth = GB_nthreads (vlen, chunk, nthreads_max) ;
 
     //--------------------------------------------------------------------------
@@ -126,10 +123,9 @@ GrB_Info GB_transpose_bucket    // bucket transpose; typecast and apply op
     bool C_iso = (C_code_iso != GB_NON_ISO) ;
     GB_OK (GB_new_bix (&C, // sparse, existing header
         ctype, A->vdim, vlen, GB_Ap_malloc, C_is_csc,
-        GxB_SPARSE, true, A->hyper_switch, vlen, anz, true, C_iso)) ;
+        GxB_SPARSE, true, A->hyper_switch, vlen, anz, true, C_iso, Context)) ;
 
     int64_t *restrict Cp = C->p ;
-    C->nvals = anz ;
 
     //--------------------------------------------------------------------------
     // allocate workspace
@@ -234,7 +230,7 @@ GrB_Info GB_transpose_bucket    // bucket transpose; typecast and apply op
         C->jumbled = true ; // atomic transpose leaves C jumbled
 
         // cumulative sum of the workspace, and copy back into C->p
-        GB_cumsum (workspace, vlen, &(C->nvec_nonempty), nth, Werk) ;
+        GB_cumsum (workspace, vlen, &(C->nvec_nonempty), nth, Context) ;
         GB_memcpy (Cp, workspace, (vlen+ 1) * sizeof (int64_t), nth) ;
 
     }
@@ -255,7 +251,7 @@ GrB_Info GB_transpose_bucket    // bucket transpose; typecast and apply op
 
         ASSERT (nworkspaces == nthreads) ;
         const int64_t *restrict Ap = A->p ;
-//      const int64_t *restrict Ah = A->h ;
+        const int64_t *restrict Ah = A->h ;
         const int64_t *restrict Ai = A->i ;
 
         int tid ;
@@ -268,7 +264,7 @@ GrB_Info GB_transpose_bucket    // bucket transpose; typecast and apply op
             for (int64_t k = A_slice [tid] ; k < A_slice [tid+1] ; k++)
             {
                 // iterate over the entries in A(:,j)
-                // int64_t j = GBH (Ah, k) ;
+                int64_t j = GBH (Ah, k) ;
                 int64_t pA_start = Ap [k] ;
                 int64_t pA_end = Ap [k+1] ;
                 for (int64_t pA = pA_start ; pA < pA_end ; pA++)
@@ -298,7 +294,7 @@ GrB_Info GB_transpose_bucket    // bucket transpose; typecast and apply op
         Cp [vlen] = 0 ;
 
         // compute the vector pointers for C
-        GB_cumsum (Cp, vlen, &(C->nvec_nonempty), nth, Werk) ;
+        GB_cumsum (Cp, vlen, &(C->nvec_nonempty), nth, Context) ;
 
         // add Cp back to all Workspaces
         #pragma omp parallel for num_threads(nth) schedule(static)
@@ -325,14 +321,13 @@ GrB_Info GB_transpose_bucket    // bucket transpose; typecast and apply op
     if (op == NULL)
     { 
         // do not apply an operator; optional typecast to C->type
-        GB_OK (GB_transpose_ix (C, A, Workspaces, A_slice, nworkspaces,
-            nthreads)) ;
+        GB_transpose_ix (C, A, Workspaces, A_slice, nworkspaces, nthreads) ;
     }
     else
     { 
         // apply an operator, C has type op->ztype
-        GB_OK (GB_transpose_op (C, C_code_iso, op, scalar, binop_bind1st, A,
-            Workspaces, A_slice, nworkspaces, nthreads)) ;
+        GB_transpose_op (C, C_code_iso, op, scalar, binop_bind1st, A,
+            Workspaces, A_slice, nworkspaces, nthreads) ;
     }
 
     //--------------------------------------------------------------------------

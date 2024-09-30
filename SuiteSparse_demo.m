@@ -7,8 +7,7 @@ function SuiteSparse_demo (matrixpath, dopause)
 % See also umfpack, cholmod, amd, camd, colamd, ccolamd, btf, klu, spqr,
 %   CSparse, CXSparse, ldlsparse, mongoose, GraphBLAS.
 
-% Copyright (c) 2020, Timothy A. Davis, http://suitesparse.com.
-% See each package for its license.
+% Copyright 2020, Timothy A. Davis, http://suitesparse.com.
 
 if (nargin < 1 || isempty (matrixpath) || ~ischar (matrixpath))
     try
@@ -24,6 +23,16 @@ end
 
 if (nargin < 2)
     dopause = false ;
+end
+
+if (dopause)
+    input ('Hit enter to run the GraphBLAS demo: ', 's') ;
+end
+try
+    gbdemo
+catch me
+    disp (me.message) ;
+    fprintf ('GraphBLAS demo failed\n' )
 end
 
 if (dopause)
@@ -198,14 +207,16 @@ catch me
     fprintf ('Mongoose demo failed\n' )
 end
 
+%{
 if (dopause)
-    input ('Hit enter to run the GraphBLAS demo: ', 's') ;
+    input ('Hit enter to run the piro_band demo: ', 's') ;
 end
 try
-    gbdemo
+    piro_band_demo
 catch me
     disp (me.message) ;
-    fprintf ('GraphBLAS demo failed\n' )
+    fprintf ('piro_band_demo failed\n' )
 end
+%}
 
 fprintf ('\n\n---- SuiteSparse demos complete\n') ;

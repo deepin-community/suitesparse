@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_get_memory.c: reallocate Numeric->Memory
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_get_memory ======================================================= */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     Reallocate the workspace (Numeric->Memory) and shift elements downwards.
@@ -23,7 +23,7 @@
 #include "umf_mem_free_tail_block.h"
 #include "umf_realloc.h"
 
-Int UMF_get_memory
+GLOBAL Int UMF_get_memory
 (
     NumericType *Numeric,
     WorkType *Work,

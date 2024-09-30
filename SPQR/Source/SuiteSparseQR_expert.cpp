@@ -2,11 +2,6 @@
 // === SuiteSparseQR_expert ====================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
 // This file includes a suite of "expert" user-callable routines that allow the
 // reuse of a QR factorization, including the ability to find the min 2-norm
 // solution of an under-determined system of equations:
@@ -49,8 +44,8 @@
 // This returns a QR factorization object with a NULL numeric part.  It must
 // be followed by a numeric factorization, by SuiteSparseQR_numeric.
 
-template <typename Entry, typename Int> 
-SuiteSparseQR_factorization <Entry, Int> *SuiteSparseQR_symbolic
+template <typename Entry> 
+SuiteSparseQR_factorization <Entry> *SuiteSparseQR_symbolic
 (
     // inputs:
     int ordering,           // all, except 3:given treated as 0:fixed
@@ -64,7 +59,7 @@ SuiteSparseQR_factorization <Entry, Int> *SuiteSparseQR_symbolic
 
     RETURN_IF_NULL_COMMON (NULL) ;
     RETURN_IF_NULL (A, NULL) ;
-    int64_t xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (A, NULL) ;
     cc->status = CHOLMOD_OK ;
 
@@ -72,11 +67,11 @@ SuiteSparseQR_factorization <Entry, Int> *SuiteSparseQR_symbolic
     // get inputs and allocate result
     // -------------------------------------------------------------------------
 
-    SuiteSparseQR_factorization <Entry, Int> *QR ;
-    spqr_symbolic <Int> *QRsym ;
+    SuiteSparseQR_factorization <Entry> *QR ;
+    spqr_symbolic *QRsym ;
 
-    QR = (SuiteSparseQR_factorization <Entry, Int> *)
-        spqr_malloc <Int> (1, sizeof (SuiteSparseQR_factorization <Entry, Int>), cc) ;
+    QR = (SuiteSparseQR_factorization <Entry> *)
+        cholmod_l_malloc (1, sizeof (SuiteSparseQR_factorization <Entry>), cc) ;
 
     if (cc->status < CHOLMOD_OK)
     {
@@ -91,7 +86,7 @@ SuiteSparseQR_factorization <Entry, Int> *SuiteSparseQR_symbolic
     // Using SuiteSparseQR_symbolic followed by SuiteSparseQR_numeric requires
     // that the Householder vectors be kept, and thus the GPU will not be used.
     int keepH = TRUE ;
-    QR->QRsym = QRsym = spqr_analyze <Int> (A, ordering, NULL, allow_tol, keepH, cc) ;
+    QR->QRsym = QRsym = spqr_analyze (A, ordering, NULL, allow_tol, keepH, cc) ;
 
     QR->QRnum = NULL ;          // allocated later, by numeric factorization
 
@@ -132,10 +127,10 @@ SuiteSparseQR_factorization <Entry, Int> *SuiteSparseQR_symbolic
 
     if (QRsym->Qfill != NULL)
     {
-        Int n, k, *Qfill, *Q1fill ;
+        Long n, k, *Qfill, *Q1fill ;
         Qfill = QRsym->Qfill ;
         n = A->ncol ;
-        Q1fill = (Int *) spqr_malloc <Int> (n, sizeof (Int), cc) ;
+        Q1fill = (Long *) cholmod_l_malloc (n, sizeof (Long), cc) ;
         QR->Q1fill = Q1fill ;
         if (cc->status < CHOLMOD_OK)
         {
@@ -156,7 +151,7 @@ SuiteSparseQR_factorization <Entry, Int> *SuiteSparseQR_symbolic
 }
 
 template
-SuiteSparseQR_factorization <double, int32_t> *SuiteSparseQR_symbolic <double, int32_t>
+SuiteSparseQR_factorization <double> *SuiteSparseQR_symbolic <double>
 (
     // inputs:
     int ordering,           // all, except 3:given treated as 0:fixed
@@ -167,28 +162,7 @@ SuiteSparseQR_factorization <double, int32_t> *SuiteSparseQR_symbolic <double, i
 ) ;
 
 template
-SuiteSparseQR_factorization <Complex, int32_t> *SuiteSparseQR_symbolic <Complex, int32_t>
-(
-    // inputs:
-    int ordering,           // all, except 3:given treated as 0:fixed
-    int allow_tol,          // if FALSE, tol is ignored by the numeric
-                            // factorization, and no rank detection is performed
-    cholmod_sparse *A,      // sparse matrix to factorize (A->x ignored)
-    cholmod_common *cc      // workspace and parameters
-) ;
-template
-SuiteSparseQR_factorization <double, int64_t> *SuiteSparseQR_symbolic <double, int64_t>
-(
-    // inputs:
-    int ordering,           // all, except 3:given treated as 0:fixed
-    int allow_tol,          // if FALSE, tol is ignored by the numeric
-                            // factorization, and no rank detection is performed
-    cholmod_sparse *A,      // sparse matrix to factorize (A->x ignored)
-    cholmod_common *cc      // workspace and parameters
-) ;
-
-template
-SuiteSparseQR_factorization <Complex, int64_t> *SuiteSparseQR_symbolic <Complex, int64_t>
+SuiteSparseQR_factorization <Complex> *SuiteSparseQR_symbolic <Complex>
 (
     // inputs:
     int ordering,           // all, except 3:given treated as 0:fixed
@@ -212,13 +186,13 @@ SuiteSparseQR_factorization <Complex, int64_t> *SuiteSparseQR_symbolic <Complex,
 // The GPU is not used by this function, since it requires the Householder
 // vectors to be kept.
 
-template <typename Entry, typename Int> int SuiteSparseQR_numeric
+template <typename Entry> int SuiteSparseQR_numeric
 (
     // inputs:
     double tol,             // treat columns with 2-norm <= tol as zero
     cholmod_sparse *A,      // sparse matrix to factorize
     // input/output
-    SuiteSparseQR_factorization <Entry, Int> *QR,
+    SuiteSparseQR_factorization <Entry> *QR,
     cholmod_common *cc      // workspace and parameters
 )
 {
@@ -227,7 +201,7 @@ template <typename Entry, typename Int> int SuiteSparseQR_numeric
     RETURN_IF_NULL_COMMON (FALSE) ;
     RETURN_IF_NULL (A, FALSE) ;
     RETURN_IF_NULL (QR, FALSE) ;
-    int64_t xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (A, FALSE) ;
     cc->status = CHOLMOD_OK ;
 
@@ -239,7 +213,7 @@ template <typename Entry, typename Int> int SuiteSparseQR_numeric
         return (FALSE) ;
     }
 
-    int64_t n = A->ncol ;
+    Long n = A->ncol ;
 
     // -------------------------------------------------------------------------
     // get the column 2-norm tolerance
@@ -250,7 +224,7 @@ template <typename Entry, typename Int> int SuiteSparseQR_numeric
         // compute default tol, if requested
         if (tol <= SPQR_DEFAULT_TOL)
         {
-            tol = spqr_tol <Entry, Int> (A, cc) ;
+            tol = spqr_tol <Entry> (A, cc) ;
         }
     }
     else
@@ -268,7 +242,7 @@ template <typename Entry, typename Int> int SuiteSparseQR_numeric
     spqr_freenum (&(QR->QRnum), cc) ;
 
     // compute the new factorization
-    QR->QRnum = spqr_factorize <Entry, Int> (&A, FALSE, tol, n, QR->QRsym, cc) ;
+    QR->QRnum = spqr_factorize <Entry> (&A, FALSE, tol, n, QR->QRsym, cc) ;
 
     if (cc->status < CHOLMOD_OK)
     {
@@ -303,44 +277,26 @@ template <typename Entry, typename Int> int SuiteSparseQR_numeric
     return (TRUE) ;
 }
 
-template int SuiteSparseQR_numeric <double, int32_t>
+template int SuiteSparseQR_numeric <double>
 (
     // inputs:
     double tol,             // treat columns with 2-norm <= tol as zero
     cholmod_sparse *A,      // sparse matrix to factorize
     // input/output
-    SuiteSparseQR_factorization <double, int32_t> *QR,
+    SuiteSparseQR_factorization <double> *QR,
     cholmod_common *cc      // workspace and parameters
 ) ;
 
-template int SuiteSparseQR_numeric <Complex, int32_t>
+template int SuiteSparseQR_numeric <Complex>
 (
     // inputs:
     double tol,             // treat columns with 2-norm <= tol as zero
     cholmod_sparse *A,      // sparse matrix to factorize
     // input/output
-    SuiteSparseQR_factorization <Complex, int32_t> *QR,
-    cholmod_common *cc      // workspace and parameters
-) ;
-template int SuiteSparseQR_numeric <double, int64_t>
-(
-    // inputs:
-    double tol,             // treat columns with 2-norm <= tol as zero
-    cholmod_sparse *A,      // sparse matrix to factorize
-    // input/output
-    SuiteSparseQR_factorization <double, int64_t> *QR,
+    SuiteSparseQR_factorization <Complex> *QR,
     cholmod_common *cc      // workspace and parameters
 ) ;
 
-template int SuiteSparseQR_numeric <Complex, int64_t>
-(
-    // inputs:
-    double tol,             // treat columns with 2-norm <= tol as zero
-    cholmod_sparse *A,      // sparse matrix to factorize
-    // input/output
-    SuiteSparseQR_factorization <Complex, int64_t> *QR,
-    cholmod_common *cc      // workspace and parameters
-) ;
 // =============================================================================
 // === SuiteSparseQR_factorize =================================================
 // =============================================================================
@@ -365,8 +321,8 @@ template int SuiteSparseQR_numeric <Complex, int64_t>
 //
 // The GPU is not used because the Householder vectors are always kept.
 
-template <typename Entry, typename Int>
-SuiteSparseQR_factorization <Entry, Int> *SuiteSparseQR_factorize
+template <typename Entry>
+SuiteSparseQR_factorization <Entry> *SuiteSparseQR_factorize
 (
     // inputs, not modified:
     int ordering,           // all, except 3:given treated as 0:fixed
@@ -377,16 +333,16 @@ SuiteSparseQR_factorization <Entry, Int> *SuiteSparseQR_factorize
 {
     RETURN_IF_NULL_COMMON (NULL) ;
     RETURN_IF_NULL (A, NULL) ;
-    int64_t xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (A, NULL) ;
     cc->status = CHOLMOD_OK ;
     // B is not present, and always keep H:
     int keepH = TRUE ;
-    return (spqr_1factor <Entry, Int> (ordering, tol, 0, keepH, A,
+    return (spqr_1factor <Entry> (ordering, tol, 0, keepH, A,
         0, NULL, NULL, NULL, cc)) ;
 }
 
-template SuiteSparseQR_factorization <double, int32_t> *SuiteSparseQR_factorize <double, int32_t>
+template SuiteSparseQR_factorization <double> *SuiteSparseQR_factorize <double>
 (
     // inputs, not modified:
     int ordering,           // all, except 3:given treated as 0:fixed
@@ -396,16 +352,7 @@ template SuiteSparseQR_factorization <double, int32_t> *SuiteSparseQR_factorize 
     cholmod_common *cc
 ) ;
 
-template SuiteSparseQR_factorization <Complex, int32_t> *SuiteSparseQR_factorize<Complex, int32_t>
-(
-    // inputs, not modified:
-    int ordering,           // all, except 3:given treated as 0:fixed
-    double tol,             // treat columns with 2-norm <= tol as zero
-    cholmod_sparse *A,      // sparse matrix to factorize
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template SuiteSparseQR_factorization <double, int64_t> *SuiteSparseQR_factorize <double, int64_t>
+template SuiteSparseQR_factorization <Complex> *SuiteSparseQR_factorize<Complex>
 (
     // inputs, not modified:
     int ordering,           // all, except 3:given treated as 0:fixed
@@ -415,15 +362,6 @@ template SuiteSparseQR_factorization <double, int64_t> *SuiteSparseQR_factorize 
     cholmod_common *cc
 ) ;
 
-template SuiteSparseQR_factorization <Complex, int64_t> *SuiteSparseQR_factorize<Complex, int64_t>
-(
-    // inputs, not modified:
-    int ordering,           // all, except 3:given treated as 0:fixed
-    double tol,             // treat columns with 2-norm <= tol as zero
-    cholmod_sparse *A,      // sparse matrix to factorize
-    // workspace and parameters
-    cholmod_common *cc
-) ;
 
 // =============================================================================
 // === spqr_private_rtsolve ====================================================
@@ -433,14 +371,14 @@ template SuiteSparseQR_factorization <Complex, int64_t> *SuiteSparseQR_factorize
 // or SuiteSparseQR_factorize (including the singleton-row R and the
 // multifrontal R).  A is m-by-n.  B is n-by-nrhs, and X is m-by-nrhs.
 
-template <typename Entry, typename Int> void spqr_private_rtsolve
+template <typename Entry> void spqr_private_rtsolve
 (
     // inputs
-    SuiteSparseQR_factorization <Entry, Int> *QR,
+    SuiteSparseQR_factorization <Entry> *QR,
     int use_Q1fill,
 
-    Int nrhs,              // number of columns of B
-    Int ldb,               // leading dimension of B
+    Long nrhs,              // number of columns of B
+    Long ldb,               // leading dimension of B
     Entry *B,               // size n-by-nrhs with leading dimension ldb
 
     // output, contents undefined on input
@@ -450,13 +388,13 @@ template <typename Entry, typename Int> void spqr_private_rtsolve
 )
 {
     Entry xi ;
-    spqr_symbolic <Int> *QRsym ;
-    spqr_numeric <Entry, Int> *QRnum ;
-    Int *R1p, *R1j, *Rmap, *Rp, *Rj, *Super, *HStair, *Hm, *Stair, *Q1fill,
+    spqr_symbolic *QRsym ;
+    spqr_numeric <Entry> *QRnum ;
+    Long *R1p, *R1j, *Rmap, *Rp, *Rj, *Super, *HStair, *Hm, *Stair, *Q1fill,
         *RmapInv ;
     Entry *R1x, **Rblock, *R, *X1, *X2 ;
     char *Rdead ;
-    Int i, j, k, m, n, p, kk, n1rows, n1cols, rank, nf, f, col1, col2, fp, pr,
+    Long i, j, k, m, n, p, kk, n1rows, n1cols, rank, nf, f, col1, col2, fp, pr,
         fn, rm, row1, keepH, fm, h, t, live, jj ;
 
     // -------------------------------------------------------------------------
@@ -532,7 +470,7 @@ template <typename Entry, typename Int> void spqr_private_rtsolve
             {
                 k = RmapInv [i] ;
                 ASSERT (k >= 0 && k < n) ;
-                Int knew = Q1fill ? Q1fill [k] : k ;
+                Long knew = Q1fill ? Q1fill [k] : k ;
                 ASSERT (knew >= 0 && knew < n) ;
                 X1 [i] = B [knew] ;
             }
@@ -687,7 +625,7 @@ template <typename Entry, typename Int> void spqr_private_rtsolve
             jj = j + n1cols ;
             if (jj >= n) break ;            // in case [A Binput] was factorized
 
-            Int ii = Rmap ? Rmap [jj] : jj ;
+            Long ii = Rmap ? Rmap [jj] : jj ;
             ASSERT (ii >= n1rows && ii < n) ;
             if (ii < rank)
             {
@@ -744,11 +682,11 @@ template <typename Entry, typename Int> void spqr_private_rtsolve
 // Both X and B are dense matrices.  Only the first r rows and columns of R are
 // used, where r is the rank estimate of A found by SuiteSparseQR_factorize.
 
-template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_solve // returns X
+template <typename Entry> cholmod_dense *SuiteSparseQR_solve    // returns X
 (
     // inputs, not modified:
     int system,                 // which system to solve (0,1,2,3)
-    SuiteSparseQR_factorization <Entry, Int> *QR, // of an m-by-n sparse matrix A
+    SuiteSparseQR_factorization <Entry> *QR,    // of an m-by-n sparse matrix A
     cholmod_dense *B,           // right-hand-side, m-by-nrhs or n-by-nrhs
     // workspace and parameters
     cholmod_common *cc
@@ -756,7 +694,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_solve // re
 {
     Entry *Bx ;
     cholmod_dense *W, *X ;
-    Int m, n, nrhs, ldb, ok ;
+    Long m, n, nrhs, ldb, ok ;
 
     // -------------------------------------------------------------------------
     // get inputs
@@ -764,7 +702,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_solve // re
 
     RETURN_IF_NULL_COMMON (NULL) ;
     RETURN_IF_NULL (B, NULL) ;
-    int64_t xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (B, NULL) ;
     RETURN_IF_NULL (QR, NULL) ;
     RETURN_IF_NULL (QR->QRnum, NULL) ;
@@ -775,7 +713,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_solve // re
     }
     m = QR->narows ;
     n = QR->nacols ;
-    if ((Int) B->nrow != ((system <= SPQR_RETX_EQUALS_B) ? m : n))
+    if ((Long) B->nrow != ((system <= SPQR_RETX_EQUALS_B) ? m : n))
     {
         ERROR (CHOLMOD_INVALID, "invalid dimensions") ;
         return (NULL) ;
@@ -796,22 +734,22 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_solve // re
         // X = E*(R\B) or X=R\B
         // ---------------------------------------------------------------------
 
-        Int *Rlive ;
+        Long *Rlive ;
         Entry **Rcolp ;
-        X = spqr_allocate_dense <Int> (n, nrhs, n, xtype, cc) ;
-        Int maxfrank = QR->QRnum->maxfrank  ;
-        W = spqr_allocate_dense <Int> (maxfrank, nrhs, maxfrank, xtype, cc) ;
-        Rlive = (Int *)   spqr_malloc <Int> (maxfrank, sizeof (Int),    cc) ;
-        Rcolp = (Entry **) spqr_malloc <Int> (maxfrank, sizeof (Entry *), cc) ;
+        X = cholmod_l_allocate_dense (n, nrhs, n, xtype, cc) ;
+        Long maxfrank = QR->QRnum->maxfrank  ;
+        W = cholmod_l_allocate_dense (maxfrank, nrhs, maxfrank, xtype, cc) ;
+        Rlive = (Long *)   cholmod_l_malloc (maxfrank, sizeof (Long),    cc) ;
+        Rcolp = (Entry **) cholmod_l_malloc (maxfrank, sizeof (Entry *), cc) ;
         ok = (X != NULL) && (W != NULL) && (cc->status == CHOLMOD_OK) ;
         if (ok)
         {
             spqr_rsolve (QR, system == SPQR_RETX_EQUALS_B, nrhs, ldb, Bx,
                 (Entry *) X->x, Rcolp, Rlive, (Entry *) W->x, cc) ;
         }
-        spqr_free <Int> (maxfrank, sizeof (Int),    Rlive, cc) ;
-        spqr_free <Int> (maxfrank, sizeof (Entry *), Rcolp, cc) ;
-        spqr_free_dense <Int> (&W, cc) ;
+        cholmod_l_free (maxfrank, sizeof (Long),    Rlive, cc) ;
+        cholmod_l_free (maxfrank, sizeof (Entry *), Rcolp, cc) ;
+        cholmod_l_free_dense (&W, cc) ;
 
     }
     else
@@ -821,7 +759,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_solve // re
         // X = R'\(E'*B) or R'\B
         // ---------------------------------------------------------------------
 
-        X = spqr_allocate_dense <Int> (m, nrhs, m, xtype, cc) ;
+        X = cholmod_l_allocate_dense (m, nrhs, m, xtype, cc) ;
         ok = (X != NULL) ;
         if (ok)
         {
@@ -834,7 +772,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_solve // re
     {
         // out of memory
         ERROR (CHOLMOD_OUT_OF_MEMORY, "out of memory") ;
-        spqr_free_dense <Int> (&X, cc) ;
+        cholmod_l_free_dense (&X, cc) ;
         return (NULL) ;
     }
 
@@ -842,54 +780,36 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_solve // re
 }
 
 
-template cholmod_dense *SuiteSparseQR_solve <Complex, int32_t>
+template cholmod_dense *SuiteSparseQR_solve <Complex>
 (
     // inputs, not modified:
     int system,                 // which system to solve
-    SuiteSparseQR_factorization <Complex, int32_t> *QR,  // of an m-by-n sparse matrix A
+    SuiteSparseQR_factorization <Complex> *QR,  // of an m-by-n sparse matrix A
     cholmod_dense *B,           // right-hand-side, m-by-nrhs or n-by-nrhs
     // workspace and parameters
     cholmod_common *cc
 ) ;
 
-template cholmod_dense *SuiteSparseQR_solve <Complex, int64_t>
+template cholmod_dense *SuiteSparseQR_solve <double>
 (
     // inputs, not modified:
     int system,                 // which system to solve
-    SuiteSparseQR_factorization <Complex, int64_t> *QR,  // of an m-by-n sparse matrix A
+    SuiteSparseQR_factorization <double> *QR,   // of an m-by-n sparse matrix A
     cholmod_dense *B,           // right-hand-side, m-by-nrhs or n-by-nrhs
     // workspace and parameters
     cholmod_common *cc
 ) ;
 
-template cholmod_dense *SuiteSparseQR_solve <double, int64_t>
-(
-    // inputs, not modified:
-    int system,                 // which system to solve
-    SuiteSparseQR_factorization <double, int64_t> *QR,   // of an m-by-n sparse matrix A
-    cholmod_dense *B,           // right-hand-side, m-by-nrhs or n-by-nrhs
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template cholmod_dense *SuiteSparseQR_solve <double, int32_t>
-(
-    // inputs, not modified:
-    int system,                 // which system to solve
-    SuiteSparseQR_factorization <double, int32_t> *QR,   // of an m-by-n sparse matrix A
-    cholmod_dense *B,           // right-hand-side, m-by-nrhs or n-by-nrhs
-    // workspace and parameters
-    cholmod_common *cc
-) ;
 
 // =============================================================================
 // === SuiteSparseQR_solve (sparse case) =======================================
 // =============================================================================
 
-template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_solve // returns X
+template <typename Entry> cholmod_sparse *SuiteSparseQR_solve    // returns X
 (
     // inputs, not modified:
     int system,                 // which system to solve (0,1,2,3)
-    SuiteSparseQR_factorization <Entry, Int> *QR, // of an m-by-n sparse matrix A
+    SuiteSparseQR_factorization <Entry> *QR,    // of an m-by-n sparse matrix A
     cholmod_sparse *Bsparse,    // right-hand-side, m-by-nrhs or n-by-nrhs
     // workspace and parameters
     cholmod_common *cc
@@ -900,15 +820,15 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_solve // r
     RETURN_IF_NULL_COMMON (NULL) ;
     RETURN_IF_NULL (QR, NULL) ;
     RETURN_IF_NULL (Bsparse, NULL) ;
-    int64_t xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (Bsparse, NULL) ;
     cc->status = CHOLMOD_OK ;
 
-    Bdense = spqr_sparse_to_dense <Int> (Bsparse, cc) ;
-    Xdense = SuiteSparseQR_solve <Entry, Int> (system, QR, Bdense, cc) ;
-    spqr_free_dense <Int> (&Bdense, cc) ;
-    Xsparse = spqr_dense_to_sparse <Int> (Xdense, TRUE, cc) ;
-    spqr_free_dense <Int> (&Xdense, cc) ;
+    Bdense = cholmod_l_sparse_to_dense (Bsparse, cc) ;
+    Xdense = SuiteSparseQR_solve <Entry> (system, QR, Bdense, cc) ;
+    cholmod_l_free_dense (&Bdense, cc) ;
+    Xsparse = cholmod_l_dense_to_sparse (Xdense, TRUE, cc) ;
+    cholmod_l_free_dense (&Xdense, cc) ;
 
     if (Xsparse == NULL)
     {
@@ -917,43 +837,26 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_solve // r
     return (Xsparse) ;
 }
 
-template cholmod_sparse *SuiteSparseQR_solve <double, int32_t>
+template cholmod_sparse *SuiteSparseQR_solve <double>
 (
     // inputs, not modified:
     int system,                 // which system to solve (0,1,2,3)
-    SuiteSparseQR_factorization <double, int32_t> *QR, // of an m-by-n sparse matrix A
-    cholmod_sparse *Bsparse,    // right-hand-side, m-by-nrhs or n-by-nrhs
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template cholmod_sparse *SuiteSparseQR_solve <double, int64_t>
-(
-    // inputs, not modified:
-    int system,                 // which system to solve (0,1,2,3)
-    SuiteSparseQR_factorization <double, int64_t> *QR, // of an m-by-n sparse matrix A
+    SuiteSparseQR_factorization <double> *QR,   // of an m-by-n sparse matrix A
     cholmod_sparse *Bsparse,    // right-hand-side, m-by-nrhs or n-by-nrhs
     // workspace and parameters
     cholmod_common *cc
 ) ;
 
-template cholmod_sparse *SuiteSparseQR_solve <Complex, int32_t>
+template cholmod_sparse *SuiteSparseQR_solve <Complex>
 (
     // inputs, not modified:
     int system,                 // which system to solve (0,1,2,3)
-    SuiteSparseQR_factorization <Complex, int32_t> *QR,  // of an m-by-n sparse matrix A
+    SuiteSparseQR_factorization <Complex> *QR,  // of an m-by-n sparse matrix A
     cholmod_sparse *Bsparse,    // right-hand-side, m-by-nrhs or n-by-nrhs
     // workspace and parameters
     cholmod_common *cc
 ) ;
-template cholmod_sparse *SuiteSparseQR_solve <Complex, int64_t>
-(
-    // inputs, not modified:
-    int system,                 // which system to solve (0,1,2,3)
-    SuiteSparseQR_factorization <Complex, int64_t> *QR,  // of an m-by-n sparse matrix A
-    cholmod_sparse *Bsparse,    // right-hand-side, m-by-nrhs or n-by-nrhs
-    // workspace and parameters
-    cholmod_common *cc
-) ;
+
 
 // =============================================================================
 // === spqr_private_get_H_vectors ==============================================
@@ -962,24 +865,24 @@ template cholmod_sparse *SuiteSparseQR_solve <Complex, int64_t>
 // Get pointers to the Householder vectors in a single front.
 // Returns # Householder vectors in F.
 
-template <typename Entry, typename Int> Int spqr_private_get_H_vectors
+template <typename Entry> Long spqr_private_get_H_vectors
 (
     // inputs
-    Int f,                 // front to operate on
-    SuiteSparseQR_factorization <Entry, Int> *QR,
+    Long f,                 // front to operate on
+    SuiteSparseQR_factorization <Entry> *QR,
 
     // outputs
     Entry *H_Tau,           // size QRsym->maxfn
-    Int *H_start,          // size QRsym->maxfn
-    Int *H_end,            // size QRsym->maxfn
+    Long *H_start,          // size QRsym->maxfn
+    Long *H_end,            // size QRsym->maxfn
     cholmod_common *cc
 )
 {
-    spqr_symbolic <Int> *QRsym ;
-    spqr_numeric <Entry, Int> *QRnum ;
+    spqr_symbolic *QRsym ;
+    spqr_numeric <Entry> *QRnum ;
     Entry *Tau ;
-    Int *Rj, *Stair ;
-    Int col1, col2, fp, pr, fn, fm, h, nh, p, rm, k, j, t, n1cols, n ;
+    Long *Rj, *Stair ;
+    Long col1, col2, fp, pr, fn, fm, h, nh, p, rm, k, j, t, n1cols, n ;
 
     // -------------------------------------------------------------------------
     // get the R block for front F
@@ -1061,13 +964,13 @@ template <typename Entry, typename Int> Int spqr_private_get_H_vectors
 
 // Load Householder vectors h1:h2-1 into the panel V.  Return # of rows in V.
 
-template <typename Entry, typename Int> Int spqr_private_load_H_vectors
+template <typename Entry> Long spqr_private_load_H_vectors
 (
     // input
-    Int h1,            // load vectors h1 to h2-1
-    Int h2,
-    Int *H_start,      // vector h starts at R [H_start [h]]
-    Int *H_end,        // vector h ends at R [H_end [h]-1]
+    Long h1,            // load vectors h1 to h2-1
+    Long h2,
+    Long *H_start,      // vector h starts at R [H_start [h]]
+    Long *H_end,        // vector h ends at R [H_end [h]-1]
     Entry *R,           // Rblock [f]
     // output
     Entry *V,           // V is v-by-(h2-h1) and lower triangular
@@ -1075,16 +978,16 @@ template <typename Entry, typename Int> Int spqr_private_load_H_vectors
 )
 {
     // v = length of last H vector
-    Int v = H_end [h2-1] - H_start [h2-1] + (h2-h1) ;
+    Long v = H_end [h2-1] - H_start [h2-1] + (h2-h1) ;
     Entry *V1 = V ;
-    for (Int h = h1 ; h < h2 ; h++)
+    for (Long h = h1 ; h < h2 ; h++)
     {
-        Int i ;
+        Long i ;
         // This part of V is not accessed, for testing only:
         // for (i = 0 ; i < h-h1 ; i++) V1 [i] = 0 ;
         i = h-h1 ;
         V1 [i++] = 1 ;
-        for (Int p = H_start [h] ; p < H_end [h] ; p++)
+        for (Long p = H_start [h] ; p < H_end [h] ; p++)
         {
             V1 [i++] = R [p] ;
         }
@@ -1105,23 +1008,23 @@ template <typename Entry, typename Int> Int spqr_private_load_H_vectors
 // Given a QR factorization from spqr_1factor, apply the Householder vectors
 // to a dense matrix X.
 
-template <typename Entry, typename Int> void spqr_private_Happly
+template <typename Entry> void spqr_private_Happly
 (
     // inputs
     int method,             // 0,1,2,3
-    SuiteSparseQR_factorization <Entry, Int> *QR,
-    Int hchunk,            // apply hchunk Householder vectors at a time
+    SuiteSparseQR_factorization <Entry> *QR,
+    Long hchunk,            // apply hchunk Householder vectors at a time
 
     // input/output
-    Int m,
-    Int n,
+    Long m,
+    Long n,
     Entry *X,               // size m-by-n with leading dimension m; only
                             // X (n1rows:m-1,:) or X (:,n1rows:n-1) is modified
 
     // workspace, not defined on input or output
     Entry *H_Tau,           // size QRsym->maxfn
-    Int *H_start,          // size QRsym->maxfn
-    Int *H_end,            // size QRsym->maxfn
+    Long *H_start,          // size QRsym->maxfn
+    Long *H_end,            // size QRsym->maxfn
     Entry *V,               // size v-by-hchunk, where v = QRnum->maxfm
     Entry *C,               // size: method 0,1: v*n,     method 2,3: m*v
     Entry *W,               // size: method 0,1: h*h+n*h, method 2,3: h*h+m*h
@@ -1130,11 +1033,11 @@ template <typename Entry, typename Int> void spqr_private_Happly
 )
 {
 
-    spqr_symbolic <Int> *QRsym ;
-    spqr_numeric <Entry, Int> *QRnum ;
+    spqr_symbolic *QRsym ;
+    spqr_numeric <Entry> *QRnum ;
     Entry **Rblock, *R, *X2 ;
-    Int *Hii, *Hip, *Hi ;
-    Int nf, f, nh, h1, h2, v, n1rows, m2, n2 ;
+    Long *Hii, *Hip, *Hi ;
+    Long nf, f, nh, h1, h2, v, n1rows, m2, n2 ;
 
     // -------------------------------------------------------------------------
     // get the contents of the QR factorization
@@ -1250,21 +1153,21 @@ template <typename Entry, typename Int> void spqr_private_Happly
 
 #define FREE_WORK \
 { \
-    spqr_free_dense <Int> (&Zdense, cc) ; \
-    spqr_free_dense <Int> (&Vdense, cc) ; \
-    spqr_free_dense <Int> (&Wdense, cc) ; \
-    spqr_free_dense <Int> (&Cdense, cc) ; \
-    spqr_free <Int> (maxfn, sizeof (Entry), H_Tau,   cc) ; \
-    spqr_free <Int> (maxfn, sizeof (Int),  H_start, cc) ; \
-    spqr_free <Int> (maxfn, sizeof (Int),  H_end,   cc) ; \
+    cholmod_l_free_dense (&Zdense, cc) ; \
+    cholmod_l_free_dense (&Vdense, cc) ; \
+    cholmod_l_free_dense (&Wdense, cc) ; \
+    cholmod_l_free_dense (&Cdense, cc) ; \
+    cholmod_l_free (maxfn, sizeof (Entry), H_Tau,   cc) ; \
+    cholmod_l_free (maxfn, sizeof (Long),  H_start, cc) ; \
+    cholmod_l_free (maxfn, sizeof (Long),  H_end,   cc) ; \
 }
 
 // returns Y of size m-by-n, or NULL on failure
-template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
+template <typename Entry> cholmod_dense *SuiteSparseQR_qmult
 (
     // inputs, not modified
     int method,             // 0,1,2,3
-    SuiteSparseQR_factorization <Entry, Int> *QR,
+    SuiteSparseQR_factorization <Entry> *QR,
     cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
 
     // workspace and parameters
@@ -1273,8 +1176,8 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
 {
     cholmod_dense *Ydense, *Cdense, *Vdense, *Wdense, *Zdense ;
     Entry *X, *Y, *X1, *Y1, *Z1, *C, *V, *Z, *W, *H_Tau ;
-    Int *HPinv, *H_start, *H_end ;
-    Int i, k, mh, v, hchunk, ldx, m, n, maxfn, ok ;
+    Long *HPinv, *H_start, *H_end ;
+    Long i, k, mh, v, hchunk, ldx, m, n, maxfn, ok ;
 
     // -------------------------------------------------------------------------
     // get inputs
@@ -1285,7 +1188,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     RETURN_IF_NULL (QR->QRnum, NULL) ;
     RETURN_IF_NULL (QR->QRnum->Hm, NULL) ;
     RETURN_IF_NULL (Xdense, NULL) ;
-    int64_t xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (Xdense, NULL) ;
     cc->status = CHOLMOD_OK ;
 
@@ -1330,7 +1233,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     // allocate result Y
     // -------------------------------------------------------------------------
 
-    Ydense = spqr_allocate_dense <Int> (m, n, m, xtype, cc) ;
+    Ydense = cholmod_l_allocate_dense (m, n, m, xtype, cc) ;
     if (cc->status < CHOLMOD_OK)
     {
         // out of memory
@@ -1354,7 +1257,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     if (method == SPQR_QX || method == SPQR_XQT)
     {
         // Z of size m-by-n is needed only for Q*X and X*Q'
-        Zdense = spqr_allocate_dense <Int> (m, n, m, xtype, cc) ;
+        Zdense = cholmod_l_allocate_dense (m, n, m, xtype, cc) ;
         ok = (Zdense != NULL) ;
     }
 
@@ -1362,20 +1265,20 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     ASSERT (v <= mh) ;
 
     // C is workspace of size v-by-n or m-by-v
-    Cdense = spqr_allocate_dense <Int> (v, (method <= SPQR_QX) ? n : m,
+    Cdense = cholmod_l_allocate_dense (v, (method <= SPQR_QX) ? n : m,
         v, xtype, cc) ;
     Vdense = NULL ;
     Wdense = NULL ;
 
-    H_Tau   = (Entry *) spqr_malloc <Int> (maxfn, sizeof (Entry), cc) ;
-    H_start = (Int *)  spqr_malloc <Int> (maxfn, sizeof (Int),  cc) ;
-    H_end   = (Int *)  spqr_malloc <Int> (maxfn, sizeof (Int),  cc) ;
+    H_Tau   = (Entry *) cholmod_l_malloc (maxfn, sizeof (Entry), cc) ;
+    H_start = (Long *)  cholmod_l_malloc (maxfn, sizeof (Long),  cc) ;
+    H_end   = (Long *)  cholmod_l_malloc (maxfn, sizeof (Long),  cc) ;
 
     if (!ok || Cdense == NULL || cc->status < CHOLMOD_OK)
     {
         // out of memory; free workspace and result Y
         ERROR (CHOLMOD_OUT_OF_MEMORY, "out of memory") ;
-        spqr_free_dense <Int> (&Ydense, cc) ;
+        cholmod_l_free_dense (&Ydense, cc) ;
         FREE_WORK ;
         return (NULL) ;
     }
@@ -1406,10 +1309,10 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
     // -------------------------------------------------------------------------
 
     // V is workspace of size v-by-hchunk
-    Vdense = spqr_allocate_dense <Int> (v, hchunk, v, xtype, cc) ;
+    Vdense = cholmod_l_allocate_dense (v, hchunk, v, xtype, cc) ;
 
     // W is workspace of size h*h+n*h or h*h+m*h where h = hchunk
-    Wdense = spqr_allocate_dense <Int> (hchunk,
+    Wdense = cholmod_l_allocate_dense (hchunk,
         hchunk + ((method <= SPQR_QX) ? n : m), hchunk, xtype, cc) ;
 
     // -------------------------------------------------------------------------
@@ -1422,18 +1325,18 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
         cc->status = CHOLMOD_OK ;
         hchunk = 1 ;
 
-        spqr_free_dense <Int> (&Vdense, cc) ;
-        spqr_free_dense <Int> (&Wdense, cc) ;
+        cholmod_l_free_dense (&Vdense, cc) ;
+        cholmod_l_free_dense (&Wdense, cc) ;
 
-        Vdense = spqr_allocate_dense <Int> (v, hchunk, v, xtype, cc) ;
-        Wdense = spqr_allocate_dense <Int> (hchunk,
+        Vdense = cholmod_l_allocate_dense (v, hchunk, v, xtype, cc) ;
+        Wdense = cholmod_l_allocate_dense (hchunk,
             hchunk + ((method <= SPQR_QX) ? n : m), hchunk, xtype, cc) ;
 
         if (Vdense == NULL || Wdense == NULL)
         {
             // out of memory; free workspace and result Y
             ERROR (CHOLMOD_OUT_OF_MEMORY, "out of memory") ;
-            spqr_free_dense <Int> (&Ydense, cc) ;
+            cholmod_l_free_dense (&Ydense, cc) ;
             FREE_WORK ;
             return (NULL) ;
         }
@@ -1556,10 +1459,10 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
 
     FREE_WORK ;
 
-    if (sizeof (SUITESPARSE_BLAS_INT) < sizeof (size_t) && !cc->blas_ok)
+    if (CHECK_BLAS_INT && !cc->blas_ok)
     {
         ERROR (CHOLMOD_INVALID, "problem too large for the BLAS") ;
-        spqr_free_dense <Int> (&Ydense, cc) ;
+        cholmod_l_free_dense (&Ydense, cc) ;
         return (NULL) ;
     }
 
@@ -1567,58 +1470,40 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_qmult
 }
 
 
-template cholmod_dense *SuiteSparseQR_qmult <double, int32_t>
+template cholmod_dense *SuiteSparseQR_qmult <double>
 (
     // inputs, not modified
     int method,             // 0,1,2,3
-    SuiteSparseQR_factorization <double, int32_t> *QR,
-    cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template cholmod_dense *SuiteSparseQR_qmult <double, int64_t>
-(
-    // inputs, not modified
-    int method,             // 0,1,2,3
-    SuiteSparseQR_factorization <double, int64_t> *QR,
+    SuiteSparseQR_factorization <double> *QR,
     cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
 
     // workspace and parameters
     cholmod_common *cc
 ) ;
 
-template cholmod_dense *SuiteSparseQR_qmult <Complex, int32_t>
+
+template cholmod_dense *SuiteSparseQR_qmult <Complex>
 (
     // inputs, not modified
     int method,             // 0,1,2,3
-    SuiteSparseQR_factorization <Complex, int32_t> *QR,
+    SuiteSparseQR_factorization <Complex> *QR,
     cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
 
     // workspace and parameters
     cholmod_common *cc
 ) ;
-template cholmod_dense *SuiteSparseQR_qmult <Complex, int64_t>
-(
-    // inputs, not modified
-    int method,             // 0,1,2,3
-    SuiteSparseQR_factorization <Complex, int64_t> *QR,
-    cholmod_dense *Xdense,  // size m-by-n with leading dimension ldx
 
-    // workspace and parameters
-    cholmod_common *cc
-) ;
 
 // =============================================================================
 // === SuiteSparseQR_qmult (sparse case) =======================================
 // =============================================================================
 
 // returns Y of size m-by-n, or NULL on failure
-template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
+template <typename Entry> cholmod_sparse *SuiteSparseQR_qmult
 (
     // inputs, not modified
     int method,                 // 0,1,2,3
-    SuiteSparseQR_factorization <Entry, Int> *QR,
+    SuiteSparseQR_factorization <Entry> *QR,
     cholmod_sparse *Xsparse,    // size m-by-n
     // workspace and parameters
     cholmod_common *cc
@@ -1629,15 +1514,15 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
     RETURN_IF_NULL_COMMON (NULL) ;
     RETURN_IF_NULL (QR, NULL) ;
     RETURN_IF_NULL (Xsparse, NULL) ;
-    int64_t xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (Xsparse, NULL) ;
     cc->status = CHOLMOD_OK ;
 
-    Xdense = spqr_sparse_to_dense <Int> (Xsparse, cc) ;
-    Ydense = SuiteSparseQR_qmult <Entry, Int> (method, QR, Xdense, cc) ;
-    spqr_free_dense <Int> (&Xdense, cc) ;
-    Ysparse = spqr_dense_to_sparse <Int> (Ydense, TRUE, cc) ;
-    spqr_free_dense <Int> (&Ydense, cc) ;
+    Xdense = cholmod_l_sparse_to_dense (Xsparse, cc) ;
+    Ydense = SuiteSparseQR_qmult <Entry> (method, QR, Xdense, cc) ;
+    cholmod_l_free_dense (&Xdense, cc) ;
+    Ysparse = cholmod_l_dense_to_sparse (Ydense, TRUE, cc) ;
+    cholmod_l_free_dense (&Ydense, cc) ;
 
     if (Ysparse == NULL)
     {
@@ -1646,43 +1531,26 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_qmult
     return (Ysparse) ;
 }
 
-template cholmod_sparse *SuiteSparseQR_qmult <double, int32_t>
+template cholmod_sparse *SuiteSparseQR_qmult <double>
 (
     // inputs, not modified
     int method,                 // 0,1,2,3
-    SuiteSparseQR_factorization <double, int32_t> *QR,
-    cholmod_sparse *Xsparse,    // size m-by-n
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-template cholmod_sparse *SuiteSparseQR_qmult <double, int64_t>
-(
-    // inputs, not modified
-    int method,                 // 0,1,2,3
-    SuiteSparseQR_factorization <double, int64_t> *QR,
+    SuiteSparseQR_factorization <double> *QR,
     cholmod_sparse *Xsparse,    // size m-by-n
     // workspace and parameters
     cholmod_common *cc
 ) ;
 
-template cholmod_sparse *SuiteSparseQR_qmult <Complex, int32_t>
+template cholmod_sparse *SuiteSparseQR_qmult <Complex>
 (
     // inputs, not modified
     int method,                 // 0,1,2,3
-    SuiteSparseQR_factorization <Complex, int32_t> *QR,
+    SuiteSparseQR_factorization <Complex> *QR,
     cholmod_sparse *Xsparse,    // size m-by-n
     // workspace and parameters
     cholmod_common *cc
 ) ;
-template cholmod_sparse *SuiteSparseQR_qmult <Complex, int64_t>
-(
-    // inputs, not modified
-    int method,                 // 0,1,2,3
-    SuiteSparseQR_factorization <Complex, int64_t> *QR,
-    cholmod_sparse *Xsparse,    // size m-by-n
-    // workspace and parameters
-    cholmod_common *cc
-) ;
+
 
 // =============================================================================
 // === SuiteSparseQR_free ======================================================
@@ -1690,38 +1558,29 @@ template cholmod_sparse *SuiteSparseQR_qmult <Complex, int64_t>
 
 // Free the QR object; this is just a user-callable wrapper for spqr_freefac.
 
-template <typename Entry, typename Int> int SuiteSparseQR_free
+template <typename Entry> int SuiteSparseQR_free
 (
-    SuiteSparseQR_factorization <Entry, Int> **QR,
+    SuiteSparseQR_factorization <Entry> **QR,
     cholmod_common *cc
 )
 {
     RETURN_IF_NULL_COMMON (FALSE) ;
-    spqr_freefac <Entry, Int> (QR, cc) ;
+    spqr_freefac <Entry> (QR, cc) ;
     return (TRUE) ;
 }
 
-template int SuiteSparseQR_free <double, int32_t>
+template int SuiteSparseQR_free <double>
 (
-    SuiteSparseQR_factorization <double, int32_t> **QR,
-    cholmod_common *cc
-) ;
-template int SuiteSparseQR_free <double, int64_t>
-(
-    SuiteSparseQR_factorization <double, int64_t> **QR,
+    SuiteSparseQR_factorization <double> **QR,
     cholmod_common *cc
 ) ;
 
-template int SuiteSparseQR_free <Complex, int32_t>
+template int SuiteSparseQR_free <Complex>
 (
-    SuiteSparseQR_factorization <Complex, int32_t> **QR,
+    SuiteSparseQR_factorization <Complex> **QR,
     cholmod_common *cc
 ) ;
-template int SuiteSparseQR_free <Complex, int64_t>
-(
-    SuiteSparseQR_factorization <Complex, int64_t> **QR,
-    cholmod_common *cc
-) ;
+
 
 // =============================================================================
 // === SuiteSparseQR_min2norm ==================================================
@@ -1730,7 +1589,7 @@ template int SuiteSparseQR_free <Complex, int64_t>
 // Find the min 2-norm solution for underdetermined systems (A is m-by-n with
 // m<n), or find a least-squares solution otherwise.
 
-template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_min2norm
+template <typename Entry> cholmod_dense *SuiteSparseQR_min2norm
 (
     int ordering,           // all, except 3:given treated as 0:fixed
     double tol,
@@ -1743,7 +1602,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_min2norm
     RETURN_IF_NULL_COMMON (NULL) ;
     RETURN_IF_NULL (A, NULL) ;
     RETURN_IF_NULL (B, NULL) ;
-    int64_t xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (A, NULL) ;
     RETURN_IF_XTYPE_INVALID (B, NULL) ;
     cc->status = CHOLMOD_OK ;
@@ -1754,18 +1613,18 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_min2norm
         double t0 = SuiteSparse_time ( ) ;
 
         // x=A\B, using a QR factorization of A'
-        SuiteSparseQR_factorization <Entry, Int> *QR ;
+        SuiteSparseQR_factorization <Entry> *QR ;
         cholmod_sparse *AT ;
         cholmod_dense *Y ; 
         // [Q,R,E] = qr (A')
-        AT = spqr_transpose <Int> (A, 2, cc) ;
-        QR = SuiteSparseQR_factorize <Entry, Int> (ordering, tol, AT, cc);
-        spqr_free_sparse <Int> (&AT, cc) ;
+        AT = cholmod_l_transpose (A, 2, cc) ;
+        QR = SuiteSparseQR_factorize <Entry> (ordering, tol, AT, cc);
+        cholmod_l_free_sparse (&AT, cc) ;
         // solve Y = R'\(E'*B)
         Y = SuiteSparseQR_solve (SPQR_RTX_EQUALS_ETB, QR, B, cc) ;
         // X = Q*Y
         X = SuiteSparseQR_qmult (SPQR_QX, QR, Y, cc) ;
-        spqr_free_dense <Int> (&Y, cc) ;
+        cholmod_l_free_dense (&Y, cc) ;
         spqr_freefac (&QR, cc) ;
 
         double t3 = SuiteSparse_time ( ) ;
@@ -1777,7 +1636,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_min2norm
     else
     {
         // x=A\B, using a QR factorization of A
-        SuiteSparseQR <Entry, Int> (ordering, tol, 0, 2, A, NULL, B, NULL, &X,
+        SuiteSparseQR <Entry> (ordering, tol, 0, 2, A, NULL, B, NULL, &X,
             NULL, NULL, NULL, NULL, NULL, cc) ;
     }
 
@@ -1794,15 +1653,7 @@ template <typename Entry, typename Int> cholmod_dense *SuiteSparseQR_min2norm
     return (X) ;
 }
 
-template cholmod_dense *SuiteSparseQR_min2norm <double, int32_t>
-(
-    int ordering,           // all, except 3:given treated as 0:fixed
-    double tol,
-    cholmod_sparse *A,
-    cholmod_dense *B,
-    cholmod_common *cc
-) ;
-template cholmod_dense *SuiteSparseQR_min2norm <double, int64_t>
+template cholmod_dense *SuiteSparseQR_min2norm <double>
 (
     int ordering,           // all, except 3:given treated as 0:fixed
     double tol,
@@ -1811,7 +1662,7 @@ template cholmod_dense *SuiteSparseQR_min2norm <double, int64_t>
     cholmod_common *cc
 ) ;
 
-template cholmod_dense *SuiteSparseQR_min2norm <Complex, int32_t>
+template cholmod_dense *SuiteSparseQR_min2norm <Complex>
 (
     int ordering,           // all, except 3:given treated as 0:fixed
     double tol,
@@ -1819,20 +1670,13 @@ template cholmod_dense *SuiteSparseQR_min2norm <Complex, int32_t>
     cholmod_dense *B,
     cholmod_common *cc
 ) ;
-template cholmod_dense *SuiteSparseQR_min2norm <Complex, int64_t>
-(
-    int ordering,           // all, except 3:given treated as 0:fixed
-    double tol,
-    cholmod_sparse *A,
-    cholmod_dense *B,
-    cholmod_common *cc
-) ;
+
 
 // =============================================================================
 // === SuiteSparseQR_min2norm (sparse case) ====================================
 // =============================================================================
 
-template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_min2norm // returns X
+template <typename Entry> cholmod_sparse *SuiteSparseQR_min2norm    // returns X
 (
     int ordering,           // all, except 3:given treated as 0:fixed
     double tol,
@@ -1848,16 +1692,16 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_min2norm /
     RETURN_IF_NULL_COMMON (NULL) ;
     RETURN_IF_NULL (A, NULL) ;
     RETURN_IF_NULL (Bsparse, NULL) ;
-    int64_t xtype = spqr_type <Entry> ( ) ;
+    Long xtype = spqr_type <Entry> ( ) ;
     RETURN_IF_XTYPE_INVALID (A, NULL) ;
     RETURN_IF_XTYPE_INVALID (Bsparse, NULL) ;
     cc->status = CHOLMOD_OK ;
 
-    Bdense = spqr_sparse_to_dense <Int> (Bsparse, cc) ;
-    Xdense = SuiteSparseQR_min2norm <Entry, Int> (ordering, tol, A, Bdense, cc) ;
-    spqr_free_dense <Int> (&Bdense, cc) ;
-    Xsparse = spqr_dense_to_sparse <Int> (Xdense, TRUE, cc) ;
-    spqr_free_dense <Int> (&Xdense, cc) ;
+    Bdense = cholmod_l_sparse_to_dense (Bsparse, cc) ;
+    Xdense = SuiteSparseQR_min2norm <Entry> (ordering, tol, A, Bdense, cc) ;
+    cholmod_l_free_dense (&Bdense, cc) ;
+    Xsparse = cholmod_l_dense_to_sparse (Xdense, TRUE, cc) ;
+    cholmod_l_free_dense (&Xdense, cc) ;
 
     if (Xsparse == NULL)
     {
@@ -1872,15 +1716,7 @@ template <typename Entry, typename Int> cholmod_sparse *SuiteSparseQR_min2norm /
     return (Xsparse) ;
 }
 
-template cholmod_sparse *SuiteSparseQR_min2norm <double, int32_t>
-(
-    int ordering,           // all, except 3:given treated as 0:fixed
-    double tol,
-    cholmod_sparse *A,
-    cholmod_sparse *Bsparse,
-    cholmod_common *cc
-) ;
-template cholmod_sparse *SuiteSparseQR_min2norm <double, int64_t>
+template cholmod_sparse *SuiteSparseQR_min2norm <double>
 (
     int ordering,           // all, except 3:given treated as 0:fixed
     double tol,
@@ -1889,7 +1725,7 @@ template cholmod_sparse *SuiteSparseQR_min2norm <double, int64_t>
     cholmod_common *cc
 ) ;
 
-template cholmod_sparse *SuiteSparseQR_min2norm <Complex, int32_t>
+template cholmod_sparse *SuiteSparseQR_min2norm <Complex>
 (
     int ordering,           // all, except 3:given treated as 0:fixed
     double tol,
@@ -1897,13 +1733,4 @@ template cholmod_sparse *SuiteSparseQR_min2norm <Complex, int32_t>
     cholmod_sparse *Bsparse,
     cholmod_common *cc
 ) ;
-template cholmod_sparse *SuiteSparseQR_min2norm <Complex, int64_t>
-(
-    int ordering,           // all, except 3:given treated as 0:fixed
-    double tol,
-    cholmod_sparse *A,
-    cholmod_sparse *Bsparse,
-    cholmod_common *cc
-) ;
-
 #endif

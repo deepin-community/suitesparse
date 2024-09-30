@@ -1,14 +1,15 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Demo/umf4.c: C demo program for UMFPACK
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === umf4 ================================================================= */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2022, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* UMFPACK Copyright (c) 2005-2012 by Timothy A. Davis,                       */
+/* http://www.suitesparse.com. All Rights Reserved.                           */
+/* See ../Doc/License.txt for License.                                        */
+/* -------------------------------------------------------------------------- */
 
 /* Demo program for UMFPACK.  Reads in a triplet-form matrix in the
- * file tmp_A, whose size and # of nonzeros are in the file tmp_Asize.
+ * directory tmp/A, whose size and # of nonzeros are in the file tmp/Asize.
  * Then calls UMFPACK to analyze, factor, and solve the system.
  *
  * Syntax:
@@ -23,8 +24,8 @@
  *
  * To test a matrix in the Harwell/Boeing format, do the following:
  *
- *	readhb < HB/arc130.rua > tmp_A
- *	readhb_size < HB/arc130.rua > tmp_Asize
+ *	readhb < HB/arc130.rua > tmp/A
+ *	readhb_size < HB/arc130.rua > tmp/Asize
  *	umf4
  *
  * The above options do not drop any nonzero entry in L or U.  To compute an
@@ -44,9 +45,9 @@
  * all internal memory fragmentation, even though this can be removed via
  * garbage collection.
  *
- * Control parameters can also be set in the optional tmp_control.umf4 file.
- * The right-hand-side can be provided in the optional tmp_b file.  The solution
- * is written to tmp_x, and the output statistics are written to tmp_info.umf4.
+ * Control parameters can also be set in the optional tmp/control.umf4 file.
+ * The right-hand-side can be provided in the optional tmp/b file.  The solution
+ * is written to tmp/x, and the output statistics are written to tmp/info.umf4.
  *
  * After the matrix is factorized, solved, and the LU factors deallocated,
  * this program then test the AMD ordering routine.  This call to AMD is NOT
@@ -268,17 +269,13 @@ int main (int argc, char **argv)
     Control [UMFPACK_PRL] = 3 ;
     Control [UMFPACK_BLOCK_SIZE] = 32 ;
 
-    f = fopen ("tmp_control.umf4", "r") ;
+    f = fopen ("tmp/control.umf4", "r") ;
     if (f != (FILE *) NULL)
     {
-	printf ("Reading control file tmp_control.umf4\n") ;
+	printf ("Reading control file tmp/control.umf4\n") ;
 	for (i = 0 ; i < UMFPACK_CONTROL ; i++)
 	{
-	    if (fscanf (f, "%lg\n", & Control [i]) == EOF)
-            {
-                printf ("file I/O error\n") ;
-                exit (1) ;
-            }
+	    fscanf (f, "%lg\n", & Control [i]) ;
 	}
 	fclose (f) ;
     }
@@ -346,11 +343,11 @@ int main (int argc, char **argv)
     umfpack_di_report_control (Control) ;
 
     /* ---------------------------------------------------------------------- */
-    /* open the matrix file (tmp_A) */
+    /* open the matrix file (tmp/A) */
     /* ---------------------------------------------------------------------- */
 
-    printf ("File: tmp_A\n") ;
-    f = fopen ("tmp_A", "r") ;
+    printf ("File: tmp/A\n") ;
+    f = fopen ("tmp/A", "r") ;
     if (!f)
     {
 	printf ("Unable to open file\n") ;
@@ -361,15 +358,11 @@ int main (int argc, char **argv)
     /* get n and nz */
     /* ---------------------------------------------------------------------- */
 
-    printf ("File: tmp_Asize\n") ;
-    f2 = fopen ("tmp_Asize", "r") ;
+    printf ("File: tmp/Asize\n") ;
+    f2 = fopen ("tmp/Asize", "r") ;
     if (f2)
     {
-	if (fscanf (f2, "%d %d %d\n", &nrow, &ncol, &nz) == EOF)
-        {
-	    printf ("file I/O error\n") ;
-	    exit (1) ;
-        }
+	fscanf (f2, "%d %d %d\n", &nrow, &ncol, &nz) ;
 	fclose (f2) ;
     }
     else
@@ -412,7 +405,7 @@ int main (int argc, char **argv)
     /* read in the triplet form */
     /* ---------------------------------------------------------------------- */
 
-    f2 = fopen ("tmp_A", "r") ;
+    f2 = fopen ("tmp/A", "r") ;
     if (!f2)
     {
 	printf ("Unable to open file\n") ;
@@ -478,18 +471,14 @@ int main (int argc, char **argv)
     rhs = FALSE ;
     if (nrow == ncol)
     {
-	f = fopen ("tmp_b", "r") ;
+	f = fopen ("tmp/b", "r") ;
 	if (f != (FILE *) NULL)
 	{
-	    printf ("Reading tmp_b\n") ;
+	    printf ("Reading tmp/b\n") ;
 	    rhs = TRUE ;
 	    for (i = 0 ; i < n ; i++)
 	    {
-		if (fscanf (f, "%lg\n", &b [i]) == EOF)
-                {
-                    printf ("file I/O error\n") ;
-                    exit (1) ;
-                }
+		fscanf (f, "%lg\n", &b [i]) ;
 	    }
 	    fclose (f) ;
 	}
@@ -567,10 +556,10 @@ int main (int argc, char **argv)
 		err (n, x)) ;
 	}
 
-	f = fopen ("tmp_x", "w") ;
+	f = fopen ("tmp/x", "w") ;
 	if (f != (FILE *) NULL)
 	{
-	    printf ("Writing tmp_x\n") ;
+	    printf ("Writing tmp/x\n") ;
 	    for (i = 0 ; i < n ; i++)
 	    {
 		fprintf (f, "%30.20e\n", x [i]) ;
@@ -583,10 +572,10 @@ int main (int argc, char **argv)
 	    exit (1) ;
 	}
 
-	f = fopen ("tmp_info.umf4", "w") ;
+	f = fopen ("tmp/info.umf4", "w") ;
 	if (f != (FILE *) NULL)
 	{
-	    printf ("Writing tmp_info.umf4\n") ;
+	    printf ("Writing tmp/info.umf4\n") ;
 	    for (i = 0 ; i < UMFPACK_INFO ; i++)
 	    {
 		fprintf (f, "%30.20e\n", Info [i]) ;

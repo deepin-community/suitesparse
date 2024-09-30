@@ -13,8 +13,7 @@ function X = cs_qright (V, Beta, p, Y)
 %
 %   See also CS_QR, CS_QLEFT.
 
-% CXSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 [m n] = size (V) ;
 X = Y ;

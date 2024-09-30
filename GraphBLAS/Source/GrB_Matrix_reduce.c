@@ -2,7 +2,7 @@
 // GrB_Matrix_reduce: reduce a matrix to a vector or scalar
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -15,6 +15,7 @@
 //------------------------------------------------------------------------------
 
 // Reduce entries in a matrix to a scalar, c = accum (c, reduce_to_scalar(A)))
+
 
 // All entries in the matrix are "summed" to a single scalar t using the reduce
 // monoid, which must be associative (otherwise the results are undefined).
@@ -37,7 +38,7 @@ GrB_Info GB_EVAL3 (prefix, _Matrix_reduce_, T) /* c = accum (c, reduce (A)) */ \
     GB_BURBLE_START ("GrB_reduce") ;                                           \
     GB_RETURN_IF_NULL_OR_FAULTY (A) ;                                          \
     GrB_Info info = GB_reduce_to_scalar (c, GB_EVAL3 (prefix, _, T), accum,    \
-        monoid, A, Werk) ;                                                  \
+        monoid, A, Context) ;                                                  \
     GB_BURBLE_END ;                                                            \
     return (info) ;                                                            \
 }
@@ -70,7 +71,7 @@ GrB_Info GrB_Matrix_reduce_UDT      // c = accum (c, reduce_to_scalar (A))
     GB_RETURN_IF_NULL_OR_FAULTY (A) ;
     GB_RETURN_IF_NULL_OR_FAULTY (monoid) ;
     GrB_Info info = GB_reduce_to_scalar (c, monoid->op->ztype, accum,
-        monoid, A, Werk) ;
+        monoid, A, Context) ;
     GB_BURBLE_END ;
     return (info) ;
 }
@@ -92,7 +93,7 @@ GrB_Info GrB_Matrix_reduce_Monoid   // w<M> = accum (w,reduce(A))
     GB_WHERE (w, "GrB_Matrix_reduce_Monoid (w, M, accum, monoid, A, desc)") ;
     GB_BURBLE_START ("GrB_reduce") ;
     GrB_Info info = GB_reduce_to_vector ((GrB_Matrix) w, (GrB_Matrix) M,
-        accum, monoid, A, desc, Werk) ;
+        accum, monoid, A, desc, Context) ;
     GB_BURBLE_END ;
     return (info) ;
 }
@@ -130,7 +131,7 @@ GrB_Info GrB_Matrix_reduce_BinaryOp
     }
     // w<M> = reduce (A) via the monoid
     GrB_Info info = GB_reduce_to_vector ((GrB_Matrix) w, (GrB_Matrix) M,
-        accum, monoid, A, desc, Werk) ;
+        accum, monoid, A, desc, Context) ;
     GB_BURBLE_END ;
     return (info) ;
 }
@@ -150,7 +151,7 @@ GrB_Info GrB_Matrix_reduce_Monoid_Scalar
 { 
     GB_WHERE (S, "GrB_Matrix_reduce_Monoid_Scalar (s, accum, monoid, A, desc)") ;
     GB_BURBLE_START ("GrB_reduce") ;
-    GrB_Info info = GB_Scalar_reduce (S, accum, monoid, A, Werk) ;
+    GrB_Info info = GB_Scalar_reduce (S, accum, monoid, A, Context) ;
     GB_BURBLE_END ;
     return (info) ;
 }
@@ -185,7 +186,7 @@ GrB_Info GrB_Matrix_reduce_BinaryOp_Scalar
             " z=%s(x,y) has no equivalent monoid\n", op->name) ;
     }
     // S = reduce (A) via the monoid
-    GrB_Info info = GB_Scalar_reduce (S, accum, monoid, A, Werk) ;
+    GrB_Info info = GB_Scalar_reduce (S, accum, monoid, A, Context) ;
     GB_BURBLE_END ;
     return (info) ;
 }

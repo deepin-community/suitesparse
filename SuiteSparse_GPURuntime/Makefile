@@ -1,74 +1,41 @@
 #-------------------------------------------------------------------------------
-# SuiteSparse/SuiteSparse_GPURuntime/Makefile
+# SuiteSparse_GPURuntime Makefile
 #-------------------------------------------------------------------------------
 
-# SuiteSparse_GPURuntime, Copyright (c) 2013-2022, Timothy A Davis,
-# Sencer Nuri Yeralan, and Sanjay Ranka.  All Rights Reserved.
-# SPDX-License-Identifier: GPL-2.0+
+SUITESPARSE ?= $(realpath $(CURDIR)/..)
+export SUITESPARSE
 
-#-------------------------------------------------------------------------------
+default: all
 
-# A simple Makefile for SuiteSparse_GPURuntime, which relies on cmake to do the
-# actual build.  All the work is done in cmake so this Makefile is just for
-# convenience.
+include ../SuiteSparse_config/SuiteSparse_config.mk
 
-# To compile with an alternate compiler:
-#
-#       make CC=gcc CXX=g++
-#
-# To compile/install for system-wide usage:
-#
-#       make
-#       sudo make install
-#
-# To compile/install for local usage (SuiteSparse/lib and SuiteSparse/include):
-#
-#       make local
-#       make install
-#
-# To clean up the files:
-#
-#       make clean
+# Compile the C-callable libraries only (there is no Demo for this package)
+all: library
 
-JOBS ?= 8
-
-default: library
-
-# default is to install only in /usr/local
+# Compile the C-callable libraries only.
 library:
-	( cd build && cmake $(CMAKE_OPTIONS) .. && cmake --build . --config Release -j${JOBS} )
+	( cd Lib ; $(MAKE) )
 
-# install only in SuiteSparse/lib and SuiteSparse/include
-local:
-	( cd build && cmake $(CMAKE_OPTIONS) -DLOCAL_INSTALL=1 .. && cmake --build . --config Release -j${JOBS} )
+# compile the static libraries only
+static:
+	( cd Lib    ; $(MAKE) static )
 
-# install only in /usr/local (default)
-global:
-	( cd build && cmake $(CMAKE_OPTIONS) -DLOCAL_INSTALL=0 .. && cmake --build . --config Release -j${JOBS} )
+# Remove all files not in the original distribution
+purge:
+	( cd Lib ; $(MAKE) purge )
 
-# just compile after running cmake; do not run cmake again
-remake:
-	( cd build && cmake --build . -j${JOBS} )
+# Remove all files not in the original distribution, except keep the 
+# compiled libraries.
+clean:
+	( cd Lib ; $(MAKE) clean )
 
-# just run cmake to set things up
-setup:
-	( cd build && cmake $(CMAKE_OPTIONS) .. )
+distclean: purge
+
+ccode: all
 
 install:
-	( cd build && cmake --install . )
+	( cd Lib ; $(MAKE) install )
 
-# remove any installed libraries and #include files
 uninstall:
-	- xargs rm < build/install_manifest.txt
-
-# remove all files not in the distribution
-clean:
-	- $(RM) -rf build/* 
-
-purge: clean
-
-distclean: clean
-
-docs:
-
+	( cd Lib ; $(MAKE) uninstall )
 

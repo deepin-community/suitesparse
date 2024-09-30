@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// AMD/Source/amd_1: construct input matrix and then order with amd_2
-//------------------------------------------------------------------------------
+/* ========================================================================= */
+/* === AMD_1 =============================================================== */
+/* ========================================================================= */
 
-// AMD, Copyright (c) 1996-2022, Timothy A. Davis, Patrick R. Amestoy, and
-// Iain S. Duff.  All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
-//------------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
+/* AMD, Copyright (c) Timothy A. Davis,					     */
+/* Patrick R. Amestoy, and Iain S. Duff.  See ../README.txt for License.     */
+/* email: DrTimothyAldenDavis@gmail.com                                      */
+/* ------------------------------------------------------------------------- */
 
 /* AMD_1: Construct A+A' for a sparse matrix A and perform the AMD ordering.
  *
@@ -26,7 +26,7 @@
 
 #include "amd_internal.h"
 
-void AMD_1
+GLOBAL void AMD_1
 (
     Int n,		/* n > 0 */
     const Int Ap [ ],	/* input of size n+1, not modified */

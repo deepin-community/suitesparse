@@ -5,9 +5,7 @@ function private_stream = spqr_repeatable (seed)
 % ignored and the default random stream is always used.
 % Not user-callable.
 
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2012, Leslie Foster and Timothy A Davis
 
 % Since this code is called very often, use 'version', which is perhaps 100
 % times faster than 'verLessThan'.

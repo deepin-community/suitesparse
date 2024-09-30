@@ -10,8 +10,7 @@ function varargout = shellgui(varargin)
 %
 % See also GUIDE, SEASHELL
 
-% SHELLGUI, Copyright (c) 2006, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2006 Timothy A. Davis
 
 % Last Modified by GUIDE v2.5 29-Jul-2006 11:33:37
 

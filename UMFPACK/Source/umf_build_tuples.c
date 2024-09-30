@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_build_tuples: construct tuple lists
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_build_tuples ===================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     Construct the tuple lists from a set of packed elements (no holes in
@@ -20,7 +20,7 @@
 #include "umf_build_tuples.h"
 #include "umf_mem_alloc_tail_block.h"
 
-Int UMF_build_tuples
+GLOBAL Int UMF_build_tuples
 (
     NumericType *Numeric,
     WorkType *Work

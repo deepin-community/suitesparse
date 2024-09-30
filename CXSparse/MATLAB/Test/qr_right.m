@@ -4,8 +4,7 @@ function [V,Beta,R] = qr_right (A)
 %   [V,Beta,R] = qr_right (A)
 % See also: cs_demo
 
-% CXSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 [m n] = size (A) ;
 V = zeros (m,n) ;

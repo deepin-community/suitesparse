@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// AMD/Source/amd_aat: compute symmetry of A and nnz in each column of A+A'
-//------------------------------------------------------------------------------
+/* ========================================================================= */
+/* === AMD_aat ============================================================= */
+/* ========================================================================= */
 
-// AMD, Copyright (c) 1996-2022, Timothy A. Davis, Patrick R. Amestoy, and
-// Iain S. Duff.  All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
-//------------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
+/* AMD, Copyright (c) Timothy A. Davis,					     */
+/* Patrick R. Amestoy, and Iain S. Duff.  See ../README.txt for License.     */
+/* email: DrTimothyAldenDavis@gmail.com                                      */
+/* ------------------------------------------------------------------------- */
 
 /* AMD_aat:  compute the symmetry of the pattern of A, and count the number of
  * nonzeros each column of A+A' (excluding the diagonal).  Assumes the input
@@ -17,7 +17,7 @@
 
 #include "amd_internal.h"
 
-size_t AMD_aat	/* returns nz in A+A' */
+GLOBAL size_t AMD_aat	/* returns nz in A+A' */
 (
     Int n,
     const Int Ap [ ],

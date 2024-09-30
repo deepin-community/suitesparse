@@ -9,8 +9,7 @@ function cholmod_updown_demo
 %
 % See also CHOLMOD_DEMO
 
-% Copyright 2006-2022, Timothy A. Davis, All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+%   Copyright 2015, Timothy A. Davis, http://www.suitesparse.com
 
 fprintf ('\n\n------------------------------------------------------------\n') ;
 fprintf ('demo of CHOLMOD update/downdate and row add/delete functions\n') ;

@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_kernel_init: initializations for umf_kernel
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_kernel_init ====================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     Initialize the kernel: scale the matrix, load the initial elements, and
@@ -136,7 +136,7 @@ PRIVATE Int packsp	/* returns new value of pnew */
 /* === UMF_kernel_init ====================================================== */
 /* ========================================================================== */
 
-Int UMF_kernel_init
+GLOBAL Int UMF_kernel_init
 (
     const Int Ap [ ],		/* user's input matrix (not modified) */
     const Int Ai [ ],

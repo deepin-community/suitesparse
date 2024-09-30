@@ -1,6 +1,5 @@
 LINFACTOR factorize a matrix, or use the factors to solve Ax=b.
-LINFACTOR, Copyright (c) 2008, Timothy A Davis. All Rights Reserved.
-SPDX-License-Identifier: BSD-3-clause
+Timothy A. Davis, http://www.suitesparse.com
 
 Uses LU or CHOL to factorize A, or uses a previously computed factorization to
 solve a linear system.  This function automatically selects an LU or Cholesky
@@ -60,4 +59,3 @@ matrix yourself and then using the factors to solve the system.
 See also lu, chol, mldivide, linsolve, umfpack, cholmod.
 
 Oh, did I tell you never to use inv(A) to solve Ax=b?
-

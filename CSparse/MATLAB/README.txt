@@ -17,5 +17,4 @@ permanently, for future MATLAB sessions).
 To run the MATLAB demo programs, run cs_demo in the Demo directory.
 To run the MATLAB test programs, run testall in the Test directory.
 
-CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-SPDX-License-Identifier: LGPL-2.1+
+Timothy A. Davis, http://www.suitesparse.com

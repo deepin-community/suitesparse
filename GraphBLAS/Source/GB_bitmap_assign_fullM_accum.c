@@ -2,7 +2,7 @@
 // GB_bitmap_assign_fullM_accum:  assign to C bitmap, M is bitmap or full
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -28,12 +28,8 @@
 // A:           matrix (hyper, sparse, bitmap, or full), or scalar
 // kind:        assign, row assign, col assign, or subassign
 
-// JIT: needed.
-
 #include "GB_bitmap_assign_methods.h"
-#include "GB_assign_shared_definitions.h"
 
-#undef  GB_FREE_ALL
 #define GB_FREE_ALL ;
 
 GrB_Info GB_bitmap_assign_fullM_accum
@@ -58,7 +54,7 @@ GrB_Info GB_bitmap_assign_fullM_accum
     const void *scalar,         // input scalar
     const GrB_Type scalar_type, // type of input scalar
     const int assign_kind,      // row assign, col assign, assign, or subassign
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -87,7 +83,7 @@ GrB_Info GB_bitmap_assign_fullM_accum
     //--------------------------------------------------------------------------
 
     #define GB_GET_MIJ(mij,pM)                                  \
-        bool mij = (GBB (Mb, pM) && GB_MCAST (Mx, pM, msize)) ^ Mask_comp ;
+        bool mij = (GBB (Mb, pM) && GB_mcast (Mx, pM, msize)) ^ Mask_comp ;
 
     //--------------------------------------------------------------------------
     // assignment phase
@@ -117,26 +113,26 @@ GrB_Info GB_bitmap_assign_fullM_accum
         // if C FULL: no change, just cb = GBB (Cb,pC)
 
         #undef  GB_IXJ_WORK
-        #define GB_IXJ_WORK(pC,pA)                          \
-        {                                                   \
-            int64_t pM = GB_GET_pM ;                        \
-            GB_GET_MIJ (mij, pM) ;                          \
-            if (mij)                                        \
-            {                                               \
-                int8_t cb = Cb [pC] ;                       \
-                if (cb == 0)                                \
-                {                                           \
-                    /* Cx [pC] = scalar */                  \
-                    GB_COPY_scalar_to_C (Cx, pC, cwork) ;   \
-                    Cb [pC] = 1 ;                           \
-                    task_cnvals++ ;                         \
-                }                                           \
-                else /* (cb == 1) */                        \
-                {                                           \
-                    /* Cx [pC] += scalar */                 \
-                    GB_ACCUMULATE_scalar (Cx, pC, ywork) ;  \
-                }                                           \
-            }                                               \
+        #define GB_IXJ_WORK(pC,pA)                  \
+        {                                           \
+            int64_t pM = GB_GET_pM ;                \
+            GB_GET_MIJ (mij, pM) ;                  \
+            if (mij)                                \
+            {                                       \
+                int8_t cb = Cb [pC] ;               \
+                if (cb == 0)                        \
+                {                                   \
+                    /* Cx [pC] = scalar */          \
+                    GB_ASSIGN_SCALAR (pC) ;         \
+                    Cb [pC] = 1 ;                   \
+                    task_cnvals++ ;                 \
+                }                                   \
+                else /* (cb == 1) */                \
+                {                                   \
+                    /* Cx [pC] += scalar */         \
+                    GB_ACCUM_SCALAR (pC) ;          \
+                }                                   \
+            }                                       \
         }
 
         ASSERT (assign_kind == GB_ASSIGN || assign_kind == GB_SUBASSIGN) ;
@@ -183,26 +179,26 @@ GrB_Info GB_bitmap_assign_fullM_accum
 
         // if C FULL: no change, just cb = GBB (Cb,pC)
 
-        #define GB_AIJ_WORK(pC,pA)                                      \
-        {                                                               \
-            int64_t pM = GB_GET_pM ;                                    \
-            GB_GET_MIJ (mij, pM) ;                                      \
-            if (mij)                                                    \
-            {                                                           \
-                int8_t cb = Cb [pC] ;                                   \
-                if (cb == 0)                                            \
-                {                                                       \
-                    /* Cx [pC] = Ax [pA] */                             \
-                    GB_COPY_aij_to_C (Cx, pC, Ax, pA, A_iso, cwork) ;   \
-                    Cb [pC] = 1 ;                                       \
-                    task_cnvals++ ;                                     \
-                }                                                       \
-                else /* (cb == 1) */                                    \
-                {                                                       \
-                    /* Cx [pC] += Ax [pA] */                            \
-                    GB_ACCUMULATE_aij (Cx, pC, Ax, pA, A_iso, ywork) ;  \
-                }                                                       \
-            }                                                           \
+        #define GB_AIJ_WORK(pC,pA)                  \
+        {                                           \
+            int64_t pM = GB_GET_pM ;                \
+            GB_GET_MIJ (mij, pM) ;                  \
+            if (mij)                                \
+            {                                       \
+                int8_t cb = Cb [pC] ;               \
+                if (cb == 0)                        \
+                {                                   \
+                    /* Cx [pC] = Ax [pA] */         \
+                    GB_ASSIGN_AIJ (pC, pA) ;        \
+                    Cb [pC] = 1 ;                   \
+                    task_cnvals++ ;                 \
+                }                                   \
+                else /* (cb == 1) */                \
+                {                                   \
+                    /* Cx [pC] += Ax [pA] */        \
+                    GB_ACCUM_AIJ (pC, pA) ;         \
+                }                                   \
+            }                                       \
         }
 
         switch (assign_kind)

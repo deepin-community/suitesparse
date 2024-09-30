@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// KLU/MATLAB/klumex.c: MATLAB interface for KLU
-//------------------------------------------------------------------------------
-
-// KLU, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-// Authors: Timothy A. Davis and Ekanathan Palamadai.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === klu mexFunction ====================================================== */
+/* ========================================================================== */
 
 /* KLU: a MATLAB interface to a "Clark Kent" sparse LU factorization algorithm.
 
@@ -53,12 +47,14 @@
 /* ========================================================================== */
 
 #include "klu.h"
+#include <string.h>
+#define Long SuiteSparse_long
 
 #ifndef NCHOLMOD
 #include "klu_cholmod.h"
-#include "cholmod.h"
 #endif
 
+#include "mex.h"
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define ABS(x) (((x) < 0) ? -(x) : (x))
@@ -116,7 +112,7 @@ void mexFunction
     double ukk, lkk, rs, s, lik, uik, x [4], offik, z, ukkz, lkkz, sz, wx, wz ;
     double *X, *B, *Xz, *Xx, *Bx, *Bz, *A, *Ax, *Az, *Lx, *Ux, *Rs, *Offx, *Wx,
         *Uz, *Lz, *Offz, *Wz, *W, *Xi, *Bi ;
-    int64_t *Ap, *Ai, *Lp, *Li, *Up, *Ui, *P, *Q, *R, *Rp, *Ri, *Offp, *Offi ;
+    Long *Ap, *Ai, *Lp, *Li, *Up, *Ui, *P, *Q, *R, *Rp, *Ri, *Offp, *Offi ;
     char *operator ;
     mxArray *L_matlab, *U_matlab, *p_matlab, *q_matlab, *R_matlab, *F_matlab,
         *r_matlab, *field ;
@@ -124,11 +120,10 @@ void mexFunction
     klu_l_symbolic *Symbolic ;
     klu_l_numeric *Numeric ;
     klu_l_common Common ;
-    int64_t n = 0, k, nrhs = 0,
+    Long n = 0, k, nrhs = 0, do_solve, do_factorize, symmetric,
         A_complex = 0, B_complex, nz, do_transpose = 0, p, pend, nblocks,
         R1 [2], chunk, nr, i, j, block, k1, k2, nk, bn = 0, ordering ;
-    int mx_int, do_solve, do_factorize ;
-    int64_t symmetric ;
+    int mx_int ;
     static const char *fnames [ ] = {
         "noffdiag",     /* # of off-diagonal pivots */
         "nrealloc",     /* # of memory reallocations */
@@ -160,7 +155,14 @@ void mexFunction
     do_solve = (nargin > 2) ;
 
     /* determine size of the MATLAB integer */
-    mx_int = mxINT64_CLASS ;
+    if (sizeof (Long) == sizeof (INT32_T))
+    {
+        mx_int = mxINT32_CLASS ;
+    }
+    else
+    {
+        mx_int = mxINT64_CLASS ;
+    }
 
     if (do_solve)
     {
@@ -298,11 +300,8 @@ void mexFunction
     /* ordering option 3,4 becomes KLU option 3, with symmetric 0 or 1 */
     symmetric = (Common.ordering == 4) ;
     if (symmetric) Common.ordering = 3 ;
-    int64_t user_data [3] ;
     Common.user_order = klu_l_cholmod ;
-    user_data [0] = symmetric ;
-    user_data [1] = CHOLMOD_METIS ;
-    Common.user_data = user_data ;
+    Common.user_data = &symmetric ;
 #else
     /* CHOLMOD, METIS, CAMD, CCOLAMD, not available */
     if (Common.ordering > 2)
@@ -330,8 +329,8 @@ void mexFunction
             mexErrMsgTxt ("A must be sparse, square, and non-empty") ;
         }
 
-        Ap = (int64_t *) mxGetJc (A_matlab) ;
-        Ai = (int64_t *) mxGetIr (A_matlab) ;
+        Ap = (Long *) mxGetJc (A_matlab) ;
+        Ai = (Long *) mxGetIr (A_matlab) ;
         Ax = mxGetPr (A_matlab) ;
         Az = mxGetPi (A_matlab) ;
         nz = Ap [n] ;
@@ -566,7 +565,7 @@ void mexFunction
                     {
 
                         /* A is real: real(X) = real(b) / real(A) */
-                        int64_t chunksize = MIN (nrhs - chunk, 4) ;
+                        Long chunksize = MIN (nrhs - chunk, 4) ;
                         for (j = 0 ; j < chunksize ; j++)
                         {
                             for (i = 0 ; i < n ; i++)
@@ -701,8 +700,8 @@ void mexFunction
                 mexErrMsgTxt ("LU.L must be sparse and same size as A") ;
             }
 
-            Lp = (int64_t *) mxGetJc (L_matlab) ;
-            Li = (int64_t *) mxGetIr (L_matlab) ;
+            Lp = (Long *) mxGetJc (L_matlab) ;
+            Li = (Long *) mxGetIr (L_matlab) ;
             Lx = mxGetPr (L_matlab) ;
             Lz = mxGetPi (L_matlab) ;
 
@@ -712,8 +711,8 @@ void mexFunction
             {
                 mexErrMsgTxt ("LU.U must be sparse and same size as A") ;
             }
-            Up = (int64_t *) mxGetJc (U_matlab) ;
-            Ui = (int64_t *) mxGetIr (U_matlab) ;
+            Up = (Long *) mxGetJc (U_matlab) ;
+            Ui = (Long *) mxGetIr (U_matlab) ;
             Ux = mxGetPr (U_matlab) ;
             Uz = mxGetPi (U_matlab) ;
 
@@ -726,7 +725,7 @@ void mexFunction
                 {
                     mexErrMsgTxt ("P invalid") ;
                 }
-                P = (int64_t *) mxGetData (p_matlab) ;
+                P = (Long *) mxGetData (p_matlab) ;
                 for (k = 0 ; k < n ; k++)
                 {
                     if (P [k] < 1 || P [k] > n) mexErrMsgTxt ("P invalid") ;
@@ -747,7 +746,7 @@ void mexFunction
                 {
                     mexErrMsgTxt ("Q invalid") ;
                 }
-                Q = (int64_t *) mxGetData (q_matlab) ;
+                Q = (Long *) mxGetData (q_matlab) ;
                 for (k = 0 ; k < n ; k++)
                 {
                     if (Q [k] < 1 || Q [k] > n) mexErrMsgTxt ("Q invalid.") ;
@@ -770,7 +769,7 @@ void mexFunction
                 {
                     mexErrMsgTxt ("r invalid") ;
                 }
-                R = (int64_t *) mxGetData (r_matlab) ;
+                R = (Long *) mxGetData (r_matlab) ;
                 if (R [0] != 1) mexErrMsgTxt ("r invalid") ;
                 for (k = 1 ; k <= nblocks ; k++)
                 {
@@ -797,7 +796,7 @@ void mexFunction
                 {
                     mexErrMsgTxt ("LU.R must be sparse and same size as A") ;
                 }
-                Rp = (int64_t *) mxGetJc (R_matlab) ;
+                Rp = (Long *) mxGetJc (R_matlab) ;
                 Rs = mxGetPr (R_matlab) ;
                 if (Rp [n] != n)
                 {
@@ -818,8 +817,8 @@ void mexFunction
                 {
                     mexErrMsgTxt ("LU.F must be sparse and same size as A") ;
                 }
-                Offp = (int64_t *) mxGetJc (F_matlab) ;
-                Offi = (int64_t *) mxGetIr (F_matlab) ;
+                Offp = (Long *) mxGetJc (F_matlab) ;
+                Offi = (Long *) mxGetIr (F_matlab) ;
                 Offx = mxGetPr (F_matlab) ;
                 Offz = mxGetPi (F_matlab) ;
             }
@@ -1885,31 +1884,31 @@ void mexFunction
         /* L */
         L_matlab = mxCreateSparse (n, n, Numeric->lnz,
             A_complex ? mxCOMPLEX: mxREAL) ;
-        Lp = (int64_t *) mxGetJc (L_matlab) ;
-        Li = (int64_t *) mxGetIr (L_matlab) ;
+        Lp = (Long *) mxGetJc (L_matlab) ;
+        Li = (Long *) mxGetIr (L_matlab) ;
         Lx = mxGetPr (L_matlab) ;
         Lz = mxGetPi (L_matlab) ;
 
         /* U */
         U_matlab = mxCreateSparse (n, n, Numeric->unz,
             A_complex ? mxCOMPLEX: mxREAL) ;
-        Up = (int64_t *) mxGetJc (U_matlab) ;
-        Ui = (int64_t *) mxGetIr (U_matlab) ;
+        Up = (Long *) mxGetJc (U_matlab) ;
+        Ui = (Long *) mxGetIr (U_matlab) ;
         Ux = mxGetPr (U_matlab) ;
         Uz = mxGetPi (U_matlab) ;
 
         /* p */
         p_matlab = mxCreateNumericMatrix (1, n, mx_int, mxREAL) ;
-        P = (int64_t *) mxGetData (p_matlab) ;
+        P = (Long *) mxGetData (p_matlab) ;
 
         /* q */
         q_matlab = mxCreateNumericMatrix (1, n, mx_int, mxREAL) ;
-        Q = (int64_t *) mxGetData (q_matlab) ;
+        Q = (Long *) mxGetData (q_matlab) ;
 
         /* R, as a sparse diagonal matrix */
         R_matlab = mxCreateSparse (n, n, n+1, mxREAL) ;
-        Rp = (int64_t *) mxGetJc (R_matlab) ;
-        Ri = (int64_t *) mxGetIr (R_matlab) ;
+        Rp = (Long *) mxGetJc (R_matlab) ;
+        Ri = (Long *) mxGetIr (R_matlab) ;
         Rs = mxGetPr (R_matlab) ;
         for (k = 0 ; k <= n ; k++)
         {
@@ -1920,15 +1919,15 @@ void mexFunction
         /* F, off diagonal blocks */
         F_matlab = mxCreateSparse (n, n, Numeric->nzoff,
             A_complex ? mxCOMPLEX: mxREAL) ;
-        Offp = (int64_t *) mxGetJc (F_matlab) ;
-        Offi = (int64_t *) mxGetIr (F_matlab) ;
+        Offp = (Long *) mxGetJc (F_matlab) ;
+        Offi = (Long *) mxGetIr (F_matlab) ;
         Offx = mxGetPr (F_matlab) ;
         Offz = mxGetPi (F_matlab) ;
 
         /* r, block boundaries */
         nblocks = Symbolic->nblocks ;
         r_matlab = mxCreateNumericMatrix (1, nblocks+1, mx_int, mxREAL) ;
-        R = (int64_t *) mxGetData (r_matlab) ;
+        R = (Long *) mxGetData (r_matlab) ;
 
         /* extract the LU factorization from KLU Numeric and Symbolic objects */
         if (A_complex)

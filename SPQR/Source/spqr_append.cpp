@@ -2,35 +2,30 @@
 // === spqr_append =============================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
-#include "spqr.hpp"
-
 // Appends a dense column X onto a sparse matrix A, increasing nnzmax(A) as
 // needed.  The column pointer array is not modified; it must be large enough
 // to accomodate the new column.
 
-template <typename Entry, typename Int> int spqr_append       // TRUE/FALSE if OK or not
+#include "spqr.hpp"
+
+template <typename Entry> int spqr_append       // TRUE/FALSE if OK or not
 (
     // inputs, not modified
     Entry *X,           // size m-by-1
-    Int *P,            // size m, or NULL; permutation to apply to X.
+    Long *P,            // size m, or NULL; permutation to apply to X.
                         // P [k] = i if row k of A is row i of X
 
     // input/output
     cholmod_sparse *A,  // size m-by-(A->ncol) where A->ncol > n must hold
-    Int *p_n,          // n = # of columns of A so far; increased one
+    Long *p_n,          // n = # of columns of A so far; increased one
 
     // workspace and parameters
     cholmod_common *cc
 )
 {
     Entry *Ax ;
-    Int *Ai, *Ap ;
-    Int nzmax, nz, i, k, nznew, n, m, nz2 ;
+    Long *Ai, *Ap ;
+    Long nzmax, nz, i, k, nznew, n, m, nz2 ;
     int ok = TRUE ;
 
     // -------------------------------------------------------------------------
@@ -39,7 +34,7 @@ template <typename Entry, typename Int> int spqr_append       // TRUE/FALSE if O
 
     m = A->nrow ;
     n = *p_n ;
-    Ap = (Int *) A->p ;
+    Ap = (Long *) A->p ;
 
     if (m == 0)
     {
@@ -50,7 +45,7 @@ template <typename Entry, typename Int> int spqr_append       // TRUE/FALSE if O
         return (TRUE) ;
     }
 
-    Ai = (Int *) A->i ;
+    Ai = (Long *) A->i ;
     Ax = (Entry *) A->x ;
     nzmax = A->nzmax ;      // current nzmax(A)
     nz = Ap [n] ;           // current nnz(A)
@@ -98,16 +93,16 @@ template <typename Entry, typename Int> int spqr_append       // TRUE/FALSE if O
                 {
                     // Ai and Ax are not big enough; increase their size.
                     // nznew = 2*nzmax + m ;
-                    nznew = spqr_mult <Int> (2, nzmax, &ok) ;
+                    nznew = spqr_mult (2, nzmax, &ok) ;
                     nznew = spqr_add (nznew, m, &ok) ;
-                    if (!ok || !spqr_reallocate_sparse <Int> (nznew, A, cc))
+                    if (!ok || !cholmod_l_reallocate_sparse (nznew, A, cc))
                     {
                         // out of memory
                         ERROR (CHOLMOD_OUT_OF_MEMORY, "out of memory") ;
                         return (FALSE) ;
                     }
                     // Ai and Ax have moved, reaquire the pointers
-                    Ai = (Int *) A->i ;
+                    Ai = (Long *) A->i ;
                     Ax = (Entry *) A->x ;
                     PR (("reallocated from %ld to %ld\n", nzmax, nznew)) ;
                     nzmax = nznew ;
@@ -134,61 +129,36 @@ template <typename Entry, typename Int> int spqr_append       // TRUE/FALSE if O
     return (TRUE) ;
 }
 
-template int spqr_append <double, int32_t>       // TRUE/FALSE if OK or not
+
+// =============================================================================
+
+template int spqr_append <double>
 (
     // inputs, not modified
-    double *X,           // size m-by-1
-    int32_t *P,            // size m, or NULL; permutation to apply to X.
-                        // P [k] = i if row k of A is row i of X
+    double *X,      // size m-by-1
+    Long *P,        // size m, or NULL; permutation to apply to X.
+                    // P [k] = i if row k of A is row i of X
 
     // input/output
-    cholmod_sparse *A,  // size m-by-(A->ncol) where A->ncol > n must hold
-    int32_t *p_n,          // n = # of columns of A so far; increased one
+    cholmod_sparse *A,    // size m-by-n2 where n2 > n
+    Long *p_n,       // number of columns of A; increased by one
 
     // workspace and parameters
     cholmod_common *cc
 ) ;
 
-template int spqr_append <Complex, int32_t>       // TRUE/FALSE if OK or not
+// =============================================================================
+
+template int spqr_append <Complex>
 (
     // inputs, not modified
-    Complex *X,           // size m-by-1
-    int32_t *P,            // size m, or NULL; permutation to apply to X.
-                        // P [k] = i if row k of A is row i of X
+    Complex *X,     // size m-by-1
+    Long *P,        // size m, or NULL; permutation to apply to X.
+                    // P [k] = i if row k of A is row i of X
 
     // input/output
-    cholmod_sparse *A,  // size m-by-(A->ncol) where A->ncol > n must hold
-    int32_t *p_n,          // n = # of columns of A so far; increased one
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-
-template int spqr_append <double, int64_t>       // TRUE/FALSE if OK or not
-(
-    // inputs, not modified
-    double *X,           // size m-by-1
-    int64_t *P,            // size m, or NULL; permutation to apply to X.
-                        // P [k] = i if row k of A is row i of X
-
-    // input/output
-    cholmod_sparse *A,  // size m-by-(A->ncol) where A->ncol > n must hold
-    int64_t *p_n,          // n = # of columns of A so far; increased one
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-
-template int spqr_append <Complex, int64_t>       // TRUE/FALSE if OK or not
-(
-    // inputs, not modified
-    Complex *X,           // size m-by-1
-    int64_t *P,            // size m, or NULL; permutation to apply to X.
-                        // P [k] = i if row k of A is row i of X
-
-    // input/output
-    cholmod_sparse *A,  // size m-by-(A->ncol) where A->ncol > n must hold
-    int64_t *p_n,          // n = # of columns of A so far; increased one
+    cholmod_sparse *A,    // size m-by-n2 where n2 > n
+    Long *p_n,      // number of columns of A; increased by one
 
     // workspace and parameters
     cholmod_common *cc

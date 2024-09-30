@@ -1,15 +1,15 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umfpack_report_numeric: print a Numeric object
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMFPACK_report_numeric =============================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     User-callable.  Prints the Numeric object.
-    See umfpack.h for details.
+    See umfpack_report_numeric.h for details.
 
     Dynamic memory usage:  Allocates a size n*sizeof(Int) workspace via a single
     call to UMF_malloc and then frees all of it via UMF_free on return.  The
@@ -25,7 +25,7 @@
 #include "umf_free.h"
 
 
-PRIVATE int report_L
+PRIVATE Int report_L
 (
     NumericType *Numeric,
     Int Pattern [ ],
@@ -33,7 +33,7 @@ PRIVATE int report_L
 ) ;
 
 
-PRIVATE int report_U
+PRIVATE Int report_U
 (
     NumericType *Numeric,
     Int Pattern [ ],
@@ -44,7 +44,7 @@ PRIVATE int report_U
 /* === UMFPACK_report_numeric =============================================== */
 /* ========================================================================== */
 
-int UMFPACK_report_numeric
+GLOBAL Int UMFPACK_report_numeric
 (
     void *NumericHandle,
     const double Control [UMFPACK_CONTROL]
@@ -248,7 +248,7 @@ int UMFPACK_report_numeric
 /* === report_L ============================================================= */
 /* ========================================================================== */
 
-PRIVATE int report_L
+PRIVATE Int report_L
 (
     NumericType *Numeric,
     Int Pattern [ ],
@@ -443,7 +443,7 @@ PRIVATE int report_L
 /* === report_U ============================================================= */
 /* ========================================================================== */
 
-PRIVATE int report_U
+PRIVATE Int report_U
 (
     NumericType *Numeric,
     Int Pattern [ ],

@@ -2,12 +2,10 @@
 // GB_subref_phase2: find # of entries in C=A(I,J)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed, but GB_subref_method has 6 or 7 variants.
 
 // GB_subref_phase2 counts the number of entries in each vector of C, for
 // C=A(I,J) and then does a cumulative sum to find Cp.
@@ -41,7 +39,7 @@ GrB_Info GB_subref_phase2               // count nnz in each C(:,j)
     const GrB_Matrix A,
     const GrB_Index *I,         // index list for C = A(I,J), or GrB_ALL, etc.
     const bool symbolic,
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -92,7 +90,7 @@ GrB_Info GB_subref_phase2               // count nnz in each C(:,j)
     //--------------------------------------------------------------------------
 
     GB_task_cumsum (Cp, Cnvec, Cnvec_nonempty, TaskList, ntasks, nthreads,
-        Werk) ;
+        Context) ;
 
     //--------------------------------------------------------------------------
     // return the result

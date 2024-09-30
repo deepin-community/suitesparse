@@ -8,9 +8,7 @@ function camd_demo
 %
 % See also: camd, camd_make
 
-% CAMD, Copyright (c) 2007-2022, Timothy A. Davis, Yanqing Chen, Patrick R.
-% Amestoy, and Iain S. Duff.  All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 1994-2007, Tim Davis, Patrick R. Amestoy, Iain S. Duff, and Y. Chen.
 
 % This orders the same matrix as the ANSI C demo, camd_demo.c.  It includes an
 % additional analysis of the matrix via MATLAB's symbfact routine.

@@ -2,13 +2,15 @@
 // GB_shallow_copy: create a shallow copy of a matrix
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
 // Create a purely shallow copy C of a matrix A.  No typecasting is done.  If A
-// has zombies or pending tuples, those are finished first.
+// has zombies or pending tuples, those are finished first.  Since C is a
+// static header, an out-of-memory condition on the wait(A) is the only way
+// this method can fail.
 
 // The CSR/CSC format of C and A can differ, but they have they same vlen and
 // vdim.  This function is CSR/CSC agnostic, except that C_is_csc is used to
@@ -22,16 +24,16 @@
 // Compare this function with GB_shallow_op.c.
 
 #include "GB_transpose.h"
-#include "GB_unused.h"
 
 #define GB_FREE_ALL ;
 
+GB_PUBLIC
 GrB_Info GB_shallow_copy    // create a purely shallow matrix
 (
     GrB_Matrix C,           // output matrix C, with a static header
     const bool C_is_csc,    // desired CSR/CSC format of C
     const GrB_Matrix A,     // input matrix
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -55,7 +57,7 @@ GrB_Info GB_shallow_copy    // create a purely shallow matrix
     GrB_Info info ;
     info = GB_new (&C, // sparse or hyper, existing header
         A->type, A->vlen, A->vdim, GB_Ap_null, C_is_csc,
-        GB_sparsity (A), A->hyper_switch, 0) ;
+        GB_sparsity (A), A->hyper_switch, 0, Context) ;
     ASSERT (info == GrB_SUCCESS) ;
 
     //--------------------------------------------------------------------------
@@ -80,13 +82,6 @@ GrB_Info GB_shallow_copy    // create a purely shallow matrix
     { 
         GB_BURBLE_MATRIX (A, "(iso copy) ") ;
     }
-
-    //--------------------------------------------------------------------------
-    // make a shallow copy of the A->Y hyper_hash
-    //--------------------------------------------------------------------------
-
-    C->Y = A->Y ;
-    C->Y_shallow = (A->Y != NULL) ;
 
     //--------------------------------------------------------------------------
     // check for empty matrix

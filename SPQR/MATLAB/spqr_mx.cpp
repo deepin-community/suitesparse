@@ -2,9 +2,6 @@
 // === spqr_mx =================================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
 // Utility routines used by the SuiteSparseQR mexFunctions
 
 #include "spqr_mx.hpp"
@@ -15,7 +12,7 @@
 
 // Define function pointers and other parameters for a mexFunction
 
-int spqr_mx_config (int64_t spumoni, cholmod_common *cc)
+int spqr_mx_config (Long spumoni, cholmod_common *cc)
 {
     if (cc == NULL) return (FALSE) ;
 
@@ -27,7 +24,7 @@ int spqr_mx_config (int64_t spumoni, cholmod_common *cc)
     {
 	// do not print anything from within CHOLMOD
 	cc->print = -1 ;
-	SuiteSparse_config_printf_func_set (NULL) ;
+	SuiteSparse_config.printf_func = NULL ;
     }
     else
     {
@@ -90,9 +87,13 @@ void spqr_mx_spumoni
             "    size of mwIndex:  %d bytes\n"
             "    size of int:      %d bytes\n"
             "    size of BLAS int: %d bytes\n",
-            sizeof (mwIndex), sizeof (int), sizeof (SUITESPARSE_BLAS_INT)) ;
+            sizeof (mwIndex), sizeof (int), sizeof (BLAS_INT)) ;
 #ifndef NEXPERT
         mexPrintf ("    compiled with opts.solution='min2norm' option\n") ;
+#endif
+#ifndef NPARTITION
+        mexPrintf (
+            "    compiled with opts.ordering='metis' option\n") ;
 #endif
     }
 
@@ -140,7 +141,9 @@ void spqr_mx_spumoni
         case SPQR_ORDERING_GIVEN:   mexPrintf ("given'\n") ;   break ;
         case SPQR_ORDERING_CHOLMOD: mexPrintf ("best'\n") ;    break ;
         case SPQR_ORDERING_AMD:     mexPrintf ("amd'\n") ;     break ;
+#ifndef NPARTITION
         case SPQR_ORDERING_METIS:   mexPrintf ("metis'\n") ;   break ;
+#endif
         case SPQR_ORDERING_DEFAULT: mexPrintf ("default'\n") ; break ;
         default: mexPrintf ("undefined'\n") ; break ;
     }
@@ -173,6 +176,7 @@ void spqr_mx_spumoni
     mexPrintf ("    upper bound on nnz(R): %ld\n",        cc->SPQR_istat [0]) ;
     mexPrintf ("    upper bound on nnz(H): %ld\n",        cc->SPQR_istat [1]) ;
     mexPrintf ("    number of frontal matrices: %ld\n",   cc->SPQR_istat [2]) ;
+//  mexPrintf ("    # tasks in TBB task tree: %ld\n",     cc->SPQR_istat [3]) ;
     mexPrintf ("    rank(A) estimate: %ld\n",             cc->SPQR_istat [4]) ;
     mexPrintf ("    # of column singletons: %ld\n",       cc->SPQR_istat [5]) ;
     mexPrintf ("    # of singleton rows: %ld\n",          cc->SPQR_istat [6]) ;
@@ -200,7 +204,7 @@ static int get_option
 
     // outputs:
     double *x,                  // double value of the field, if present
-    int64_t *x_present,            // true if x is present
+    Long *x_present,            // true if x is present
     char **s,                   // char value of the field, if present;
                                 // must be mxFree'd by caller when done
 
@@ -208,7 +212,7 @@ static int get_option
     cholmod_common *cc
 )
 {
-    int64_t f ;
+    Long f ;
     mxArray *p ;
 
     if (cc == NULL) return (FALSE) ;
@@ -294,14 +298,14 @@ int spqr_mx_get_options
 (
     const mxArray *mxopts,
     spqr_mx_options *opts,
-    int64_t m,
+    Long m,
     int nargout,
     cholmod_common *cc
 )
 {
     double x ;
     char *s ;
-    int64_t x_present ;
+    Long x_present ;
 
     if (cc == NULL) return (FALSE) ;
 
@@ -310,7 +314,7 @@ int spqr_mx_get_options
     // -------------------------------------------------------------------------
 
     get_option (mxopts, "spumoni", &x, &x_present, NULL, cc) ;
-    opts->spumoni = x_present ? ((int64_t) x) : SPUMONI ;
+    opts->spumoni = x_present ? ((Long) x) : SPUMONI ;
     spqr_spumoni = opts->spumoni ;
 
     // -------------------------------------------------------------------------
@@ -318,7 +322,7 @@ int spqr_mx_get_options
     // -------------------------------------------------------------------------
 
     get_option (mxopts, "econ", &x, &x_present, NULL, cc) ;
-    opts->econ = x_present ? ((int64_t) x) : m ;
+    opts->econ = x_present ? ((Long) x) : m ;
 
     // -------------------------------------------------------------------------
     // tol: a double with default computed later
@@ -390,10 +394,12 @@ int spqr_mx_get_options
             {
                 opts->ordering = SPQR_ORDERING_AMD ;
             }
+#ifndef NPARTITION
             else if (strcmp (s, "metis") == 0)
             {
                 opts->ordering = SPQR_ORDERING_METIS ;
             }
+#endif
             else if (strcmp (s, "best") == 0)
             {
                 opts->ordering = SPQR_ORDERING_BEST ;
@@ -513,20 +519,20 @@ int spqr_mx_get_options
 
 static int put_values
 (
-    int64_t nz,
+    Long nz,
     mxArray *A,
     double *Ax,         // complex case: size 2*nz and freed on return,
                         // real case: size nz, not freed on return.
-    int64_t is_complex,
+    Long is_complex,
     cholmod_common *cc
 )
 {
-    int64_t imag_all_zero = TRUE ;
+    Long imag_all_zero = TRUE ;
 
     if (is_complex)
     {
         // A is complex, stored in interleaved form; split it for MATLAB
-        int64_t k ;
+        Long k ;
         double z, *Ax2, *Az2 ;
         MXFREE (mxGetPi (A)) ;
         // Ax2 and Az2 will never be NULL, even if nz == 0
@@ -583,7 +589,7 @@ mxArray *spqr_mx_put_sparse
 {
     mxArray *Amatlab ;
     cholmod_sparse *A ;
-    int64_t nz, is_complex ;
+    Long nz, is_complex ;
 
     A = *Ahandle ;
     is_complex = (A->xtype != CHOLMOD_REAL) ;
@@ -617,8 +623,8 @@ mxArray *spqr_mx_put_sparse
 
 mxArray *spqr_mx_put_dense2
 (
-    int64_t m,
-    int64_t n,
+    Long m,
+    Long n,
     double *Ax,         // size nz if real; size 2*nz if complex
     int is_complex,
     cholmod_common *cc
@@ -680,8 +686,8 @@ mxArray *spqr_mx_put_dense
 
 mxArray *spqr_mx_put_permutation
 (
-    int64_t *P,        // size n permutation vector
-    int64_t n, 
+    Long *P,        // size n permutation vector
+    Long n, 
     int vector,     // if TRUE, return a vector; otherwise return a matrix
 
     // workspace and parameters
@@ -690,7 +696,7 @@ mxArray *spqr_mx_put_permutation
 {
     mxArray *Pmatlab ;
     double *Ex ;
-    int64_t *Ep, *Ei, j, k ;
+    Long *Ep, *Ei, j, k ;
 
     if (cc == NULL) return (NULL) ;
 
@@ -708,8 +714,8 @@ mxArray *spqr_mx_put_permutation
     {
         // return E as a permutation matrix
         Pmatlab = mxCreateSparse (n, n, MAX (n,1), mxREAL) ;
-        Ep = (int64_t *) mxGetJc (Pmatlab) ;
-        Ei = (int64_t *) mxGetIr (Pmatlab) ;
+        Ep = (Long *) mxGetJc (Pmatlab) ;
+        Ei = (Long *) mxGetIr (Pmatlab) ;
         Ex = mxGetPr (Pmatlab) ;
         for (k = 0 ; k < n ; k++)
         {
@@ -740,13 +746,13 @@ double *spqr_mx_merge_if_complex
     const mxArray *A,
     int make_complex,       // if TRUE, return value is Complex
     // output
-    int64_t *p_nz,             // number of entries in A
+    Long *p_nz,             // number of entries in A
 
     // workspace and parameters
     cholmod_common *cc
 )
 {
-    int64_t nz, m, n ;
+    Long nz, m, n ;
     double *X, *Xx, *Xz ;
 
     if (cc == NULL) return (NULL) ;
@@ -758,7 +764,7 @@ double *spqr_mx_merge_if_complex
 
     if (mxIsSparse (A))
     {
-        int64_t *Ap = (int64_t *) mxGetJc (A) ;
+        Long *Ap = (Long *) mxGetJc (A) ;
         nz = Ap [n] ;
     }
     else
@@ -769,7 +775,7 @@ double *spqr_mx_merge_if_complex
     {
         // Note the typecast and sizeof (...) intentionally do not match
         X = (double *) cholmod_l_malloc (nz, sizeof (Complex), cc) ;
-        for (int64_t k = 0 ; k < nz ; k++)
+        for (Long k = 0 ; k < nz ; k++)
         {
             X [2*k  ] = Xx [k] ;
             X [2*k+1] = Xz ? (Xz [k]) : 0 ;
@@ -798,12 +804,12 @@ cholmod_sparse *spqr_mx_get_sparse
     double *dummy 	    // a pointer to a valid scalar double
 )
 {
-    int64_t *Ap ;
+    Long *Ap ;
     A->nrow = mxGetM (Amatlab) ;
     A->ncol = mxGetN (Amatlab) ;
-    A->p = (int64_t *) mxGetJc (Amatlab) ;
-    A->i = (int64_t *) mxGetIr (Amatlab) ;
-    Ap = (int64_t *) A->p ;
+    A->p = (Long *) mxGetJc (Amatlab) ;
+    A->i = (Long *) mxGetIr (Amatlab) ;
+    Ap = (Long *) A->p ;
     A->nzmax = Ap [A->ncol] ;
     A->packed = TRUE ;
     A->sorted = TRUE ;
@@ -887,26 +893,26 @@ void spqr_mx_get_usage
 (
     mxArray *A,         // mxArray to check
     int tight,          // if true, then nnz(A) must equal nzmax(A)
-    int64_t *p_usage,      // bytes used
-    int64_t *p_count,      // # of malloc'd blocks
+    Long *p_usage,      // bytes used
+    Long *p_count,      // # of malloc'd blocks
     cholmod_common *cc
 )
 {
-    int64_t nz, m, n, nzmax, is_complex, usage, count, *Ap ;
+    Long nz, m, n, nzmax, is_complex, usage, count, *Ap ;
     m = mxGetM (A) ;
     n = mxGetN (A) ;
     is_complex = mxIsComplex (A) ;
     if (mxIsSparse (A))
     {
         nzmax = mxGetNzmax (A) ;
-        Ap = (int64_t *) mxGetJc (A) ;
+        Ap = (Long *) mxGetJc (A) ;
         nz = MAX (Ap [n], 1) ;
         if (tight && nz != nzmax)
         {
             // This should never occur.
             mexErrMsgIdAndTxt ("QR:internalError", "nnz (A) < nzmax (A)!") ;
         }
-        usage = sizeof (int64_t) * (n+1 + nz) ;
+        usage = sizeof (Long) * (n+1 + nz) ;
         count = 2 ;
     }
     else
@@ -939,7 +945,7 @@ void spqr_mx_get_usage
 char spqr_mx_debug_string [200] ;       // global variable; debugging only
 char *spqr_mx_id (int line)
 {
-    snprintf (spqr_mx_debug_string, 190, "QR:Line_%d", line) ;
+    sprintf (spqr_mx_debug_string, "QR:Line_%d", line) ;
     return (spqr_mx_debug_string) ;
 }
 
@@ -955,7 +961,7 @@ mxArray *spqr_mx_info       // return a struct with info statistics
     double flops            // flop count, < 0 if not computed
 )
 {
-    int64_t ninfo ;
+    Long ninfo ;
     mxArray *s ;
 
     const char *info_struct [ ] =
@@ -991,7 +997,7 @@ mxArray *spqr_mx_info       // return a struct with info statistics
 
     s = mxCreateStructMatrix (1, 1, ninfo, info_struct) ;
 
-    for (int64_t k = 0 ; k <= 6 ; k++)
+    for (Long k = 0 ; k <= 6 ; k++)
     {
         mxSetFieldByNumber (s, 0, k,
             mxCreateDoubleScalar ((double) cc->SPQR_istat [k])) ;
@@ -1016,9 +1022,11 @@ mxArray *spqr_mx_info       // return a struct with info statistics
         case SPQR_ORDERING_AMD:
             ord = mxCreateString ("amd") ;
             break ;
+#ifndef NPARTITION
         case SPQR_ORDERING_METIS:
             ord = mxCreateString ("metis") ;
             break ;
+#endif
         default:
             ord = mxCreateString ("unknown") ;
             break ;
@@ -1043,11 +1051,17 @@ mxArray *spqr_mx_info       // return a struct with info statistics
 
     mxSetFieldByNumber (s, 0, 12, mxCreateDoubleScalar (cc->SPQR_norm_E_fro)) ;
 
-    // TBB removed
+#if 0 /* ifdef HAVE_TBB (TBB removed) */
+    mxSetFieldByNumber (s, 0, 13, mxCreateString ("yes")) ;
+#else
     mxSetFieldByNumber (s, 0, 13, mxCreateString ("no")) ;
+#endif
 
-    // no need to ask if METIS is available
-    mxSetFieldByNumber (s, 0, 14, mxCreateString ("(not determined)")) ;
+#ifndef NPARTITION
+    mxSetFieldByNumber (s, 0, 14, mxCreateString ("yes")) ;
+#else
+    mxSetFieldByNumber (s, 0, 14, mxCreateString ("no")) ;
+#endif
 
     if (flops >= 0)
     {

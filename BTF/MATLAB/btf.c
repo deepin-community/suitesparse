@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// BTF/MATLAB/btf.c: MATLAB interface for BTF
-//------------------------------------------------------------------------------
-
-// BTF, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-// Author: Timothy A. Davis.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === btf mexFunction ====================================================== */
+/* ========================================================================== */
 
 /* BTF: Permute a square matrix to upper block triangular form with a zero-free
  * diagonal, or with a maximum number of nonzeros along the diagonal if a
@@ -39,6 +33,9 @@
  * work performed, or -1 if the maximum work limit is reached (in which case
  * the maximum matching might not have been found).
  *
+ * By Tim Davis.  Copyright (c) 2004-2007, University of Florida.
+ * with support from Sandia National Laboratories.  All Rights Reserved.
+ *
  * See also maxtrans, strongcomp, dmperm
  */
 
@@ -46,6 +43,7 @@
 
 #include "mex.h"
 #include "btf.h"
+#define Long SuiteSparse_long
 
 void mexFunction
 (
@@ -56,7 +54,7 @@ void mexFunction
 )
 {
     double work, maxwork ;
-    int64_t b, n, k, *Ap, *Ai, *P, *R, nblocks, *Work, *Q, nmatch ;
+    Long b, n, k, *Ap, *Ai, *P, *R, nblocks, *Work, *Q, nmatch ;
     double *Px, *Rx, *Qx, *w ;
 
     /* ---------------------------------------------------------------------- */
@@ -74,16 +72,16 @@ void mexFunction
     }
 
     /* get sparse matrix A */
-    Ap = (int64_t *) mxGetJc (pargin [0]) ;
-    Ai = (int64_t *) mxGetIr (pargin [0]) ;
+    Ap = (Long *) mxGetJc (pargin [0]) ;
+    Ai = (Long *) mxGetIr (pargin [0]) ;
 
     /* get output arrays */
-    Q = mxMalloc (n * sizeof (int64_t)) ;
-    P = mxMalloc (n * sizeof (int64_t)) ;
-    R = mxMalloc ((n+1) * sizeof (int64_t)) ;
+    Q = mxMalloc (n * sizeof (Long)) ;
+    P = mxMalloc (n * sizeof (Long)) ;
+    R = mxMalloc ((n+1) * sizeof (Long)) ;
 
     /* get workspace */
-    Work = mxMalloc (5*n * sizeof (int64_t)) ;
+    Work = mxMalloc (5*n * sizeof (Long)) ;
 
     maxwork = 0 ;
     if (nargin > 1)

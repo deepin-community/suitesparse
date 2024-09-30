@@ -2,11 +2,6 @@
 // === spqr_rmap ===============================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
 // R is squeezed, find the mapping that permutes it to trapezoidal form
 
 // Rmap is a permutation that converts R from squeezed to upper trapezoidal.
@@ -33,14 +28,14 @@
 
 #include "spqr.hpp"
 
-template <typename Entry, typename Int> int spqr_rmap
+template <typename Entry> int spqr_rmap
 (
-    SuiteSparseQR_factorization <Entry, Int> *QR,
+    SuiteSparseQR_factorization <Entry> *QR,
     cholmod_common *cc
 )
 {
-    Int n, j, i, p, n1rows, n1cols ;
-    Int *Rmap, *RmapInv, *R1p, *R1j ;
+    Long n, j, i, p, n1rows, n1cols ;
+    Long *Rmap, *RmapInv, *R1p, *R1j ;
 
     n = QR->nacols ;
     Rmap = QR->Rmap ;
@@ -49,8 +44,8 @@ template <typename Entry, typename Int> int spqr_rmap
     if (Rmap == NULL)
     {
         ASSERT (RmapInv == NULL) ;
-        QR->Rmap    = Rmap    = (Int *) spqr_malloc <Int> (n, sizeof(Int), cc);
-        QR->RmapInv = RmapInv = (Int *) spqr_malloc <Int> (n, sizeof(Int), cc);
+        QR->Rmap    = Rmap    = (Long *) cholmod_l_malloc (n, sizeof(Long), cc);
+        QR->RmapInv = RmapInv = (Long *) cholmod_l_malloc (n, sizeof(Long), cc);
         if (cc->status < CHOLMOD_OK)
         {
             // out of memory
@@ -113,24 +108,14 @@ template <typename Entry, typename Int> int spqr_rmap
     return (TRUE) ;
 }
 
-template int spqr_rmap <double, int32_t>
+template int spqr_rmap <double>
 (
-    SuiteSparseQR_factorization <double, int32_t> *QR,
-    cholmod_common *cc
-) ;
-template int spqr_rmap <Complex, int32_t>
-(
-    SuiteSparseQR_factorization <Complex, int32_t> *QR,
+    SuiteSparseQR_factorization <double> *QR,
     cholmod_common *cc
 ) ;
 
-template int spqr_rmap <double, int64_t>
+template int spqr_rmap <Complex>
 (
-    SuiteSparseQR_factorization <double, int64_t> *QR,
-    cholmod_common *cc
-) ;
-template int spqr_rmap <Complex, int64_t>
-(
-    SuiteSparseQR_factorization <Complex, int64_t> *QR,
+    SuiteSparseQR_factorization <Complex> *QR,
     cholmod_common *cc
 ) ;

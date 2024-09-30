@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_tuple_lengths: determine tuple list lengths
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_tuple_lengths ==================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /* Determine the tuple list lengths, and the amount of memory required for */
 /* them.  Return the amount of memory needed to store all the tuples. */
@@ -16,7 +16,7 @@
 #include "umf_internal.h"
 #include "umf_tuple_lengths.h"
 
-Int UMF_tuple_lengths	    /* return memory usage */
+GLOBAL Int UMF_tuple_lengths	    /* return memory usage */
 (
     NumericType *Numeric,
     WorkType *Work,

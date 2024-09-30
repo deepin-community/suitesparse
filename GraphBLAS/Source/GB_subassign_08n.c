@@ -2,12 +2,10 @@
 // GB_subassign_08n: C(I,J)<M> += A ; no S
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: needed.
 
 // Method 08n: C(I,J)<M> += A ; no S
 
@@ -23,7 +21,6 @@
 // M, A: not bitmap; Method 08s is used instead if M or A are bitmap.
 
 #include "GB_subassign_methods.h"
-#include "GB_assign_shared_definitions.h"
 
 //------------------------------------------------------------------------------
 // GB_PHASE1_ACTION
@@ -101,7 +98,7 @@ GrB_Info GB_subassign_08n
     const bool Mask_struct,
     const GrB_BinaryOp accum,
     const GrB_Matrix A,
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -112,8 +109,8 @@ GrB_Info GB_subassign_08n
     ASSERT (!GB_IS_BITMAP (C)) ;
     ASSERT (!GB_IS_BITMAP (M)) ;    // Method 08s is used if M is bitmap
     ASSERT (!GB_IS_BITMAP (A)) ;    // Method 08s is used if A is bitmap
-    ASSERT (!GB_any_aliased (C, M)) ;   // NO ALIAS of C==M
-    ASSERT (!GB_any_aliased (C, A)) ;   // NO ALIAS of C==A
+    ASSERT (!GB_aliased (C, M)) ;   // NO ALIAS of C==M
+    ASSERT (!GB_aliased (C, A)) ;   // NO ALIAS of C==A
 
     //--------------------------------------------------------------------------
     // get inputs
@@ -130,10 +127,10 @@ GrB_Info GB_subassign_08n
     const int64_t *restrict Ch = C->h ;
     const int64_t *restrict Cp = C->p ;
     const bool C_is_hyper = (Ch != NULL) ;
-    GB_GET_C_HYPER_HASH ;
     GB_GET_MASK ;
-    GB_GET_ACCUM_MATRIX ;
-    const int64_t *Ah = A->h ;
+    GB_GET_A ;
+    const int64_t *restrict Ah = A->h ;
+    GB_GET_ACCUM ;
 
     //--------------------------------------------------------------------------
     // Method 08n: C(I,J)<M> += A ; no S
@@ -170,7 +167,7 @@ GrB_Info GB_subassign_08n
         &TaskList, &TaskList_size, &ntasks, &nthreads,
         &Znvec, &Zh_shallow, &Z_to_A, &Z_to_A_size, &Z_to_M, &Z_to_M_size,
         C, I, nI, Ikind, Icolon, J, nJ, Jkind, Jcolon,
-        A, M, Werk)) ;
+        A, M, Context)) ;
     GB_ALLOCATE_NPENDING_WERK ;
 
     //--------------------------------------------------------------------------
@@ -221,9 +218,8 @@ GrB_Info GB_subassign_08n
             // get jC, the corresponding vector of C
             //------------------------------------------------------------------
 
-            GB_LOOKUP_VECTOR_jC (fine_task, taskid) ;
+            GB_GET_jC ;
             bool cjdense = (pC_end - pC_start == Cvlen) ;
-
 
             //------------------------------------------------------------------
             // C(I,jC)<M(:,j)> += A(:,j) ; no S
@@ -238,7 +234,7 @@ GrB_Info GB_subassign_08n
 
                 for ( ; pM < pM_end ; pM++)
                 {
-                    if (GB_MCAST (Mx, pM, msize))
+                    if (GB_mcast (Mx, pM, msize))
                     { 
                         int64_t iA = GBI (Mi, pM, Mvlen) ;
                         // find iA in A(:,j)
@@ -295,7 +291,7 @@ GrB_Info GB_subassign_08n
                     else
                     { 
                         // both A(i,j) and M(i,j) exist
-                        if (GB_MCAST (Mx, pM, msize)) GB_PHASE1_ACTION ;
+                        if (GB_mcast (Mx, pM, msize)) GB_PHASE1_ACTION ;
                         GB_NEXT (A) ;
                         GB_NEXT (M) ;
                     }
@@ -357,7 +353,7 @@ GrB_Info GB_subassign_08n
             // get jC, the corresponding vector of C
             //------------------------------------------------------------------
 
-            GB_LOOKUP_VECTOR_jC (fine_task, taskid) ;
+            GB_GET_jC ;
             bool cjdense = (pC_end - pC_start == Cvlen) ;
             if (cjdense) continue ;
 
@@ -374,7 +370,7 @@ GrB_Info GB_subassign_08n
 
                 for ( ; pM < pM_end ; pM++)
                 {
-                    if (GB_MCAST (Mx, pM, msize))
+                    if (GB_mcast (Mx, pM, msize))
                     { 
                         int64_t iA = GBI (Mi, pM, Mvlen) ;
                         // find iA in A(:,j)
@@ -431,7 +427,7 @@ GrB_Info GB_subassign_08n
                     else
                     { 
                         // both A(i,j) and M(i,j) exist
-                        if (GB_MCAST (Mx, pM, msize)) GB_PHASE2_ACTION ;
+                        if (GB_mcast (Mx, pM, msize)) GB_PHASE2_ACTION ;
                         GB_NEXT (A) ;
                         GB_NEXT (M) ;
                     }

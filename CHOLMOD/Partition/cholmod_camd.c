@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Partition/cholmod_camd: CHOLMOD interface to CAMD
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Partition/cholmod_camd =============================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Partition Module.  Copyright (C) 2005-2022, University of Florida.
-// All Rights Reserved.  Author: Timothy A. Davis.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Partition Module.  Copyright (C) 2005-2013, Timothy A. Davis
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* CHOLMOD interface to the CAMD ordering routine.  Orders A if the matrix is
  * symmetric.  On output, Perm [k] = i if row/column i of A is the kth
@@ -30,11 +29,12 @@
  * Supports any xtype (pattern, real, complex, or zomplex)
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCAMD
 
+#include "cholmod_internal.h"
 #include "camd.h"
+#include "cholmod_camd.h"
+
 #if (CAMD_VERSION < CAMD_VERSION_CODE (2,0))
 #error "CAMD v2.0 or later is required"
 #endif
@@ -177,7 +177,7 @@ int CHOLMOD(camd)
 	Control [CAMD_AGGRESSIVE] = Common->method [Common->current].aggressive;
     }
 
-#if defined ( CHOLMOD_INT64 )
+#ifdef LONG
     /* DEBUG (camd_l_debug_init ("cholmod_l_camd")) ; */
     camd_l2 (n, C->p,  C->i, Len, C->nzmax, cnz, Nv, Next, Perm, Head, Elen,
 	    Degree, Wi, Control, Info, Cmember, BucketSet) ;

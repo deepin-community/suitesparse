@@ -20,8 +20,7 @@ function list = ssgrep (expression, index)
 %
 % See also regexp, ssget.
 
-% ssget, Copyright (c) 2009-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2009-2019, Timothy A. Davis
 
 if (nargin < 2)
     index = ssget ;

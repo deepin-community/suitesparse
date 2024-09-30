@@ -2,7 +2,7 @@
 // GB_convert_any_to_sparse: convert any matrix to sparse
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -13,7 +13,7 @@
 GrB_Info GB_convert_any_to_sparse // convert to sparse
 (
     GrB_Matrix A,           // matrix to convert to sparse
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -34,17 +34,17 @@ GrB_Info GB_convert_any_to_sparse // convert to sparse
     if (GB_IS_HYPERSPARSE (A))
     { 
         // convert from hypersparse to sparse
-        GB_OK (GB_convert_hyper_to_sparse (A, true)) ;
+        GB_OK (GB_convert_hyper_to_sparse (A, Context)) ;
     }
     else if (GB_IS_FULL (A))
     { 
         // convert from full to sparse
-        GB_OK (GB_convert_full_to_sparse (A)) ;
+        GB_OK (GB_convert_full_to_sparse (A, Context)) ;
     }
     else if (GB_IS_BITMAP (A))
     { 
         // convert from bitmap to sparse
-        GB_OK (GB_convert_bitmap_to_sparse (A, Werk)) ;
+        GB_OK (GB_convert_bitmap_to_sparse (A, Context)) ;
     }
     else
     { 

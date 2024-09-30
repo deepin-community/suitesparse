@@ -2,8 +2,8 @@
 // gb_get_mxargs: get input arguments to a GraphBLAS mexFunction 
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 //------------------------------------------------------------------------------
 
@@ -92,7 +92,7 @@ void gb_get_mxargs
             // a matrix argument is C, M, A, or B
             if ((*nmatrices) >= 6)
             { 
-                // at most 6 matrix inputs are allowed
+                // at most 4 matrix inputs are allowed
                 ERROR (usage) ;
             }
             Matrix [(*nmatrices)++] = (mxArray *) pargin [k] ;

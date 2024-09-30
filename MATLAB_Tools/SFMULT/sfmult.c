@@ -1,9 +1,6 @@
 //==============================================================================
-// SFMULT/sfmult.c: y = A*x and variants, A is sparse, x is full
+// y = A*x and variants, A is sparse, x is full
 //==============================================================================
-
-// SFMULT, Copyright (c) 2009, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
 
 // y = ytrans (yconj (atrans (aconj (A)) * xtrans (xconj (x))))
 //

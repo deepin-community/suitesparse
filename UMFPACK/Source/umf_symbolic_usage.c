@@ -1,18 +1,18 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_symbolic_usage: return final size of Symbolic object
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_symbolic_usage =================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /* Returns the final size of the Symbolic object, in Units */
 
 #include "umf_internal.h"
 #include "umf_symbolic_usage.h"
 
-double UMF_symbolic_usage
+GLOBAL double UMF_symbolic_usage
 (
     Int n_row,
     Int n_col,

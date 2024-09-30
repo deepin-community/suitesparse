@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_mem_free_tail_block: free memory in Numeric->Memory
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_mem_free_tail_block ============================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /* The UMF_mem_* routines manage the Numeric->Memory memory space. */
 
@@ -14,7 +14,7 @@
 #include "umf_internal.h"
 #include "umf_mem_free_tail_block.h"
 
-void UMF_mem_free_tail_block
+GLOBAL void UMF_mem_free_tail_block
 (
     NumericType *Numeric,
     Int i

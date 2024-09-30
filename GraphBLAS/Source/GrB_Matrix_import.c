@@ -2,7 +2,7 @@
 // GrB_Matrix_import: import a matrix in CSR, CSC, FullC, FullR, or COO format
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ static GrB_Info GB_import_worker   // import a matrix of any type
     GrB_Index Ai_len,       // number of entries in Ai (not # of bytes)
     GrB_Index Ax_len,       // number of entries in Ax (not # of bytes)
     GrB_Format format,      // import format
-    GB_Werk Werk
+    GB_Context Context
 )
 { 
 
@@ -90,7 +90,7 @@ static GrB_Info GB_import_worker   // import a matrix of any type
 //      case GrB_DENSE_ROW_FORMAT :
 //      case GrB_DENSE_COL_FORMAT :
 //
-//          ok = GB_uint64_multiply (&nvals, nrows, ncols) ;
+//          ok = GB_int64_multiply (&nvals, (int64_t) nrows, (int64_t) ncols) ;
 //          if (!ok || Ax_len < nvals)
 //          {
 //              // Ap, Ai, and Ax must all have the same size
@@ -160,7 +160,7 @@ static GrB_Info GB_import_worker   // import a matrix of any type
     // determine the # of threads to use
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
 
     //--------------------------------------------------------------------------
     // copy the user input arrays
@@ -201,7 +201,7 @@ static GrB_Info GB_import_worker   // import a matrix of any type
                 false,              // not iso
                 fast_import,
                 false,              // do not add to memtable
-                Werk)) ;
+                Context)) ;
             break ;
 
         case GrB_CSC_FORMAT : 
@@ -218,7 +218,7 @@ static GrB_Info GB_import_worker   // import a matrix of any type
                 false,              // not iso
                 fast_import,
                 false,              // do not add to memtable
-                Werk)) ;
+                Context)) ;
             break ;
 
 //      case GrB_DENSE_ROW_FORMAT :
@@ -235,7 +235,7 @@ static GrB_Info GB_import_worker   // import a matrix of any type
 //              false,              // not iso
 //              fast_import,
 //              false,              // do not add to memtable
-//              Werk)) ;
+//              Context)) ;
 //          break ;
 
 //      case GrB_DENSE_COL_FORMAT :
@@ -252,7 +252,7 @@ static GrB_Info GB_import_worker   // import a matrix of any type
 //              false,              // not iso
 //              fast_import,
 //              false,              // do not add to memtable
-//              Werk)) ;
+//              Context)) ;
 //          break ;
 
         default : // GrB_COO_FORMAT
@@ -268,7 +268,7 @@ static GrB_Info GB_import_worker   // import a matrix of any type
                 // allocate the header for A
                 GB_OK (GB_new (A, // new header
                     type, vlen, vdim, GB_Ap_null, is_csc, GxB_AUTO_SPARSITY,
-                    GB_Global_hyper_switch_get ( ), 0)) ;
+                    GB_Global_hyper_switch_get ( ), 0, Context)) ;
 
                 // build A from the input triplets
                 GB_OK (GB_builder (
@@ -294,8 +294,7 @@ static GrB_Info GB_import_worker   // import a matrix of any type
                     nvals,          // number of tuples
                     NULL,           // implicit SECOND operator for duplicates
                     type,           // type of the X array
-                    true,           // burble is allowed
-                    Werk
+                    Context
                 )) ;
             }
             break ;
@@ -307,19 +306,19 @@ static GrB_Info GB_import_worker   // import a matrix of any type
     // determine if A is iso
     //--------------------------------------------------------------------------
 
-    if (GB_check_if_iso (*A))
+    if (GB_iso_check (*A, Context))
     { 
         // All entries in A are the same; convert A to iso
-        GBURBLE ("(import post iso) ") ;
+        GBURBLE ("(post iso) ") ;
         (*A)->iso = true ;
-        GB_OK (GB_convert_any_to_iso (*A, NULL)) ;
+        GB_OK (GB_convert_any_to_iso (*A, NULL, Context)) ;
     }
 
     //--------------------------------------------------------------------------
     // conform the matrix to its desired sparsity and return result
     //--------------------------------------------------------------------------
 
-    GB_OK (GB_conform (*A, Werk)) ;
+    GB_OK (GB_conform (*A, Context)) ;
     ASSERT_MATRIX_OK (*A, "final A imported", GB0) ;
     return (GrB_SUCCESS) ;
 }
@@ -346,12 +345,12 @@ GrB_Info GB_EVAL3 (prefix, _Matrix_import_, T) /* import a matrix */           \
 {                                                                              \
     GB_WHERE1 (GB_STR(prefix) "_Matrix_import_" GB_STR(T) " (&A, type, nrows," \
         " ncols, Ap, Ai, Ax, Ap_len, Ai_len, Ax_len, format)") ;               \
-/*  GB_BURBLE_START (GB_STR(prefix) "_Matrix_import_" GB_STR(T)) ;  */         \
+    GB_BURBLE_START (GB_STR(prefix) "_Matrix_import_" GB_STR(T)) ;             \
     GB_RETURN_IF_NULL_OR_FAULTY (type) ;                                       \
     if (type->code != acode) return (GrB_DOMAIN_MISMATCH) ;                    \
     GrB_Info info = GB_import_worker (A, type, nrows, ncols, Ap, Ai,           \
-        (const void *) Ax, Ap_len, Ai_len, Ax_len, format, Werk) ;             \
-/*  GB_BURBLE_END ; */                                                         \
+        (const void *) Ax, Ap_len, Ai_len, Ax_len, format, Context) ;          \
+    GB_BURBLE_END ;                                                            \
     return (info) ;                                                            \
 }
 

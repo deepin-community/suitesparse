@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/MATLAB/mread: read a matrix in Matrix Market format
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === CHOLMOD/MATLAB/mread mexFunction ===================================== */
+/* ========================================================================== */
 
-// CHOLMOD/MATLAB Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/MATLAB Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * MATLAB(tm) is a Trademark of The MathWorks, Inc.
+ * -------------------------------------------------------------------------- */
 
 /* [A Z] = mread (filename, prefer_binary)
  *
@@ -40,10 +40,10 @@ void mexFunction
     cholmod_dense *X = NULL ;
     cholmod_sparse *A = NULL, *Z = NULL ;
     cholmod_common Common, *cm ;
-    int64_t *Ap = NULL, *Ai ;
+    Long *Ap = NULL, *Ai ;
     double *Ax, *Az = NULL ;
     char filename [MAXLEN] ;
-    int64_t nz, k, is_complex = FALSE, nrow = 0, ncol = 0, allzero ;
+    Long nz, k, is_complex = FALSE, nrow = 0, ncol = 0, allzero ;
     int mtype ;
 
     /* ---------------------------------------------------------------------- */
@@ -89,7 +89,7 @@ void mexFunction
 	mexErrMsgTxt ("could not read file") ;
     }
 
-    /* get the specific matrix (A or X), and change to zomplex if needed */
+    /* get the specific matrix (A or X), and change to ZOMPLEX if needed */
     if (mtype == CHOLMOD_SPARSE)
     {
 	A = (cholmod_sparse *) G ;
@@ -100,7 +100,7 @@ void mexFunction
 	Ai = A->i ;
 	if (is_complex)
 	{
-	    /* if complex, ensure A is zomplex */
+	    /* if complex, ensure A is ZOMPLEX */
 	    cholmod_l_sparse_xtype (CHOLMOD_ZOMPLEX, A, cm) ;
 	}
 	Ax = A->x ;
@@ -114,7 +114,7 @@ void mexFunction
 	is_complex = (X->xtype == CHOLMOD_COMPLEX) ;
 	if (is_complex)
 	{
-	    /* if complex, ensure X is zomplex */
+	    /* if complex, ensure X is ZOMPLEX */
 	    cholmod_l_dense_xtype (CHOLMOD_ZOMPLEX, X, cm) ;
 	}
 	Ax = X->x ;

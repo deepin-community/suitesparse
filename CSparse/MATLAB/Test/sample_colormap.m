@@ -5,8 +5,7 @@ function sample_colormap
 %   sample_colormap
 % See also: testall
 
-% CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 h = jet (64) ;
 h = h (64:-1:1,:) ;

@@ -13,12 +13,9 @@ function colamd_test
 %
 % See also colamd2, symamd2
 
-% COLAMD, Copyright (c) 1998-2022, Timothy A. Davis, and Stefan Larimore.
-% SPDX-License-Identifier: BSD-3-clause
+%    Copyright 1998-2007, Timothy A. Davis, and Stefan Larimore
+%    Developed in collaboration with J. Gilbert and E. Ng.
 
-% Developed in collaboration with J. Gilbert and E. Ng.
-% Acknowledgements: This work was supported by the National Science Foundation,
-% under grants DMS-9504974 and DMS-9803599.
 
 help colamd_test
 
@@ -31,8 +28,8 @@ help colamd_test
 	d = '-largeArrayDims' ;
     end
     cmd = sprintf (...
-        'mex -O %s -I../../SuiteSparse_config -I../Include ', d) ;
-    src = '../Source/colamd_l.c ../../SuiteSparse_config/SuiteSparse_config.c' ;
+        'mex -DDLONG -O %s -I../../SuiteSparse_config -I../Include ', d) ;
+    src = '../Source/colamd.c ../../SuiteSparse_config/SuiteSparse_config.c' ;
     if (~(ispc || ismac))
         % for POSIX timing routine
         src = [src ' -lrt'] ;
@@ -93,7 +90,6 @@ fprintf ('Matrices with a few dense row/cols\n') ;
 for trial = 1:20
 
     waitbar (trial/20, h, 'COLAMD: with dense rows/cols') ;
-    fprintf ('.') ;
 
     % random square unsymmetric matrix
     A = rand_matrix (1000, 1000, 1, 10, 20) ;
@@ -120,7 +116,6 @@ fprintf ('General matrices\n') ;
 for trial = 1:400
 
     waitbar (trial/400, h, 'COLAMD: general') ;
-    fprintf ('.') ;
 
     % matrix of random mtype
     mtype = irand (3) ;
@@ -141,7 +136,6 @@ fprintf ('Test error handling with invalid inputs\n') ;
 for trial = 1:30
 
     waitbar (trial/30, h, 'COLAMD: error handling') ;
-    fprintf ('.') ;
 
     A = rand_matrix (1000, 1000, 2, 0, 0) ;
     [m n] = size (A) ;
@@ -242,7 +236,6 @@ fprintf ('Matrices with a few empty rows and columns\n') ;
 for trial = 1:400
 
     waitbar (trial/400, h, 'COLAMD: with empty rows/cols') ;
-    fprintf ('.') ;
 
     % symmetric matrices
     n = 0 ;
@@ -282,7 +275,6 @@ fprintf ('Matrices with a few empty rows\n') ;
 for trial = 1:400
 
     waitbar (trial/400, h, 'COLAMD: with null rows') ;
-    fprintf ('.') ;
 
     m = 0 ;
     while (m < 5)

@@ -10,8 +10,8 @@ function C = gb_eadd (A, op, B)
 %
 % See also GrB/plus, GrB/minus, GrB/bitxor, GrB/bitor, GrB/hypot.
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
-% SPDX-License-Identifier: Apache-2.0
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 [am, an, atype] = gbsize (A) ;
 [bm, bn, btype] = gbsize (B) ;

@@ -39,7 +39,7 @@ namespace jit {
             std::string Major_ver = GB_XSTR (GxB_IMPLEMENTATION_MAJOR) ;
             std::string Minor_ver = GB_XSTR (GxB_IMPLEMENTATION_MINOR) ;
             std::string Imple_sub = GB_XSTR (GxB_IMPLEMENTATION_SUB) ;
-            return std::string(home_dir) + "/.SuiteSparse/GrB"
+            return std::string(home_dir) + "/.SuiteSparse/GraphBLAS/"
                    + Major_ver+"."+Minor_ver+"."+Imple_sub;
         } else {
             return std::string();
@@ -59,7 +59,7 @@ namespace jit {
 // `-DGRAPHBLAS_CACHE_PATH=/kernel/cache/path` CMake argument.
 // This path is used in the `getCacheDir()` function below.
 #if !defined(GRAPHBLAS_CACHE_PATH)
-#define GRAPHBLAS_CACHE_PATH get_user_home_cache_dir() 
+#define GRAPHBLAS_CACHE_PATH  get_user_home_cache_dir()
 #endif
 
 /**
@@ -79,21 +79,16 @@ namespace jit {
 std::string getCacheDir() {
   // The environment variable always overrides the
   // default/compile-time value of `GRAPHBLAS_CACHE_PATH`
-  // FIXME: use GB_jitifyer_get_cache_path ( ) here.
-  //std::cout<<"Cache-dir runtime=>"<< get_user_home_cache_dir() << std::endl;
   auto kernel_cache_path_env = std::getenv("GRAPHBLAS_CACHE_PATH");
-  //auto kernel_cache_path_env = get_user_home_cache_dir();
   auto kernel_cache_path = (kernel_cache_path_env != nullptr ? kernel_cache_path_env
                                        : GRAPHBLAS_CACHE_PATH);
 
   struct stat st;
-  //if ( (stat( kernel_cache_path.c_str(), &st) != 0) ) {
   if ( (stat( kernel_cache_path.c_str(), &st) != 0) ) {
     // `mkdir -p` the kernel cache path if it doesn't exist
-//    printf("cache is going to path %s\n", kernel_cache_path.c_str());
+    printf("cache is going to path %s\n", kernel_cache_path.c_str());
     int status;
-    //status = std::filesystem::create_directories(kernel_cache_path.c_str());
-    status = std::filesystem::create_directories(kernel_cache_path);
+    status = std::filesystem::create_directories(kernel_cache_path.c_str());
 //    if (status != 0 ) return std::string();
     //boost::filesystem::create_directories(kernel_cache_path);
   }
@@ -133,7 +128,7 @@ named_prog<jitify::experimental::Program> GBJitCache::getProgram(
 {
     // Lock for thread safety
     std::lock_guard<std::mutex> lock(_program_cache_mutex);
-//    printf(" jit_cache get program %s\n", prog_name.c_str());
+    printf(" jit_cache get program %s\n", prog_name.c_str());
 
     return getCached(prog_name, program_map, 
         [&](){
@@ -160,7 +155,7 @@ named_prog<jitify::experimental::KernelInstantiation> GBJitCache::getKernelInsta
     std::string kern_inst_name = kern_name;
     for ( auto&& arg : arguments ) kern_inst_name += '_' + arg;
 
-    //printf(" got kernel instance %s\n",kern_inst_name.c_str());
+    printf(" got kernel instance %s\n",kern_inst_name.c_str());
 
     return getCached(kern_inst_name, kernel_inst_map, 
         [&](){return program.kernel(kern_name)
@@ -202,7 +197,7 @@ std::string GBJitCache::cacheFile::read_file()
     int fd = open ( _file_name.c_str(), O_RDWR );
     if ( fd == -1 ) {
         // TODO: connect errors to GrB_error result
-//        printf(" failed to open cache file %s\n",_file_name.c_str());
+        printf(" failed to open cache file %s\n",_file_name.c_str());
         successful_read = false;
         return std::string();
     }
@@ -236,10 +231,10 @@ std::string GBJitCache::cacheFile::read_file()
         return content; // FIXME: use unique_ptr here
     }
 
-//    printf("about to close\n");
+    printf("about to close\n");
     fclose(fp);
     successful_read = true;
-//    printf(" read cache file %s\n",_file_name.c_str());
+    printf(" read cache file %s\n",_file_name.c_str());
 
     return content;
 }
@@ -249,7 +244,7 @@ void GBJitCache::cacheFile::write(std::string content)
     // Open file and create if it doesn't exist, with access 0600
     int fd = open ( _file_name.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR );
     if ( fd == -1 ) {
-        //printf(" failed to open cache file for write %s\n",_file_name.c_str());
+        printf(" failed to open cache file for write %s\n",_file_name.c_str());
         successful_write = false;
         return;
     }
@@ -265,7 +260,7 @@ void GBJitCache::cacheFile::write(std::string content)
 
     // Copy string into file
     if( fwrite(content.c_str(), content.length(), 1, fp) != 1 ) {
-        //printf(" failed to write cache file %s\n",_file_name.c_str());
+        printf(" failed to write cache file %s\n",_file_name.c_str());
         successful_write = false;
         fclose(fp);
         return;

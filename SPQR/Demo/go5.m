@@ -1,10 +1,7 @@
 % compares SPQR with SPQR+GPU on lots of sparse matrices
 
-% SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
-
 clear
-index = ssget ;
+index = UFget ;
 f = find ((index.isReal == 1) & (index.isBinary == 0) & (index.isGraph == 0)) ;
 nmat = length (f) ;
 howbig = max (index.amd_rnz (f), index.amd_lnz (f)) ;
@@ -91,7 +88,7 @@ for k = 1:nmat
         continue
     end
 
-    Prob = ssget (id, index) ;
+    Prob = UFget (id, index) ;
     A = Prob.A ;
     anorm = norm (A,1) ;
     [m n] = size (A) ;

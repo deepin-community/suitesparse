@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umfpack_save_numeric: save a Numeric object to a file
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMFPACK_save_numeric ================================================= */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     User-callable.  Saves a Numeric object to a file.  It can later be read back
@@ -30,7 +30,7 @@
 /* === UMFPACK_save_numeric ================================================= */
 /* ========================================================================== */
 
-int UMFPACK_save_numeric
+GLOBAL Int UMFPACK_save_numeric
 (
     void *NumericHandle,
     char *user_filename

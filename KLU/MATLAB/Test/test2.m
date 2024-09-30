@@ -4,9 +4,7 @@ function test2 (nmat)
 %   test2
 % See also klu
 
-% KLU, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-% Authors: Timothy A. Davis and Ekanathan Palamadai.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2004-2012, University of Florida
 
 clear functions
 % rand ('state', 0) ;

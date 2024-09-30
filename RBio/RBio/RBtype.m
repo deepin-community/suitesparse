@@ -33,8 +33,7 @@ function [mtype, mkind, skind] = RBtype (A)                                 %#ok
 %
 % See also RBread, RBwrite.
 
-% RBio, Copyright (c) 2009-2022, Timothy A. Davis.  All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2009-2011, Timothy A. Davis, http://www.suitesparse.com
 
 error ('RBtype mexFunction not found') ;
 

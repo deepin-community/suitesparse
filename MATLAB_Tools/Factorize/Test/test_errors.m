@@ -6,8 +6,7 @@ function test_errors
 %
 % See also test_all, factorize.
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
 fprintf ('\nTesting error handling (error messages are expected)\n\n') ;
 reset_rand ;

@@ -46,8 +46,7 @@ function seashell (a, b, c, n, azimuth, elevation, res)
 % See also SHELLGUI, SURF, VIEW, LINSPACE, MESHGRID, SHADING, LIGHTING,
 %   LIGHTANGLE, COLORMAP, AXIS, MATERIAL, SIN, COS, PI.
 
-% SHELLGUI, Copyright (c) 2006, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2006, Timothy A. Davis, http://www.suitesparse.com
 
 % use default input parameters, if not present
 if (nargin == 1 && ischar (a))

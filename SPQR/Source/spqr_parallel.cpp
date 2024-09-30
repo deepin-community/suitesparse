@@ -2,11 +2,6 @@
 // === spqr_parallel ===========================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
 // Factorize all the tasks in parallel with TBB.
 // The GPU is not used.
 
@@ -21,7 +16,7 @@ using namespace tbb ;
 // === spqr_zippy ==============================================================
 // =============================================================================
 
-template <typename Entry, typename Int> class spqr_zippy: public task
+template <typename Entry> class spqr_zippy: public task
 {
   public:
 
@@ -29,14 +24,14 @@ template <typename Entry, typename Int> class spqr_zippy: public task
     // spqr_zippy state
     // -------------------------------------------------------------------------
 
-    const Int id ;
+    const Long id ;
     spqr_blob <Entry> *Blob ;
 
     // -------------------------------------------------------------------------
     // spqr_zippy constructor
     // -------------------------------------------------------------------------
 
-    spqr_zippy (Int id_, spqr_blob <Entry> *Blob_) : id (id_), Blob (Blob_) { }
+    spqr_zippy (Long id_, spqr_blob <Entry> *Blob_) : id (id_), Blob (Blob_) { }
 
     // -------------------------------------------------------------------------
     // spqr_zippy task
@@ -49,19 +44,19 @@ template <typename Entry, typename Int> class spqr_zippy: public task
         // spawn my children
         // ---------------------------------------------------------------------
 
-        Int *TaskChildp = Blob->QRsym->TaskChildp ;
-        Int *TaskChild  = Blob->QRsym->TaskChild ;
-        Int pfirst = TaskChildp [id] ;
-        Int plast  = TaskChildp [id+1] ;
-        Int nchildren = plast - pfirst ;
+        Long *TaskChildp = Blob->QRsym->TaskChildp ;
+        Long *TaskChild  = Blob->QRsym->TaskChild ;
+        Long pfirst = TaskChildp [id] ;
+        Long plast  = TaskChildp [id+1] ;
+        Long nchildren = plast - pfirst ;
 
         if (nchildren > 0)
         {
             // create a list of TBB tasks, one for each child
             task_list TasksToDo ;
-            for (Int i = 0 ; i < nchildren ; i++)
+            for (Long i = 0 ; i < nchildren ; i++)
             {
-                Int child = TaskChild [pfirst+i] ;
+                Long child = TaskChild [pfirst+i] ;
                 TasksToDo.push_back (*new (allocate_child ( ))
                     spqr_zippy (child, Blob)) ;
             }
@@ -85,42 +80,35 @@ template <typename Entry, typename Int> class spqr_zippy: public task
 // === spqr_parallel ===========================================================
 // =============================================================================
 
-template <typename Entry, typename Int> void spqr_parallel
+template <typename Entry> void spqr_parallel
 (
-    Int ntasks,
+    Long ntasks,
     int nthreads,
-    spqr_blob <Entry, Int> *Blob
+    spqr_blob <Entry> *Blob
 )
 {
     // fire up TBB on the task tree, starting at the root id = ntasks-1
     task_scheduler_init
         init (nthreads <= 0 ? (task_scheduler_init::automatic) : nthreads) ;
     spqr_zippy <Entry> & a = *new (task::allocate_root ( ))
-        spqr_zippy <Entry, Int> (ntasks-1, Blob) ;
+        spqr_zippy <Entry> (ntasks-1, Blob) ;
     task::spawn_root_and_wait (a) ;
 }
-template void spqr_parallel <double, int32_t>
+
+// =============================================================================
+
+template void spqr_parallel <double>
 (
-    int32_t ntasks,
+    Long ntasks,
     int nthreads,
-    spqr_blob <double, int32_t> *Blob
+    spqr_blob <double> *Blob
 ) ;
-template void spqr_parallel <Complex, int32_t>
+
+template void spqr_parallel <Complex>
 (
-    int32_t ntasks,
+    Long ntasks,
     int nthreads,
-    spqr_blob <Complex, int32_t> *Blob
+    spqr_blob <Complex> *Blob
 ) ;
-template void spqr_parallel <double, int64_t>
-(
-    int64_t ntasks,
-    int nthreads,
-    spqr_blob <double, int64_t> *Blob
-) ;
-template void spqr_parallel <Complex, int64_t>
-(
-    int64_t ntasks,
-    int nthreads,
-    spqr_blob <Complex, int64_t> *Blob
-) ;
+
 #endif

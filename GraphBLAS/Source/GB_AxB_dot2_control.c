@@ -2,7 +2,7 @@
 // GB_AxB_dot2_control.c: determine when to use GB_AxB_dot2
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -15,7 +15,8 @@
 bool GB_AxB_dot2_control  // true: use dot2, false: use saxpy
 (
     const GrB_Matrix A,
-    const GrB_Matrix B
+    const GrB_Matrix B,
+    GB_Context Context
 )
 {
 
@@ -43,12 +44,12 @@ bool GB_AxB_dot2_control  // true: use dot2, false: use saxpy
     if (A->nvec_nonempty < 0)
     { 
         // A->nvec_nonempty is used to select the method 
-        A->nvec_nonempty = GB_nvec_nonempty (A) ;
+        A->nvec_nonempty = GB_nvec_nonempty (A, Context) ;
     }
     if (B->nvec_nonempty < 0)
     { 
         // B->nvec_nonempty is used to select the method 
-        B->nvec_nonempty = GB_nvec_nonempty (B) ;
+        B->nvec_nonempty = GB_nvec_nonempty (B, Context) ;
     }
 
     double anvec = A->nvec_nonempty ;

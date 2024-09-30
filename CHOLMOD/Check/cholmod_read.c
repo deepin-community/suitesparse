@@ -1,12 +1,10 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Check/cholmod_read: read a sparse matrix from a file
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Check/cholmod_read =================================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Check Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Check Module.  Copyright (C) 2005-2006, Timothy A. Davis.
+ * -------------------------------------------------------------------------- */
 
 /* Read a sparse matrix in triplet or dense form.  A triplet matrix can be
  * returned as compressed-column sparse matrix.  The file format is compatible
@@ -48,7 +46,7 @@
  *	complex symmetric matrices are always returned with both upper and lower
  *	triangular parts present, with an stype of zero, since CHOLMOD does not
  *	have a method for representing skew-symmetric and complex symmetric
- *	matrices.  real symmetric and complex Hermitian matrices may optionally
+ *	matrices.  Real symmetric and complex Hermitian matrices may optionally
  *	be returned with both parts present.
  *
  * Any other lines starting with "%" are treated as comments, and are ignored.
@@ -147,6 +145,9 @@
 #ifndef NCHECK
 
 #include "cholmod_internal.h"
+#include "cholmod_check.h"
+#include <string.h>
+#include <ctype.h>
 
 /* The MatrixMarket format specificies a maximum line length of 1024 */
 #define MAXLINE 1030
@@ -431,8 +432,7 @@ static int read_header	/* returns TRUE if successful, FALSE on error */
 	    l3 = 0 ;
 	    l4 = 0 ;
 	    nitems = sscanf (buf, "%lg %lg %lg %lg\n", &l1, &l2, &l3, &l4) ;
-	    if (nitems < 2 || nitems > 4 ||
-                l1 > (double) Int_max || l2 > (double) Int_max)
+	    if (nitems < 2 || nitems > 4 || l1 > Int_max || l2 > Int_max)
 	    {
 		/* invalid matrix */
 		return (FALSE) ;
@@ -557,9 +557,7 @@ static cholmod_triplet *read_triplet
 
     /* s = nrow + ncol */
     s = CHOLMOD(add_size_t) (nrow, ncol, &ok) ;
-    if (!ok || (Int) nrow > Int_max
-            || (Int) ncol > Int_max
-            || (Int) nnz  > Int_max)
+    if (!ok || nrow > Int_max || ncol > Int_max || nnz > Int_max)
     {
 	ERROR (CHOLMOD_TOO_LARGE, "problem too large") ;
 	return (NULL) ;

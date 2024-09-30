@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Supernodal/cholmod_super_numeric: supernodal Cholesky factorization
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Supernodal/cholmod_super_numeric ===================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Supernodal Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Supernodal Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* Computes the Cholesky factorization of A+beta*I or A*F+beta*I.  Only the
  * the lower triangular part of A+beta*I or A*F+beta*I is accessed.  The
@@ -54,18 +53,22 @@
  * must match.
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NGPL
 #ifndef NSUPERNODAL
+
+#include "cholmod_internal.h"
+#include "cholmod_supernodal.h"
+
+#ifdef GPU_BLAS
+#include "cholmod_gpu.h"
+#endif
 
 /* ========================================================================== */
 /* === TEMPLATE codes for GPU and regular numeric factorization ============= */
 /* ========================================================================== */
 
-#ifdef CHOLMOD_INT64
-#ifdef SUITESPARSE_CUDA
-#include "cholmod_gpu_kernels.h"
+#ifdef DLONG
+#ifdef GPU_BLAS
 #define REAL
 #include "../GPU/t_cholmod_gpu.c"
 #define COMPLEX
@@ -218,7 +221,7 @@ int CHOLMOD(super_numeric)
 	    return (FALSE) ;
 	}
     }
-    ASSERT (L->dtype == CHOLMOD_DOUBLE) ;   // FIXME
+    ASSERT (L->dtype == DTYPE) ;
     ASSERT (L->xtype == CHOLMOD_REAL || L->xtype == CHOLMOD_COMPLEX) ;
 
     /* supernodal LDL' is not supported */
@@ -298,8 +301,7 @@ int CHOLMOD(super_numeric)
     /* Flag array was used as workspace, clear it */
     Common->mark = EMPTY ;
     /* CHOLMOD(clear_flag) (Common) ; */
-    CLEAR_FLAG (Common) ;
-    ASSERT (check_flag (Common)) ;
+    CHOLMOD_CLEAR_FLAG (Common) ;
     ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, 0, Common)) ;
     CHOLMOD(free_dense) (&C, Common) ;
     return (ok) ;

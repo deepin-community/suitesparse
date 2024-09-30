@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_mem_init_memoryspace: initialize Numeric->Memory
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_mem_init_memoryspace ============================================= */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /* The UMF_mem_* routines manage the Numeric->Memory memory space. */
 
@@ -14,7 +14,7 @@
 
 /* initialize the LU and element workspace (Numeric->Memory) */
 
-void UMF_mem_init_memoryspace
+GLOBAL void UMF_mem_init_memoryspace
 (
     NumericType *Numeric
 )

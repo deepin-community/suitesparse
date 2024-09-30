@@ -1,6 +1,3 @@
-// CSparse/Source/cs_ltsolve: x=L'\b, back substitution where x and b are dense
-// CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
 #include "cs.h"
 /* solve L'x=b where x and b are dense.  x=b on input, solution on output. */
 csi cs_ltsolve (const cs *L, double *x)

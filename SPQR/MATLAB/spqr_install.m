@@ -1,4 +1,4 @@
-function spqr_install
+function spqr_install (tbb)
 %SPQR_INSTALL compile and install SuiteSparseQR
 %
 % Example:
@@ -6,22 +6,21 @@ function spqr_install
 %
 % SuiteSparseQR relies on CHOLMOD, AMD, and COLAMD, and can optionally use
 % CCOLAMD, CAMD, and METIS as well.  By default, CCOLAMD, CAMD, and METIS are
-% used.  METIS is assumed to be in the ../../CHOLMOD/SuiteSparse_metis
-% directory.  If not present there, it is not used.
+% used.  METIS is assumed to be in the ../../metis-5.1.0 directory.  If not
+% present there, it is not used.
 %
 % You can only use spqr_install while in the SuiteSparseQR/MATLAB directory.
 %
 % See also spqr, spqr_solve, spqr_qmult.
 
-% SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2008, Timothy A. Davis, http://www.suitesparse.com
 
 if (nargin < 1)
     tbb = 0 ;
 end
 
 % compile SuiteSparseQR and add to the path
-spqr_make ;
+spqr_make (tbb) ;
 spqr_path = pwd ;
 addpath (spqr_path)
 

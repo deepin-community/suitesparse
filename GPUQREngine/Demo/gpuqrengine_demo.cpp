@@ -2,34 +2,15 @@
 // === GPUQREngine/Demo/dense_demo.cpp =========================================
 // =============================================================================
 
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
-
-#if 1
-
-// Update for GPUQREngine v2.0.0: See SPQR for a demo instead.
-#include <stdio.h>
-int main(int argn, char **argv)
-{
-    printf ("Update for GPUQREngine v2.x: See SPQR for a demo instead.\n") ;
-}
-
-#else
-
 // GPUQREngine can be used to factorize a set of dense matrices of
 // various sizes.  This is the demo for this 'dense' usage case.
 // The 'sparse' case is exercised by SuiteSparseQR.
 
-#ifndef SUITESPARSE_CUDA
-#define SUITESPARSE_CUDA
+#ifndef GPU_BLAS
+#define GPU_BLAS
 #endif
 
-#include "GPUQREngine_SuiteSparse.hpp"
-#include <cublas_v2.h>
+#include "GPUQREngine.hpp"
 #include "cholmod.h"
 #include <time.h>
 #include <stdio.h>
@@ -354,4 +335,3 @@ int main(int argn, char **argv)
 #endif
 }
 
-#endif

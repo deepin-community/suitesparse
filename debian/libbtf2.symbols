@@ -1,8 +1,0 @@
-libbtf.so.2 libbtf2 #MINVER#
-* Build-Depends-Package: libsuitesparse-dev
- btf_l_maxtrans@Base 1:7.0.1
- btf_l_order@Base 1:7.0.1
- btf_l_strongcomp@Base 1:7.0.1
- btf_maxtrans@Base 1:7.0.1
- btf_order@Base 1:7.0.1
- btf_strongcomp@Base 1:7.0.1

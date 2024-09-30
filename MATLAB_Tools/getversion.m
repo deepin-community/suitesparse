@@ -46,8 +46,7 @@ function v = getversion
 %
 % See also version, ver, verLessThan.
 
-% getversion, Copyright (c) 2007, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2007, Timothy A. Davis
 
 % This function does not use ver, in the interest of speed and portability.
 % "version" is a built-in that is about 100 times faster than the ver m-file.

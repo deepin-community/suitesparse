@@ -7,8 +7,7 @@ function x = cs_reach(L,b)                                                  %#ok
 %   x = cs_reach(L,b)
 % See also: cs_demo
 
-% CXSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 error ('cs_reach mexFunction not found') ;
 

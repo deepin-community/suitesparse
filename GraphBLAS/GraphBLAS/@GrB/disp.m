@@ -24,8 +24,8 @@ function disp (A, level)
 %
 % See also GrB/display.
 
-% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
-% SPDX-License-Identifier: Apache-2.0
+% SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
+% SPDX-License-Identifier: GPL-3.0-or-later
 
 if (nargin < 2)
     level = 2 ;

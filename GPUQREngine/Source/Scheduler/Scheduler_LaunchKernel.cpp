@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/Scheduler_LaunchKernel.cpp ===========================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // This file wraps logic to launch the GPU kernel on alternating kernel streams
 // coordinated by the Scheduler. The work lists also alternate to facilitate
@@ -15,12 +9,12 @@
 //
 // =============================================================================
 
+#include "GPUQREngine_Scheduler.hpp"
 #include "GPUQREngine_Internal.hpp"
 #include "GPUQREngine_Timing.hpp"
-#include "GPUQREngine_Scheduler.hpp"
 
-template <typename Int>
-void Scheduler <Int>::launchKernel
+
+void Scheduler::launchKernel
 (
     void
 )
@@ -67,12 +61,3 @@ void Scheduler <Int>::launchKernel
     /* Clear the number of tasks. */
     numTasks[activeSet] = 0;
 }
-
-template void Scheduler <int32_t>::launchKernel
-(
-    void
-) ;
-template void Scheduler <int64_t>::launchKernel
-(
-    void
-) ;

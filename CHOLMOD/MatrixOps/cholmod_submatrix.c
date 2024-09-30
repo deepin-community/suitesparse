@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/MatrixOps/cholmod_submatrix: extract submatrix from a sparse matrix
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === MatrixOps/cholmod_submatrix ========================================== */
+/* ========================================================================== */
 
-// CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* C = A (rset,cset), where C becomes length(rset)-by-length(cset) in dimension.
  * rset and cset can have duplicate entries.  A and C must be unsymmetric.   C
@@ -36,10 +35,11 @@
  * are supported only when "values" is FALSE.
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NGPL
 #ifndef NMATRIXOPS
+
+#include "cholmod_internal.h"
+#include "cholmod_matrixops.h"
 
 /* ========================================================================== */
 /* === check_subset ========================================================= */
@@ -74,9 +74,9 @@ cholmod_sparse *CHOLMOD(submatrix)
     /* ---- input ---- */
     cholmod_sparse *A,	/* matrix to subreference */
     Int *rset,		/* set of row indices, duplicates OK */
-    int64_t rsize,	/* size of rset, or -1 for ":" */
+    SuiteSparse_long rsize,	/* size of rset, or -1 for ":" */
     Int *cset,		/* set of column indices, duplicates OK */
-    int64_t csize,	/* size of cset, or -1 for ":" */
+    SuiteSparse_long csize,	/* size of cset, or -1 for ":" */
     int values,		/* if TRUE compute the numerical values of C */
     int sorted,		/* if TRUE then return C with sorted columns */
     /* --------------- */
@@ -107,13 +107,6 @@ cholmod_sparse *CHOLMOD(submatrix)
 	ERROR (CHOLMOD_INVALID, "symmetric upper or lower case not supported") ;
 	return (NULL) ;
     }
-
-    if (rsize > Int_max || csize > Int_max)
-    {
-	ERROR (CHOLMOD_TOO_LARGE, "problem too large") ;
-	return (NULL) ;
-    }
-
     Common->status = CHOLMOD_OK ;
 
     /* ---------------------------------------------------------------------- */
@@ -122,9 +115,8 @@ cholmod_sparse *CHOLMOD(submatrix)
 
     ancol = A->ncol ;
     anrow = A->nrow ;
-    nr = (Int) rsize ;
-    nc = (Int) csize ;
-
+    nr = rsize ;
+    nc = csize ;
     if (rset == NULL)
     {
 	/* nr = 0 denotes rset = [ ], nr < 0 denotes rset = 0:anrow-1 */
@@ -155,7 +147,6 @@ cholmod_sparse *CHOLMOD(submatrix)
 	}
 	return (C) ;
     }
-
     PRINT1 (("submatrix nr "ID" nc "ID" Cnrow "ID" Cncol "ID""
 	    "  Anrow "ID" Ancol "ID"\n", nr, nc, cnrow, cncol, anrow, ancol)) ;
 

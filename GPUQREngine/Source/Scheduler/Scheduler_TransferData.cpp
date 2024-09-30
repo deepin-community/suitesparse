@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/Scheduler_TransferData.cpp ===========================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // This file wraps logic surrounding the asynchronous transfer of data between
 // the host and device. We transfer the workspace "surgically" meaning that
@@ -20,24 +14,23 @@
 //   compareTaskTime is the comparator.
 //
 // =============================================================================
-#include "GPUQREngine_TaskDescriptor.hpp"
+
 #include "GPUQREngine_Scheduler.hpp"
+#include "GPUQREngine_TaskDescriptor.hpp"
 
-static int compareTaskTime (const void * a, const void * b)
+
+int compareTaskTime (const void * a, const void * b)
 {
-    const TaskDescriptor *ta = reinterpret_cast<const TaskDescriptor*> (a);
-    const TaskDescriptor *tb = reinterpret_cast<const TaskDescriptor*> (b);
+    TaskDescriptor *ta = (TaskDescriptor*) a;
+    TaskDescriptor *tb = (TaskDescriptor*) b;
 
-    int64_t aFlops = getWeightedFlops(ta);
-    int64_t bFlops = getWeightedFlops(tb);
+    Int aFlops = getWeightedFlops(ta);
+    Int bFlops = getWeightedFlops(tb);
 
-    if (aFlops == bFlops) return (0) ;
-    if (aFlops <  bFlops) return (-1) ;
-    /* if (aFlops >  bFlops) */ return (1) ;
+    return bFlops - aFlops;
 }
 
-template <typename Int>
-void Scheduler <Int>::transferData
+void Scheduler::transferData
 (
     void
 )
@@ -50,7 +43,7 @@ void Scheduler <Int>::transferData
     for(Int t=0; t<numTasks[activeSet]; t++)
     {
         TaskDescriptor *task = &(queue[t]);
-        int64_t flops = getFlops(task);
+        Int flops = getFlops(task);
         gpuFlops += flops;
     }
 
@@ -64,12 +57,3 @@ void Scheduler <Int>::transferData
     wsQueueSurgical.transfer(cudaMemcpyHostToDevice, false, memoryStreamH2D);
     wsQueueSurgical.assign(NULL, NULL);
 }
-
-template void Scheduler <int32_t>::transferData
-(
-    void
-) ;
-template void Scheduler <int64_t>::transferData
-(
-    void
-) ;

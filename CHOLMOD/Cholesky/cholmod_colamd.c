@@ -1,12 +1,10 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Cholesky/cholmod_colamd: COLAMD interface for CHOLMOD
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Cholesky/cholmod_colamd ============================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* CHOLMOD interface to the COLAMD ordering routine (version 2.4 or later).
  * Finds a permutation p such that the Cholesky factorization of PAA'P' is
@@ -24,11 +22,12 @@
  * Supports any xtype (pattern, real, complex, or zomplex)
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCHOLESKY
 
+#include "cholmod_internal.h"
 #include "colamd.h"
+#include "cholmod_cholesky.h"
+
 #if (!defined (COLAMD_VERSION) || (COLAMD_VERSION < COLAMD_VERSION_CODE (2,5)))
 #error "COLAMD v2.5 or later is required"
 #endif
@@ -92,7 +91,7 @@ int CHOLMOD(colamd)
     s = CHOLMOD(mult_size_t) (nrow, 4, &ok) ;
     s = CHOLMOD(add_size_t) (s, ncol, &ok) ;
 
-#if defined ( CHOLMOD_INT64 )
+#ifdef LONG
     alen = colamd_l_recommended (A->nzmax, ncol, nrow) ;
     colamd_l_set_defaults (knobs) ;
 #else
@@ -151,7 +150,7 @@ int CHOLMOD(colamd)
 	Int stats [COLAMD_STATS] ;
 	Cp = C->p ;
 
-#if defined ( CHOLMOD_INT64 )
+#ifdef LONG
 	colamd_l (ncol, nrow, alen, C->i, Cp, knobs, stats) ;
 #else
 	colamd (ncol, nrow, alen, C->i, Cp, knobs, stats) ;

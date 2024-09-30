@@ -1,13 +1,9 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_transpose.h
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
-Int UMF_transpose
+GLOBAL Int UMF_transpose
 (
     Int n_row,
     Int n_col,

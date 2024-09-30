@@ -2,8 +2,8 @@
 // gblogassign: logical assignment: C(M) = A
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 //------------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@
     [m n] = size (C) ;
     mnz = nnz (M) ;         % A must be mnz-by-1
     if (~isequal (size (A), [mnz 1]))
-        error ('GrB:error', 'A must be nnz(M)-by-1')
+        error ('A must be nnz(M)-by-1')
     end
 
     [ai,  ~, ax] = GrB.extracttuples (A) ;
@@ -102,10 +102,8 @@ void mexFunction
     GrB_Matrix M_input = gb_get_shallow (pargin [1]) ;
     GrB_Matrix M = gb_new (GrB_BOOL, nrows, ncols, GxB_BY_COL,
         GxB_SPARSE + GxB_HYPERSPARSE) ;
-//  OK1 (M, GxB_Matrix_select (M, NULL, NULL, GxB_NONZERO, M_input,
-//      NULL, NULL)) ;
-    OK1 (M, GrB_Matrix_select_BOOL (M, NULL, NULL, GrB_VALUENE_BOOL, M_input,
-        0, NULL)) ;
+    OK1 (M, GxB_Matrix_select (M, NULL, NULL, GxB_NONZERO, M_input,
+        NULL, NULL)) ;
 
     OK (GrB_Matrix_free (&M_input)) ;
     GrB_Index mnz ;

@@ -28,8 +28,5 @@
 %
 % Requires ssget, CSparse, CHOLMOD, AMD, COLAMD, METIS.
 
-% SuiteSparseCollection, Copyright (c) 2006-2019, Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
-
+% Copyright 2006-2019, Timothy A. Davis
 

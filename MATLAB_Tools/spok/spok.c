@@ -1,7 +1,3 @@
-// SuiteSparse/MATLAB_Tools/spok/spok.c
-// SPOK, Copyright (c) 2008-2011, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
 #include "spok.h"
 
 /* check the validity of a MATLAB sparse matrix */

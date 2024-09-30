@@ -2,7 +2,7 @@
 // GB_import: import a matrix in any format
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ GrB_Info GB_import      // import/pack a matrix in any format
     bool fast_import,   // if true: trust the data, if false: check it
 
     bool add_to_memtable,   // if true: add to debug memtable
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -88,8 +88,8 @@ GrB_Info GB_import      // import/pack a matrix in any format
     bool ok = true ;
     int64_t full_size = 0, Ax_size_for_non_iso ;
     if (sparsity == GxB_BITMAP || sparsity == GxB_FULL)
-    { 
-        ok = GB_int64_multiply ((GrB_Index *) (&full_size), vlen, vdim) ;
+    {
+        ok = GB_int64_multiply ((GrB_Index *) &full_size, vlen, vdim) ;
         if (!ok) full_size = INT64_MAX ;
     }
 
@@ -98,7 +98,7 @@ GrB_Info GB_import      // import/pack a matrix in any format
         case GxB_HYPERSPARSE : 
             // check Ap and get nvals
             if (nvec > vdim) return (GrB_INVALID_VALUE) ;
-            if (Ap_size < (((vdim == 1) ? 1 : nvec)+1) * sizeof (int64_t))
+            if (Ap_size < (nvec+1) * sizeof (int64_t))
             { 
                 return (GrB_INVALID_VALUE) ;
             }
@@ -201,14 +201,14 @@ GrB_Info GB_import      // import/pack a matrix in any format
     if (packing)
     { 
         // clear the content and reuse the header
-        GB_phybix_free (*A) ;
+        GB_phbix_free (*A) ;
         ASSERT (!((*A)->static_header)) ;
     }
 
     // also create A->p if this is a sparse GrB_Vector
     GrB_Info info = GB_new (A, // any sparsity, new or existing user header
         type, vlen, vdim, is_sparse_vector ? GB_Ap_calloc : GB_Ap_null,
-        is_csc, sparsity, GB_Global_hyper_switch_get ( ), nvec) ;
+        is_csc, sparsity, GB_Global_hyper_switch_get ( ), nvec, Context) ;
     if (info != GrB_SUCCESS)
     { 
         // out of memory
@@ -238,16 +238,14 @@ GrB_Info GB_import      // import/pack a matrix in any format
             { 
                 // for debugging only
                 #ifdef GB_MEMDUMP
-                printf ("import A->h to memtable: %p\n", (*A)->h) ; // MEMDUMP
+                printf ("import A->h to memtable: %p\n", (*A)->h) ;
                 #endif
                 GB_Global_memtable_add ((*A)->h, (*A)->h_size) ;
             }
-            // fall through to the sparse case
 
         case GxB_SPARSE : 
             (*A)->jumbled = jumbled ;   // import jumbled status
             (*A)->nvec_nonempty = -1 ;  // not computed; delay until required
-            (*A)->nvals = nvals ;
 
             if (is_sparse_vector)
             { 
@@ -263,8 +261,7 @@ GrB_Info GB_import      // import/pack a matrix in any format
                 { 
                     // for debugging only
                     #ifdef GB_MEMDUMP
-                    printf ("import A->p to memtable: %p\n", // MEMDUMP
-                        (*A)->p) ;
+                    printf ("import A->p to memtable: %p\n", (*A)->p) ;
                     #endif
                     GB_Global_memtable_add ((*A)->p, (*A)->p_size) ;
                 }
@@ -277,8 +274,7 @@ GrB_Info GB_import      // import/pack a matrix in any format
             { 
                 // for debugging only
                 #ifdef GB_MEMDUMP
-                printf ("import A->i to memtable: %p\n", // MEMDUMP
-                    (*A)->i) ;
+                printf ("import A->i to memtable: %p\n", (*A)->i) ;
                 #endif
                 GB_Global_memtable_add ((*A)->i, (*A)->i_size) ;
             }
@@ -294,8 +290,7 @@ GrB_Info GB_import      // import/pack a matrix in any format
             { 
                 // for debugging only
                 #ifdef GB_MEMDUMP
-                printf ("import A->b to memtable: %p\n", // MEMDUMP
-                    (*A)->b) ;
+                printf ("import A->b to memtable: %p\n", (*A)->b) ;
                 #endif
                 GB_Global_memtable_add ((*A)->b, (*A)->b_size) ;
             }
@@ -316,7 +311,7 @@ GrB_Info GB_import      // import/pack a matrix in any format
         { 
             // for debugging only
             #ifdef GB_MEMDUMP
-            printf ("import A->x to memtable: %p size: %lu\n",  // MEMDUMP
+            printf ("import A->x to memtable: %p size: %lu\n",
                 (*A)->x, Ax_size) ;
             #endif
             GB_Global_memtable_add ((*A)->x, (*A)->x_size) ;
@@ -363,7 +358,7 @@ GrB_Info GB_import      // import/pack a matrix in any format
         // The time for this check is proportional to the size of the 5 input
         // arrays, far higher than the O(1) time for the fast import.  However,
         // this check is essential if the input data is not trusted.
-        GBURBLE ("(secure import) ") ;
+        GBURBLE ("(secure) ") ;
         GB_OK (GB_matvec_check (*A, "secure import", GxB_SILENT, NULL, "")) ;
     }
 

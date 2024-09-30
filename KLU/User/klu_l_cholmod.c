@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// SuiteSparse/KLU/User/klu_l_cholmod.c: KLU int64_t interface to CHOLMOD
-//------------------------------------------------------------------------------
-
-// KLU, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-// Authors: Timothy A. Davis and Ekanathan Palamadai.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === klu_cholmod ========================================================== */
+/* ========================================================================== */
 
 /* klu_l_cholmod: user-defined ordering function to interface KLU to CHOLMOD.
  *
@@ -24,14 +18,14 @@
 #define TRUE 1
 #define FALSE 0
 
-int64_t klu_l_cholmod
+SuiteSparse_long klu_l_cholmod
 (
     /* inputs */
-    int64_t n,              /* A is n-by-n */
-    int64_t Ap [ ],         /* column pointers */
-    int64_t Ai [ ],         /* row indices */
+    SuiteSparse_long n,              /* A is n-by-n */
+    SuiteSparse_long Ap [ ],         /* column pointers */
+    SuiteSparse_long Ai [ ],         /* row indices */
     /* outputs */
-    int64_t Perm [ ],       /* fill-reducing permutation */
+    SuiteSparse_long Perm [ ],       /* fill-reducing permutation */
     /* user-defined */
     klu_l_common *Common    /* user-defined data is in Common->user_data */
 )
@@ -40,11 +34,8 @@ int64_t klu_l_cholmod
     cholmod_sparse Amatrix, *A, *AT, *S ;
     cholmod_factor *L ;
     cholmod_common cm ;
-    int64_t *P ;
-    int64_t k ;
-    int symmetric ;
-    klu_l_common km ;
-    klu_l_defaults (&km) ;
+    SuiteSparse_long *P ;
+    SuiteSparse_long k, symmetric ;
 
     if (Ap == NULL || Ai == NULL || Perm == NULL || n < 0)
     {
@@ -64,7 +55,7 @@ int64_t klu_l_cholmod
     A->nzmax = Ap [n] ;             /* with nzmax entries */
     A->packed = TRUE ;              /* there is no A->nz array */
     A->stype = 0 ;                  /* A is unsymmetric */
-    A->itype = CHOLMOD_LONG ;
+    A->itype = CHOLMOD_INT ;
     A->xtype = CHOLMOD_PATTERN ;
     A->dtype = CHOLMOD_DOUBLE ;
     A->nz = NULL ;
@@ -75,15 +66,8 @@ int64_t klu_l_cholmod
     A->sorted = FALSE ;             /* columns of A are not sorted */
 
     /* get the user_data; default is symmetric if user_data is NULL */
-    symmetric = true ;
-    cm.nmethods = 1 ;
-    cm.method [0].ordering = CHOLMOD_AMD ;
-    int64_t *user_data = Common->user_data ;
-    if (user_data != NULL)
-    {
-        symmetric = (user_data [0] != 0) ;
-        cm.method [0].ordering = user_data [1] ;
-    }
+    symmetric = (Common->user_data == NULL) ? TRUE :
+        (((SuiteSparse_long *) (Common->user_data)) [0] != 0) ;
 
     /* AT = pattern of A' */
     AT = cholmod_l_transpose (A, 0, &cm) ;

@@ -13,8 +13,7 @@ function b = gee_its_simple_backsolve (U, b)
 %
 % See also: mldivide, gee_its_simple, gee_its_short, gee_its_simple_forwardsolve
 
-% GEE, Copyright (c) 2006-2007, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2006-2007, Timothy A. Davis, http://www.suitesparse.com
 
 %-------------------------------------------------------------------------------
 % check inputs

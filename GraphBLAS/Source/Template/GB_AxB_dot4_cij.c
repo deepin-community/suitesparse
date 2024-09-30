@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-// GB_AxB_dot4_cij.c: C(i,j) += A(:,i)'*B(:,j) for dot4 method
+// GB_AxB_dot4_cij.c: C(i,j) = A(:,i)'*B(:,j) for dot4 method
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -15,11 +15,8 @@
     // get C(i,j)
     //--------------------------------------------------------------------------
 
-    // future:: allow for the use of any accum in the JIT:  set cij = identity,
-    // and then use the accum when done.
-
     const int64_t pC = i + pC_start ;   // C(i,j) is at Cx [pC]
-    GB_C_TYPE GB_GET4C (cij, pC) ;      // cij = Cx [pC]
+    GB_CTYPE GB_GET4C (cij, pC) ;       // cij = Cx [pC]
 
     //--------------------------------------------------------------------------
     // C(i,j) += A (:,i)*B(:,j): a single dot product
@@ -32,45 +29,27 @@
         // A is sparse/hyper and B is full
         //----------------------------------------------------------------------
 
-        #if GB_IS_LXOR_PAIR_SEMIRING
+        #if GB_IS_PAIR_MULTIPLIER
         { 
-            // (boolean XOR monoid)_PAIR semiring
+            #if GB_IS_EQ_MONOID
+            // EQ_PAIR semiring
+            cij = (cij == 1) ;
+            #elif (GB_CTYPE_BITS > 0)
+            // PLUS, XOR monoids: A(:,i)'*B(:,j) is nnz(A(:,i)),
+            // for bool, 8-bit, 16-bit, or 32-bit integer
             uint64_t t = ((uint64_t) cij) + ainz ;
-            cij = (GB_C_TYPE) (t & 0x1L) ;
+            cij = (GB_CTYPE) (t & GB_CTYPE_BITS) ;
+            #elif GB_IS_PLUS_FC32_MONOID
+            // PLUS monoid for float complex
+            cij = GxB_CMPLXF (crealf (cij) + (float) ainz, 0) ;
+            #elif GB_IS_PLUS_FC64_MONOID
+            // PLUS monoid for double complex
+            cij = GxB_CMPLX (creal (cij) + (double) ainz, 0) ;
+            #else
+            // PLUS monoid for float, double, or 64-bit integers 
+            cij += (GB_CTYPE) ainz ;
+            #endif
         }
-        #elif GB_IS_PLUS_PAIR_8_SEMIRING
-        { 
-            // (PLUS int8, uint8 monoids)_PAIR semirings
-            uint64_t t = ((uint64_t) cij) + ainz ;
-            cij = (GB_C_TYPE) (t & 0xFFL) ;
-        }
-        #elif GB_IS_PLUS_PAIR_16_SEMIRING
-        { 
-            // (PLUS int16, uint16 monoids)_PAIR semirings
-            uint64_t t = ((uint64_t) cij) + ainz ;
-            cij = (GB_C_TYPE) (t & 0xFFFFL) ;
-        }
-        #elif GB_IS_PLUS_PAIR_32_SEMIRING
-        { 
-            // (PLUS int32, uint32 monoids)_PAIR semirings
-            uint64_t t = ((uint64_t) cij) + ainz ;
-            cij = (GB_C_TYPE) (t & 0xFFFFFFFFL) ;
-        }
-        #elif GB_IS_PLUS_PAIR_BIG_SEMIRING
-        { 
-            // (PLUS int64, uint64, float, or double)_PAIR semirings
-            cij += (GB_C_TYPE) ainz ;
-        }
-//      #elif GB_IS_PLUS_PAIR_FC32_SEMIRING
-//      {
-//          // (PLUS monoid for float complex)_PAIR semiring
-//          cij = GJ_CMPLX32 (GB_crealf (cij) + (float) ainz, GB_imagf (cij)) ;
-//      }
-//      #elif GB_IS_PLUS_PAIR_FC64_SEMIRING
-//      {
-//          // (PLUS monoid for double complex)_PAIR semiring
-//          cij = GJ_CMPLX64 (GB_creal (cij) + (double) ainz, GB_imag (cij)) ;
-//      }
         #elif GB_IS_MIN_FIRSTJ_SEMIRING
         {
             // MIN_FIRSTJ semiring: take the 1st entry in A(:,i)
@@ -91,7 +70,7 @@
         }
         #else
         {
-            GB_PRAGMA_SIMD_REDUCTION_MONOID (cij)
+            GB_PRAGMA_SIMD_DOT (cij)
             for (int64_t p = pA ; p < pA_end ; p++)
             { 
                 int64_t k = Ai [p] ;
@@ -136,7 +115,7 @@
         }
         #else
         {
-            GB_PRAGMA_SIMD_REDUCTION_MONOID (cij)
+            GB_PRAGMA_SIMD_DOT (cij)
             for (int64_t p = pA ; p < pA_end ; p++)
             {
                 int64_t k = Ai [p] ;
@@ -145,6 +124,7 @@
                     GB_DOT (k, p, pB+k) ; // cij+=A(k,i)*B(k,j)
                 }
             }
+
         }
         #endif
 
@@ -155,8 +135,6 @@
     // save C(i,j)
     //--------------------------------------------------------------------------
 
-    // future:: add the accum here for the JIT kernel (arbitrary accum
-    // and typecasting)
     Cx [pC] = cij ;
 }
 

@@ -2,7 +2,7 @@
 // GB_emult: C = A.*B, C<M>=A.*B, or C<!M>=A.*B
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -33,7 +33,6 @@
 
 #include "GB_emult.h"
 #include "GB_add.h"
-#include "GB_binop.h"
 
 #define GB_FREE_WORKSPACE                       \
 {                                               \
@@ -46,7 +45,7 @@
 #define GB_FREE_ALL             \
 {                               \
     GB_FREE_WORKSPACE ;         \
-    GB_phybix_free (C) ;        \
+    GB_phbix_free (C) ;         \
 }
 
 GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
@@ -61,7 +60,7 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
     const GrB_Matrix A,     // input A matrix
     const GrB_Matrix B,     // input B matrix
     const GrB_BinaryOp op,  // op to perform C = op (A,B)
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -72,10 +71,10 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
     GrB_Info info ;
     ASSERT (C != NULL && (C->static_header || GBNSTATIC)) ;
 
-    ASSERT_MATRIX_OK (A, "A for emult", GB0) ;
-    ASSERT_MATRIX_OK (B, "B for emult", GB0) ;
-    ASSERT_MATRIX_OK_OR_NULL (M, "M for emult", GB0) ;
-    ASSERT_BINARYOP_OK (op, "op for emult", GB0) ;
+    ASSERT_MATRIX_OK (A, "A for emult phased", GB0) ;
+    ASSERT_MATRIX_OK (B, "B for emult phased", GB0) ;
+    ASSERT_MATRIX_OK_OR_NULL (M, "M for emult phased", GB0) ;
+    ASSERT_BINARYOP_OK (op, "op for emult phased", GB0) ;
     ASSERT (A->vdim == B->vdim && A->vlen == B->vlen) ;
     ASSERT (GB_IMPLIES (M != NULL, A->vdim == M->vdim && A->vlen == M->vlen)) ;
 
@@ -105,42 +104,6 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
     int ewise_method ;          // method to use
     int C_sparsity = GB_emult_sparsity (&apply_mask, &ewise_method,
         M, Mask_comp, A, B) ;
-
-    //--------------------------------------------------------------------------
-    // get the opcode and determine if f(x,y) == f(y,x)
-    //--------------------------------------------------------------------------
-
-    GB_Opcode opcode = op->opcode ;
-    if (op->xtype == GrB_BOOL)
-    { 
-        opcode = GB_boolean_rename (opcode) ;
-    }
-
-    bool op_is_commutative ;
-    switch (opcode)
-    {
-        case GB_MIN_binop_code     :    // z = min(x,y)
-        case GB_MAX_binop_code     :    // z = max(x,y)
-        case GB_PLUS_binop_code    :    // z = x + y
-        case GB_TIMES_binop_code   :    // z = x * y
-        case GB_PAIR_binop_code    :    // z = 1
-        case GB_ISEQ_binop_code    :    // z = (x == y)
-        case GB_ISNE_binop_code    :    // z = (x != y)
-        case GB_EQ_binop_code      :    // z = (x == y)
-        case GB_NE_binop_code      :    // z = (x != y)
-        case GB_LOR_binop_code     :    // z = x || y
-        case GB_LAND_binop_code    :    // z = x && y
-        case GB_LXOR_binop_code    :    // z = x != y
-        case GB_HYPOT_binop_code   :    // z = hypot (x,y)
-        case GB_BOR_binop_code     :    // z = (x | y), bitwise or
-        case GB_BAND_binop_code    :    // z = (x & y), bitwise and
-        case GB_BXOR_binop_code    :    // z = (x ^ y), bitwise xor
-        case GB_BXNOR_binop_code   :    // z = ~(x ^ y), bitwise xnor
-            op_is_commutative = true ;
-            break ;
-        default : 
-            op_is_commutative = false ;
-    }
 
     //--------------------------------------------------------------------------
     // C<M or !M> = A.*B
@@ -174,7 +137,7 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
 
             return (GB_add (C, ctype, C_is_csc, M, Mask_struct,
                 Mask_comp, mask_applied, A, B, false, NULL, NULL,
-                op, false, Werk)) ;
+                op, Context)) ;
 
         case GB_EMULT_METHOD2 :  // A sparse/hyper, B bitmap/full
 
@@ -210,7 +173,7 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
 
             return (GB_emult_02 (C, ctype, C_is_csc,
                 (apply_mask) ? M : NULL, Mask_struct, Mask_comp,
-                A, B, op, Werk)) ;
+                A, B, op, false, Context)) ;
 
         case GB_EMULT_METHOD3 :  // A bitmap/full, B sparse/hyper
 
@@ -239,28 +202,13 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
             //      sparse  full        bitmap          sparse  (method: 3)
             //      sparse  full        full            sparse  (method: 3)
 
-            // A is bitmap/full and B is sparse/hyper.
+            // A is bitmap/full and B is sparse/hyper, with flipxy true.
             // M is not present, not applied, or bitmap/full
             // Note that A and B are flipped.
 
-            if (op_is_commutative)
-            {
-                // replace A.*B with B.*A, and use GB_emult_02, since the op is
-                // commutative.  No need to change the op or flip it by using
-                // f(y,x).  Just swap A and B.  This allows GB_emult_03 to
-                // cover fewer cases via GB_NO_COMMUTATIVE_BINARY_OPS in the
-                // GB_binop_factory.
-                return (GB_emult_02 (C, ctype, C_is_csc,
-                    (apply_mask) ? M : NULL, Mask_struct, Mask_comp,
-                    B, A, op, Werk)) ;
-            }
-            else
-            {
-                // the op is not commutative: use GB_emult_03
-                return (GB_emult_03 (C, ctype, C_is_csc,
-                    (apply_mask) ? M : NULL, Mask_struct, Mask_comp,
-                    A, B, op, Werk)) ;
-            }
+            return (GB_emult_02 (C, ctype, C_is_csc,
+                (apply_mask) ? M : NULL, Mask_struct, Mask_comp,
+                B, A, op, true, Context)) ;
 
         case GB_EMULT_METHOD8 : 
 
@@ -335,9 +283,9 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
             // by method 4, which constructs C as sparse/hyper (the same
             // structure as M), not bitmap.
 
-            return (GB_emult_bitmap (C, ewise_method, ctype, C_is_csc,
+            return (GB_bitmap_emult (C, ewise_method, ctype, C_is_csc,
                 M, Mask_struct, Mask_comp, mask_applied, A, B,
-                op, Werk)) ;
+                op, Context)) ;
 
         case GB_EMULT_METHOD4 : 
 
@@ -350,7 +298,7 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
             //      sparse  sparse      full            full    (GB_add or 4)
 
             return (GB_emult_04 (C, ctype, C_is_csc, M, Mask_struct,
-                mask_applied, A, B, op, Werk)) ;
+                mask_applied, A, B, op, Context)) ;
 
         case GB_EMULT_METHOD9 : break ; // punt
 
@@ -417,7 +365,7 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
         // input/output to phase0:
         &C_sparsity,
         // original input:
-        (apply_mask) ? M : NULL, A, B, Werk)) ;
+        (apply_mask) ? M : NULL, A, B, Context)) ;
 
     // C is still sparse or hypersparse, not bitmap or full
     ASSERT (C_sparsity == GxB_SPARSE || C_sparsity == GxB_HYPERSPARSE) ;
@@ -433,7 +381,7 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
         // computed by phase0:
         Cnvec, Ch, C_to_M, C_to_A, C_to_B, false,
         // original input:
-        (apply_mask) ? M : NULL, A, B, Werk)) ;
+        (apply_mask) ? M : NULL, A, B, Context)) ;
 
     // count the number of entries in each vector of C
     GB_OK (GB_emult_08_phase1 (
@@ -444,7 +392,7 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
         // from phase0:
         Cnvec, Ch, C_to_M, C_to_A, C_to_B,
         // original input:
-        (apply_mask) ? M : NULL, Mask_struct, Mask_comp, A, B, Werk)) ;
+        (apply_mask) ? M : NULL, Mask_struct, Mask_comp, A, B, Context)) ;
 
     //--------------------------------------------------------------------------
     // phase2: compute the entries (indices and values) in each vector of C
@@ -465,14 +413,14 @@ GrB_Info GB_emult           // C=A.*B, C<M>=A.*B, or C<!M>=A.*B
         // from GB_emult_sparsity:
         ewise_method,
         // original input:
-        (apply_mask) ? M : NULL, Mask_struct, Mask_comp, A, B, Werk)) ;
+        (apply_mask) ? M : NULL, Mask_struct, Mask_comp, A, B, Context)) ;
 
     //--------------------------------------------------------------------------
     // free workspace and return result
     //--------------------------------------------------------------------------
 
     GB_FREE_WORKSPACE ;
-    ASSERT_MATRIX_OK (C, "C output for emult", GB0) ;
+    ASSERT_MATRIX_OK (C, "C output for emult phased", GB0) ;
     (*mask_applied) = apply_mask ;
     return (GrB_SUCCESS) ;
 }

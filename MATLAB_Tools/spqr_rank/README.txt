@@ -46,9 +46,7 @@ SJget:      a subset, adequate to run the demonstration and testing routines
             University Singular Matrix Database.  Also SJget has utilities
             to download additional matrices from the database.
             
-spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-All Rights Reserved.
-SPDX-License-Identifier: BSD-3-clause
+Copyright 2011-2012, Leslie Foster and Timothy A Davis.
 
 ChangeLog:
 

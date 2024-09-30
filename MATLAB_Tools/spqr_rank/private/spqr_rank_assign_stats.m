@@ -67,9 +67,7 @@ function [ stats ] =  spqr_rank_assign_stats(...
 %    stats_ssp_NT -- stats from spqr_ssp applied to A' * NT
 %    start_tic -- tic time for start of calling routine
 
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2012, Leslie Foster and Timothy A Davis.
 
 get_details = opts.get_details ;
 

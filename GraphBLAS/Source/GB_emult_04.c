@@ -2,17 +2,13 @@
 // GB_emult_04: C<M>= A.*B, M sparse/hyper, A and B bitmap/full
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
-// JIT: done, but could be extended. symbolic phase 1 has 48 variants of mask
-// M, matrices A, B.  6 mask types x (M sparse or hyper) x A and B (bitmap or
-// full) = 48.  Use the JIT for select phase1 instead?
-
 // C<M>= A.*B, M sparse/hyper, A and B bitmap/full.  C has the same sparsity
-// structure as M, and its pattern is a subset of M.  M is not complemented.
+// structure as M, and its pattern is a subset of M.
 
             //      ------------------------------------------
             //      C       <M>=        A       .*      B
@@ -30,9 +26,8 @@
 #include "GB_emult.h"
 #include "GB_binop.h"
 #include "GB_unused.h"
-#include "GB_stringify.h"
-#ifndef GBCOMPACT
-#include "GB_ew__include.h"
+#ifndef GBCUDA_DEV
+#include "GB_binop__include.h"
 #endif
 
 #define GB_FREE_WORKSPACE                   \
@@ -44,7 +39,7 @@
 #define GB_FREE_ALL                         \
 {                                           \
     GB_FREE_WORKSPACE ;                     \
-    GB_phybix_free (C) ;                    \
+    GB_phbix_free (C) ;                     \
 }
 
 GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
@@ -58,7 +53,7 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
     const GrB_Matrix A,     // input A matrix (bitmap/full)
     const GrB_Matrix B,     // input B matrix (bitmap/full)
     const GrB_BinaryOp op,  // op to perform C = op (A,B)
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -78,8 +73,8 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
     ASSERT (!GB_PENDING (M)) ;
     ASSERT (GB_JUMBLED_OK (M)) ;
     ASSERT (!GB_ZOMBIES (M)) ;
-    ASSERT (GB_IS_BITMAP (A) || GB_IS_FULL (A)) ;
-    ASSERT (GB_IS_BITMAP (B) || GB_IS_FULL (B)) ;
+    ASSERT (GB_IS_BITMAP (A) || GB_IS_FULL (A) || GB_as_if_full (A)) ;
+    ASSERT (GB_IS_BITMAP (B) || GB_IS_FULL (B) || GB_as_if_full (B)) ;
 
     int C_sparsity = GB_sparsity (M) ;
 
@@ -106,7 +101,7 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
     const int64_t *restrict Mp = M->p ;
     const int64_t *restrict Mh = M->h ;
     const int64_t *restrict Mi = M->i ;
-    const GB_M_TYPE *restrict Mx = (Mask_struct) ? NULL : (GB_M_TYPE *) M->x ;
+    const GB_void *restrict Mx = (Mask_struct) ? NULL : (GB_void *) M->x ;
     const int64_t vlen = M->vlen ;
     const int64_t vdim = M->vdim ;
     const int64_t nvec = M->nvec ;
@@ -122,7 +117,7 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
 
     const size_t csize = ctype->size ;
     GB_void cscalar [GB_VLA(csize)] ;
-    bool C_iso = GB_emult_iso (cscalar, ctype, A, B, op) ;
+    bool C_iso = GB_iso_emult (cscalar, ctype, A, B, op) ;
 
     //--------------------------------------------------------------------------
     // allocate C->p and C->h
@@ -130,17 +125,16 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
 
     GB_OK (GB_new (&C, // sparse or hyper (same as M), existing header
         ctype, vlen, vdim, GB_Ap_calloc, C_is_csc,
-        C_sparsity, M->hyper_switch, nvec)) ;
+        C_sparsity, M->hyper_switch, nvec, Context)) ;
     int64_t *restrict Cp = C->p ;
 
     //--------------------------------------------------------------------------
     // slice the mask matrix M
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
     int M_ntasks, M_nthreads ;
-    GB_SLICE_MATRIX (M, 8) ;
+    GB_SLICE_MATRIX (M, 8, chunk) ;
 
     //--------------------------------------------------------------------------
     // allocate workspace
@@ -161,7 +155,7 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
     // count entries in C
     //--------------------------------------------------------------------------
 
-    // This phase is very similar to GB_select_entry_phase1_template.c.
+    // This phase is very similar to GB_select_phase1 (GB_ENTRY_SELECTOR).
 
     // TODO: if M is structural and A and B are both full, then C has exactly
     // the same pattern as M, the first phase can be skipped.
@@ -185,7 +179,7 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
             int64_t cjnz = 0 ;
             for ( ; pM < pM_end ; pM++)
             { 
-                bool mij = GB_MCAST (Mx, pM, msize) ;
+                bool mij = GB_mcast (Mx, pM, msize) ;
                 if (mij)
                 {
                     int64_t i = Mi [pM] ;
@@ -216,7 +210,7 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
 
     GB_ek_slice_merge1 (Cp, Wfirst, Wlast, M_ek_slicing, M_ntasks) ;
     GB_ek_slice_merge2 (&(C->nvec_nonempty), Cp_kfirst, Cp, nvec,
-        Wfirst, Wlast, M_ek_slicing, M_ntasks, M_nthreads, Werk) ;
+        Wfirst, Wlast, M_ek_slicing, M_ntasks, M_nthreads, Context) ;
 
     //--------------------------------------------------------------------------
     // allocate C->i and C->x
@@ -224,7 +218,7 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
 
     int64_t cnz = Cp [nvec] ;
     // set C->iso = C_iso   OK
-    GB_OK (GB_bix_alloc (C, cnz, GxB_SPARSE, false, true, C_iso)) ;
+    GB_OK (GB_bix_alloc (C, cnz, GxB_SPARSE, false, true, C_iso, Context)) ;
 
     //--------------------------------------------------------------------------
     // copy pattern into C
@@ -240,7 +234,6 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
 
     C->nvec = nvec ;
     C->jumbled = M->jumbled ;
-    C->nvals = cnz ;
     C->magic = GB_MAGIC ;
 
     //--------------------------------------------------------------------------
@@ -272,13 +265,13 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
     // using a built-in binary operator (except for positional operators)
     //--------------------------------------------------------------------------
 
-    info = GrB_NO_VALUE ;
+    #define GB_PHASE_2_OF_2
 
     if (C_iso)
     { 
 
         //----------------------------------------------------------------------
-        // via the iso kernel
+        // C is iso
         //----------------------------------------------------------------------
 
         // Cx [0] = cscalar = op (A,B)
@@ -288,19 +281,18 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
         // pattern of C = set intersection of pattern of A and B
         #define GB_ISO_EMULT
         #include "GB_emult_04_template.c"
-        info = GrB_SUCCESS ;
 
     }
     else
     {
 
         //----------------------------------------------------------------------
-        // via the factory kernel
+        // C is non-iso
         //----------------------------------------------------------------------
 
-        #ifndef GBCOMPACT
-        GB_IF_FACTORY_KERNELS_ENABLED
-        { 
+        bool done = false ;
+
+        #ifndef GBCUDA_DEV
 
             //------------------------------------------------------------------
             // define the worker for the switch factory
@@ -312,6 +304,7 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
             {                                                               \
                 info = GB_AemultB_04(mult,xname) (C, M, Mask_struct, A, B,  \
                     Cp_kfirst, M_ek_slicing, M_ntasks, M_nthreads) ;        \
+                done = (info != GrB_NO_VALUE) ;                             \
             }                                                               \
             break ;
 
@@ -327,45 +320,28 @@ GrB_Info GB_emult_04        // C<M>=A.*B, M sparse/hyper, A and B bitmap/full
                 #define GB_NO_PAIR
                 #include "GB_binop_factory.c"
             }
-        }
+
         #endif
-    }
 
-    //--------------------------------------------------------------------------
-    // via the JIT or PreJIT kernel
-    //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
+        // generic worker
+        //----------------------------------------------------------------------
 
-    if (info == GrB_NO_VALUE)
-    { 
-        info = GB_emult_04_jit (C, C_sparsity, M, Mask_struct, op,
-            A, B, Cp_kfirst, M_ek_slicing, M_ntasks, M_nthreads) ;
-    }
-
-    //--------------------------------------------------------------------------
-    // via the generic kernel
-    //--------------------------------------------------------------------------
-
-    if (info == GrB_NO_VALUE)
-    { 
-        GB_BURBLE_MATRIX (C, "(generic emult_04: %s) ", op->name) ;
-        info = GB_emult_generic (C, op, NULL, 0, 0,
-            NULL, NULL, NULL, C_sparsity, GB_EMULT_METHOD4, Cp_kfirst,
-            M_ek_slicing, M_ntasks, M_nthreads, NULL, 0, 0, NULL, 0, 0,
-            M, Mask_struct, false, A, B) ;
+        if (!done)
+        { 
+            GB_BURBLE_MATRIX (C, "(generic emult_04: %s) ", op->name) ;
+            GB_ewise_generic (C, op, NULL, 0, 0,
+                NULL, NULL, NULL, C_sparsity, GB_EMULT_METHOD4, Cp_kfirst,
+                M_ek_slicing, M_ntasks, M_nthreads, NULL, 0, 0, NULL, 0, 0,
+                M, Mask_struct, false, A, B, Context) ;
+        }
     }
 
     //--------------------------------------------------------------------------
     // remove empty vectors from C, if hypersparse
     //--------------------------------------------------------------------------
 
-    if (info != GrB_SUCCESS)
-    { 
-        // out of memory, or other error
-        GB_FREE_ALL ;
-        return (info) ;
-    }
-
-    GB_OK (GB_hypermatrix_prune (C, Werk)) ;
+    GB_OK (GB_hypermatrix_prune (C, Context)) ;
 
     //--------------------------------------------------------------------------
     // free workspace and return result

@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/Scheduler.cpp ========================================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // This file contains code to construct, initialize, and destroy the Scheduler.
 //
@@ -21,22 +15,24 @@
 // the constructor is responsible for memory management AND initialization.
 // =============================================================================
 
+#include "GPUQREngine_Scheduler.hpp"
+
 // -----------------------------------------------------------------------------
 // Macro destructor
 // -----------------------------------------------------------------------------
-#include "GPUQREngine_Scheduler.hpp"
-#define FREE_EVERYTHING_SCHEDULER \
+
+#define FREE_EVERYTHING \
     afPerm = (Int *) SuiteSparse_free(afPerm); \
     afPinv = (Int *) SuiteSparse_free(afPinv); \
     if(bucketLists) \
     { \
         for(Int f=0; f<numFronts; f++) \
         { \
-            BucketList <Int> *dlbl = (&bucketLists[f]); \
+            BucketList *dlbl = (&bucketLists[f]); \
             dlbl->~BucketList(); \
         } \
     } \
-    bucketLists = (BucketList <Int> *) SuiteSparse_free(bucketLists); \
+    bucketLists = (BucketList*) SuiteSparse_free(bucketLists); \
     FrontDataPulled = (bool *) SuiteSparse_free(FrontDataPulled); \
     eventFrontDataReady =(cudaEvent_t*) SuiteSparse_free(eventFrontDataReady); \
     eventFrontDataPulled=(cudaEvent_t*) SuiteSparse_free(eventFrontDataPulled);\
@@ -54,10 +50,9 @@
 // Scheduler constructor
 // -----------------------------------------------------------------------------
 
-template <typename Int>
-Scheduler <Int>::Scheduler
+Scheduler::Scheduler
 (
-    Front <Int> *fronts,
+    Front *fronts,
     Int numFronts,
     size_t gpuMemorySize
 )
@@ -86,8 +81,8 @@ Scheduler <Int>::Scheduler
 
     afPerm = (Int*) SuiteSparse_calloc(numFronts, sizeof(Int));
     afPinv = (Int*) SuiteSparse_calloc(numFronts, sizeof(Int));
-    bucketLists = (BucketList <Int>*)
-        SuiteSparse_calloc(numFronts, sizeof(BucketList <Int>));
+    bucketLists = (BucketList*)
+        SuiteSparse_calloc(numFronts, sizeof(BucketList));
     FrontDataPulled = (bool*) SuiteSparse_calloc(numFronts, sizeof(bool));
     eventFrontDataReady =
         (cudaEvent_t*) SuiteSparse_calloc(numFronts, sizeof(cudaEvent_t));
@@ -97,7 +92,7 @@ Scheduler <Int>::Scheduler
     if(!afPerm || !afPinv || !bucketLists || !FrontDataPulled
        || !eventFrontDataReady || !eventFrontDataPulled)
     {
-        FREE_EVERYTHING_SCHEDULER ;
+        FREE_EVERYTHING ;
         memory_ok = false;
         return;
     }
@@ -110,7 +105,7 @@ Scheduler <Int>::Scheduler
        If this fails, we have either cuda_ok = false or memory_ok = false. */
     if(!initialize(gpuMemorySize))
     {
-        FREE_EVERYTHING_SCHEDULER ;
+        FREE_EVERYTHING;
         // If cuda_ok is still true then we ran out of memory.
         // Else we had enough memory but failed the cuda calls.
         if(cuda_ok) memory_ok = false;
@@ -159,38 +154,22 @@ Scheduler <Int>::Scheduler
     renderCount = 0;
     #endif
 }
-template Scheduler <int32_t>::Scheduler
-(
-    Front <int32_t> *fronts,
-    int32_t numFronts,
-    size_t gpuMemorySize
-) ;
-template Scheduler <int64_t>::Scheduler
-(
-    Front <int64_t> *fronts,
-    int64_t numFronts,
-    size_t gpuMemorySize
-) ;
 
 // -----------------------------------------------------------------------------
 // Scheduler destructor
 // -----------------------------------------------------------------------------
-template <typename Int>
-Scheduler <Int>::~Scheduler()
-{
-    FREE_EVERYTHING_SCHEDULER ;
-}
-template Scheduler <int32_t>::~Scheduler() ;
-template Scheduler <int64_t>::~Scheduler() ;
 
+Scheduler::~Scheduler()
+{
+    FREE_EVERYTHING ;
+}
 
 // -----------------------------------------------------------------------------
 // Scheduler::initialize
 // -----------------------------------------------------------------------------
 // Returns true if OK, false if out of memory or cuda initialization failed.
 // -----------------------------------------------------------------------------
-template <typename Int>
-bool Scheduler <Int>::initialize
+bool Scheduler::initialize
 (
     size_t gpuMemorySize
 )
@@ -202,7 +181,7 @@ bool Scheduler <Int>::initialize
     for(int pf=0; pf<numFronts; pf++)
     {
         /* Extract the front details from the frontListing. */
-        Front <Int> *front = &(frontList[pf]);
+        Front *front = &(frontList[pf]);
         SparseMeta *meta = &(front->sparseMeta);
         Int f = front->fids;
         bool isDense = front->isDense();
@@ -212,7 +191,7 @@ bool Scheduler <Int>::initialize
         afPinv[f] = EMPTY;
 
         /* Configure the bucket list for each front. */
-        BucketList <Int> *dlbl = (&bucketLists[f]);
+        BucketList *dlbl = (&bucketLists[f]);
         dlbl->useFlag = false;
         if(front->isTooBigForSmallQR())
         {
@@ -273,12 +252,3 @@ bool Scheduler <Int>::initialize
 
     return cuda_ok;
 }
-
-template bool Scheduler <int32_t>::initialize
-(
-    size_t gpuMemorySize
-) ;
-template bool Scheduler <int64_t>::initialize
-(
-    size_t gpuMemorySize
-) ;

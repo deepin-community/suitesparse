@@ -1,12 +1,10 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Cholesky/cholmod_rcond: estimate the reciprocal of condition number
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Cholesky/cholmod_rcond =============================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* Return a rough estimate of the reciprocal of the condition number:
  * the minimum entry on the diagonal of L (or absolute entry of D for an LDL'
@@ -20,9 +18,10 @@
  * For an LDL' factorization, (min(diag(D))/max(diag(D))) is returned.
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCHOLESKY
+
+#include "cholmod_internal.h"
+#include "cholmod_cholesky.h"
 
 /* ========================================================================== */
 /* === LMINMAX ============================================================== */
@@ -33,7 +32,7 @@
 #define FIRST_LMINMAX(Ljj,lmin,lmax) \
 { \
     double ljj = Ljj ; \
-    if (isnan (ljj)) \
+    if (IS_NAN (ljj)) \
     { \
 	return (0) ; \
     } \
@@ -44,7 +43,7 @@
 #define LMINMAX(Ljj,lmin,lmax) \
 { \
     double ljj = Ljj ; \
-    if (isnan (ljj)) \
+    if (IS_NAN (ljj)) \
     { \
 	return (0) ; \
     } \

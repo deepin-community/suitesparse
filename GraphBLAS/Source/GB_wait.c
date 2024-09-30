@@ -2,12 +2,10 @@
 // GB_wait:  finish all pending computations on a single matrix
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed.  Only one variant possible.
 
 // CALLS:     GB_builder
 
@@ -31,39 +29,28 @@
 
 // If A->nvec_nonempty is unknown (-1) it is computed.
 
-// The A->Y hyper_hash is freed if the A->h hyperlist has to be constructed.
-// Instead, it is not computed and left pending (as NULL).  It is not modified
-// if A->h doesn't change.
-
 // If the method is successful, it does an OpenMP flush just before returning.
 
-#define GB_FREE_WORKSPACE               \
+#define GB_FREE_ALL                     \
 {                                       \
-    GB_Matrix_free (&Y) ;               \
+    GB_phbix_free (A) ;                 \
     GB_Matrix_free (&T) ;               \
     GB_Matrix_free (&S) ;               \
     GB_Matrix_free (&A1) ;              \
 }
 
-#define GB_FREE_ALL                     \
-{                                       \
-    GB_FREE_WORKSPACE ;                 \
-    GB_phybix_free (A) ;                \
-}
-
 #include "GB_select.h"
 #include "GB_add.h"
-#include "GB_binop.h"
 #include "GB_Pending.h"
 #include "GB_build.h"
 #include "GB_jappend.h"
-#include "GB_scalar_wrap.h"
 
+GB_PUBLIC
 GrB_Info GB_wait                // finish all pending computations
 (
     GrB_Matrix A,               // matrix with pending computations
     const char *name,           // name of the matrix
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -73,7 +60,7 @@ GrB_Info GB_wait                // finish all pending computations
 
     GrB_Info info = GrB_SUCCESS ;
     struct GB_Matrix_opaque T_header, A1_header, S_header ;
-    GrB_Matrix T = NULL, A1 = NULL, S = NULL, Y = NULL ;
+    GrB_Matrix T = NULL, A1 = NULL, S = NULL ;
 
     ASSERT_MATRIX_OK (A, "A to wait", GB_FLIP (GB0)) ;
 
@@ -115,8 +102,7 @@ GrB_Info GB_wait                // finish all pending computations
     // determine the max # of threads to use
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
 
     //--------------------------------------------------------------------------
     // check if only A->nvec_nonempty is needed
@@ -124,10 +110,9 @@ GrB_Info GB_wait                // finish all pending computations
 
     if (npending == 0 && nzombies == 0 && !A->jumbled)
     {
-        // A->Y is not modified.  If not NULL, it remains valid
         if (A->nvec_nonempty < 0)
         {
-            A->nvec_nonempty = GB_nvec_nonempty (A) ;
+            A->nvec_nonempty = GB_nvec_nonempty (A, Context) ;
         }
         return (GrB_SUCCESS) ;
     }
@@ -140,10 +125,8 @@ GrB_Info GB_wait                // finish all pending computations
     { 
         // A is not conformed, so the sparsity structure of A is not modified.
         // That is, if A has no pending tuples and no zombies, but is just
-        // jumbled, then it stays sparse or hypersparse.  A->Y is not modified
-        // nor accessed, and remains NULL if it is NULL on input.  If it is
-        // present, it remains valid.
-        GB_OK (GB_unjumble (A, Werk)) ;
+        // jumbled, then it stays sparse or hypersparse.
+        GB_OK (GB_unjumble (A, Context)) ;
         ASSERT (GB_IMPLIES (info == GrB_SUCCESS, A->nvec_nonempty >= 0)) ;
         return (info) ;
     }
@@ -195,8 +178,7 @@ GrB_Info GB_wait                // finish all pending computations
             A->Pending->op,         // dup operator for assembling duplicates,
                                     // NULL if A is iso
             stype,                  // type of Pending->x
-            true,                   // burble is allowed
-            Werk
+            Context
         ) ;
 
         //----------------------------------------------------------------------
@@ -257,12 +239,15 @@ GrB_Info GB_wait                // finish all pending computations
     if (nzombies > 0)
     { 
         // remove all zombies from A
-        // GB_selector frees A->Y if it changes A->h, or leaves it
-        // unmodified (and valid) otherwise.
-        struct GB_Scalar_opaque Thunk_header ;
-        int64_t k = 0 ;
-        GrB_Scalar Thunk = GB_Scalar_wrap (&Thunk_header, GrB_INT64, &k) ;
-        GB_OK (GB_selector (NULL, GxB_NONZOMBIE, false, A, Thunk, Werk)) ;
+        GB_OK (GB_selector (
+            NULL,                       // A in-place
+            GB_NONZOMBIE_selop_code,    // use the opcode only
+            NULL,                       // no GB_Operator
+            false,                      // flipij is false
+            A,                          // input/output matrix
+            0,                          // ithunk is unused
+            NULL,                       // no GrB_Scalar Thunk
+            Context)) ;
         ASSERT (A->nzombies == (anz_orig - GB_nnz (A))) ;
         A->nzombies = 0 ;
     }
@@ -278,7 +263,7 @@ GrB_Info GB_wait                // finish all pending computations
     // unjumble the matrix
     //--------------------------------------------------------------------------
 
-    GB_OK (GB_unjumble (A, Werk)) ;
+    GB_OK (GB_unjumble (A, Context)) ;
 
     ASSERT (!GB_ZOMBIES (A)) ;
     ASSERT (!GB_JUMBLED (A)) ;
@@ -291,7 +276,7 @@ GrB_Info GB_wait                // finish all pending computations
     if (npending == 0)
     { 
         // conform A to its desired sparsity structure and return result
-        info = GB_conform (A, Werk) ;
+        info = GB_conform (A, Context) ;
         ASSERT (GB_IMPLIES (info == GrB_SUCCESS, A->nvec_nonempty >= 0)) ;
         #pragma omp flush
         return (info) ;
@@ -306,18 +291,11 @@ GrB_Info GB_wait                // finish all pending computations
     { 
         // A has no entries so just transplant T into A, then free T and
         // conform A to its desired hypersparsity.
-        info = GB_transplant_conform (A, A->type, &T, Werk) ;
+        info = GB_transplant_conform (A, A->type, &T, Context) ;
         ASSERT (GB_IMPLIES (info == GrB_SUCCESS, A->nvec_nonempty >= 0)) ;
         #pragma omp flush
         return (info) ;
     }
-
-    //--------------------------------------------------------------------------
-    // create the SECOND_ATYPE binary operator
-    //--------------------------------------------------------------------------
-
-    struct GB_BinaryOp_opaque op_header ;
-    GrB_BinaryOp op_2nd = GB_binop_second (A->type, &op_header) ;
 
     //--------------------------------------------------------------------------
     // determine the method for A = A+T
@@ -391,7 +369,7 @@ GrB_Info GB_wait                // finish all pending computations
         if (anz_new > GB_nnz_max (A))
         { 
             // double the size if not enough space
-            GB_OK (GB_ix_realloc (A, 2 * anz_new)) ;
+            GB_OK (GB_ix_realloc (A, 2 * anz_new, Context)) ;
             Ai = A->i ;
             Ax = (GB_void *) A->x ;
         }
@@ -411,7 +389,7 @@ GrB_Info GB_wait                // finish all pending computations
             GB_CLEAR_STATIC_HEADER (A1, &A1_header) ;
             GB_OK (GB_new (&A1, // hyper, existing header
                 A->type, A->vlen, A->vdim, GB_Ap_malloc, A->is_csc,
-                GxB_HYPERSPARSE, GB_ALWAYS_HYPER, anvec - kA)) ;
+                GxB_HYPERSPARSE, GB_ALWAYS_HYPER, anvec - kA, Context)) ;
 
             // the A1->i and A1->x content are shallow copies of A(:,kA:end).
             // They are not allocated pointers, but point to space inside
@@ -448,7 +426,6 @@ GrB_Info GB_wait                // finish all pending computations
             A1p [a1nvec] = anz1 ;
             A1->nvec = a1nvec ;
             A1->nvec_nonempty = a1nvec ;
-            A1->nvals = anz1 ;
             A1->magic = GB_MAGIC ;
 
             ASSERT_MATRIX_OK (A1, "A1 slice for GB_wait", GB0) ;
@@ -459,7 +436,7 @@ GrB_Info GB_wait                // finish all pending computations
     
             GB_CLEAR_STATIC_HEADER (S, &S_header) ;
             GB_OK (GB_add (S, A->type, A->is_csc, NULL, 0, 0, &ignore, A1, T,
-                false, NULL, NULL, op_2nd, true, Werk)) ;
+                false, NULL, NULL, NULL, Context)) ;
 
             ASSERT_MATRIX_OK (S, "S = A1+T", GB0) ;
 
@@ -513,7 +490,7 @@ GrB_Info GB_wait                // finish all pending computations
             int64_t j = Th [k] ;
             ASSERT (j >= tjfirst) ;
             anz += (Tp [k+1] - Tp [k]) ;
-            GB_OK (GB_jappend (A, j, &jlast, anz, &anz_last, Werk)) ;
+            GB_OK (GB_jappend (A, j, &jlast, anz, &anz_last, Context)) ;
         }
 
         GB_jwrapup (A, jlast, anz) ;
@@ -522,16 +499,12 @@ GrB_Info GB_wait                // finish all pending computations
         // need to recompute the # of non-empty vectors in GB_conform
         A->nvec_nonempty = -1 ;     // recomputed just below
 
-        // A->h has been modified so A->Y is now invalid
-        GB_hyper_hash_free (A) ;
-
         ASSERT_MATRIX_OK (A, "A after GB_wait:append", GB0) ;
 
         GB_Matrix_free (&T) ;
 
         // conform A to its desired sparsity structure
-        GB_OK (GB_conform (A, Werk)) ;
-        ASSERT (A->nvec_nonempty >= 0) ;
+        info = GB_conform (A, Context) ;
 
     }
     else
@@ -549,96 +522,19 @@ GrB_Info GB_wait                // finish all pending computations
         // FUTURE:: if GB_add could tolerate zombies in A, then the initial
         // prune of zombies can be skipped.
 
-        // T->Y is not present (GB_builder does not create it).  The old A->Y
-        // is still valid, if present, for the matrix A prior to added the
-        // pending tuples in T.  GB_add may need A->Y to compute S, but it does
-        // not compute S->Y.
-
         GB_CLEAR_STATIC_HEADER (S, &S_header) ;
         GB_OK (GB_add (S, A->type, A->is_csc, NULL, 0, 0, &ignore, A, T,
-            false, NULL, NULL, op_2nd, true, Werk)) ;
+            false, NULL, NULL, NULL, Context)) ;
         GB_Matrix_free (&T) ;
         ASSERT_MATRIX_OK (S, "S after GB_wait:add", GB0) ;
-
-        if (GB_IS_HYPERSPARSE (A) && GB_IS_HYPERSPARSE (S) && A->Y != NULL
-            && !A->Y_shallow && !GB_is_shallow (A->Y))
-        {
-            // A and S are both hypersparse, and the old A->Y exists and is not
-            // shallow.  Check if S->h and A->h are identical.  If so, remove
-            // A->Y from A and save it.  Then after the transplant of S into A,
-            // below, if A is still hyperparse, transplant Y back into A->Y.
-            if (S->nvec == anvec)
-            {
-                // A and S have the same number of vectors.  Compare Ah and Sh
-                int64_t *restrict Ah = A->h ;
-                int64_t *restrict Sh = S->h ;
-                bool hsame = true ;
-                int nthreads = GB_nthreads (anvec, chunk, nthreads_max) ;
-                if (nthreads == 1)
-                { 
-                    // compare Ah and Sh with a single thread
-                    hsame = (memcmp (Ah, Sh, anvec * sizeof (int64_t)) == 0) ;
-                }
-                else
-                { 
-                    // compare Ah and Sh with several threads
-                    int ntasks = 64 * nthreads ;
-                    int tid ;
-                    #pragma omp parallel for num_threads(nthreads) \
-                        schedule(dynamic)
-                    for (tid = 0 ; tid < ntasks ; tid++)
-                    {
-                        int64_t kstart, kend ;
-                        GB_PARTITION (kstart, kend, anvec, tid, ntasks) ;
-                        bool my_hsame ;
-                        GB_ATOMIC_READ
-                        my_hsame = hsame ;
-                        if (my_hsame)
-                        {
-                            // compare this task's region of Ah and Sh
-                            my_hsame = (memcmp (Ah + kstart, Sh + kstart,
-                                (kend - kstart) * sizeof (int64_t)) == 0) ;
-                            if (!my_hsame)
-                            {
-                                // tell other tasks to exit early
-                                GB_ATOMIC_WRITE
-                                hsame = false ;
-                            }
-                        }
-                    }
-                }
-                if (hsame)
-                { 
-                    // Ah and Sh are the same, so keep A->Y
-                    Y = A->Y ;
-                    A->Y = NULL ;
-                    A->Y_shallow = false ;
-                }
-            }
-        }
-
-        // transplant S into A
-        GB_OK (GB_transplant_conform (A, A->type, &S, Werk)) ;
-        ASSERT (A->nvec_nonempty >= 0) ;
-
-        if (Y != NULL && GB_IS_HYPERSPARSE (A) && A->Y == NULL)
-        { 
-            // The hyperlist of A has not changed.  A is still hypersparse, and
-            // has no A->Y after the transplant/conform above.  The original
-            // A->Y is valid, so transplant it back into A.
-            A->Y = Y ;
-            A->Y_shallow = false ;
-            Y = NULL ;
-        }
-
-        ASSERT_MATRIX_OK (A, "A after GB_wait:add", GB0) ;
+        info = GB_transplant_conform (A, A->type, &S, Context) ;
     }
 
     //--------------------------------------------------------------------------
     // flush the matrix and return result
     //--------------------------------------------------------------------------
 
-    GB_FREE_WORKSPACE ;
+    ASSERT (GB_IMPLIES (info == GrB_SUCCESS, A->nvec_nonempty >= 0)) ;
     #pragma omp flush
     return (info) ;
 }

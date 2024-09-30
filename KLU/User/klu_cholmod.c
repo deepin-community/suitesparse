@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// SuiteSparse/KLU/User/klu_cholmod.c: KLU int32_t interface to CHOLMOD
-//------------------------------------------------------------------------------
-
-// KLU, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-// Authors: Timothy A. Davis and Ekanathan Palamadai.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === klu_cholmod ========================================================== */
+/* ========================================================================== */
 
 /* klu_cholmod: user-defined ordering function to interface KLU to CHOLMOD.
  *
@@ -24,14 +18,14 @@
 #define TRUE 1
 #define FALSE 0
 
-int32_t klu_cholmod
+int klu_cholmod
 (
     /* inputs */
-    int32_t n,                  /* A is n-by-n */
-    int32_t Ap [ ],             /* column pointers */
-    int32_t Ai [ ],             /* row indices */
+    int n,                  /* A is n-by-n */
+    int Ap [ ],             /* column pointers */
+    int Ai [ ],             /* row indices */
     /* outputs */
-    int32_t Perm [ ],           /* fill-reducing permutation */
+    int Perm [ ],           /* fill-reducing permutation */
     /* user-defined */
     klu_common *Common      /* user-defined data is in Common->user_data */
 )
@@ -40,11 +34,8 @@ int32_t klu_cholmod
     cholmod_sparse Amatrix, *A, *AT, *S ;
     cholmod_factor *L ;
     cholmod_common cm ;
-    int32_t *P ;
-    int32_t k ;
-    int symmetric ;
-    klu_common km ;
-    klu_defaults (&km) ;
+    int *P ;
+    int k, symmetric ;
 
     if (Ap == NULL || Ai == NULL || Perm == NULL || n < 0)
     {
@@ -75,15 +66,8 @@ int32_t klu_cholmod
     A->sorted = FALSE ;             /* columns of A are not sorted */
 
     /* get the user_data; default is symmetric if user_data is NULL */
-    symmetric = true ;
-    cm.nmethods = 1 ;
-    cm.method [0].ordering = CHOLMOD_AMD ;
-    int64_t *user_data = Common->user_data ;
-    if (user_data != NULL)
-    {
-        symmetric = (user_data [0] != 0) ;
-        cm.method [0].ordering = user_data [1] ;
-    }
+    symmetric = (Common->user_data == NULL) ? TRUE :
+        (((int *) (Common->user_data)) [0] != 0) ;
 
     /* AT = pattern of A' */
     AT = cholmod_transpose (A, 0, &cm) ;

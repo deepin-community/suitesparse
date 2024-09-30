@@ -1,27 +1,14 @@
 //------------------------------------------------------------------------------
-// GB_reduce_to_scalar_template: z=reduce(A), reduce a matrix to a scalar
+// GB_reduce_to_scalar_template: s=reduce(A), reduce a matrix to a scalar
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
 
 // Reduce a matrix to a scalar, with typecasting and generic operators.
-// No panel is used.  The workspace W always has the same type as the ztype
-// of the monoid, GB_Z_TYPE.
-
-#include "GB_unused.h"
-
-// z += W [i], no typecast
-#ifndef GB_ADD_ARRAY_TO_SCALAR
-#define GB_ADD_ARRAY_TO_SCALAR(z,W,i) GB_UPDATE (z, W [i])
-#endif
-
-// W [k] = z, no typecast
-#ifndef GB_COPY_SCALAR_TO_ARRAY
-#define GB_COPY_SCALAR_TO_ARRAY(W,k,z) W [k] = z
-#endif
+// No panel is used.
 
 {
 
@@ -31,16 +18,11 @@
 
     const int8_t   *restrict Ab = A->b ;
     const int64_t  *restrict Ai = A->i ;
-    const GB_A_TYPE *restrict Ax = (GB_A_TYPE *) A->x ;
-    GB_A_NHELD (anz) ;      // int64_t anz = GB_nnz_held (A) ;
+    const GB_ATYPE *restrict Ax = (GB_ATYPE *) A->x ;
+    int64_t anz = GB_nnz_held (A) ;
     ASSERT (anz > 0) ;
-    #ifdef GB_JIT_KERNEL
-    #define A_has_zombies GB_A_HAS_ZOMBIES
-    #else
     const bool A_has_zombies = (A->nzombies > 0) ;
-    #endif
     ASSERT (!A->iso) ;
-    GB_DECLARE_TERMINAL_CONST (zterminal) ;
 
     //--------------------------------------------------------------------------
     // reduce A to a scalar
@@ -57,12 +39,12 @@
         { 
             // skip if the entry is a zombie or if not in the bitmap
             if (A_has_zombies && GB_IS_ZOMBIE (Ai [p])) continue ;
-            if (!GBB_A (Ab, p)) continue ;
-            // z += (ztype) Ax [p]
-            GB_GETA_AND_UPDATE (z, Ax, p) ;
-            #if GB_MONOID_IS_TERMINAL
+            if (!GBB (Ab, p)) continue ;
+            // s = op (s, (ztype) Ax [p])
+            GB_ADD_CAST_ARRAY_TO_SCALAR (s, Ax, p) ;
             // check for early exit
-            GB_IF_TERMINAL_BREAK (z, zterminal) ;
+            #if GB_HAS_TERMINAL
+            if (GB_IS_TERMINAL (s)) break ;
             #endif
         }
 
@@ -83,7 +65,7 @@
             int64_t pstart, pend ;
             GB_PARTITION (pstart, pend, anz, tid, ntasks) ;
             // ztype t = identity
-            GB_DECLARE_IDENTITY (t) ;
+            GB_SCALAR_IDENTITY (t) ;
             bool my_exit, found = false ;
             GB_ATOMIC_READ
             my_exit = early_exit ;
@@ -93,13 +75,13 @@
                 { 
                     // skip if the entry is a zombie or if not in the bitmap
                     if (A_has_zombies && GB_IS_ZOMBIE (Ai [p])) continue ;
-                    if (!GBB_A (Ab, p)) continue ;
+                    if (!GBB (Ab, p)) continue ;
                     found = true ;
-                    // t += (ztype) Ax [p]
-                    GB_GETA_AND_UPDATE (t, Ax, p) ;
-                    #if GB_MONOID_IS_TERMINAL
+                    // t = op (t, (ztype) Ax [p]), with typecast
+                    GB_ADD_CAST_ARRAY_TO_SCALAR (t, Ax, p) ;
                     // check for early exit
-                    if (GB_TERMINAL_CONDITION (t, zterminal))
+                    #if GB_HAS_TERMINAL
+                    if (GB_IS_TERMINAL (t))
                     { 
                         // tell the other tasks to exit early
                         GB_ATOMIC_WRITE
@@ -122,8 +104,8 @@
         {
             if (F [tid])
             { 
-                // z += W [tid], no typecast
-                GB_ADD_ARRAY_TO_SCALAR (z, W, tid) ;
+                // s = op (s, W [tid]), no typecast
+                GB_ADD_ARRAY_TO_SCALAR (s, W, tid) ;
             }
         }
     }

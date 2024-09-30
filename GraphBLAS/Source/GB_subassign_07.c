@@ -2,12 +2,10 @@
 // GB_subassign_07: C(I,J)<M> += scalar ; no S
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: needed.
 
 // Method 07: C(I,J)<M> += scalar ; no S
 
@@ -22,7 +20,6 @@
 // M: any sparsity
 
 #include "GB_subassign_methods.h"
-#include "GB_assign_shared_definitions.h"
 
 GrB_Info GB_subassign_07
 (
@@ -40,8 +37,8 @@ GrB_Info GB_subassign_07
     const bool Mask_struct,
     const GrB_BinaryOp accum,
     const void *scalar,
-    const GrB_Type scalar_type,
-    GB_Werk Werk
+    const GrB_Type atype,
+    GB_Context Context
 )
 {
 
@@ -50,7 +47,7 @@ GrB_Info GB_subassign_07
     //--------------------------------------------------------------------------
 
     ASSERT (!GB_IS_BITMAP (C)) ;
-    ASSERT (!GB_any_aliased (C, M)) ;   // NO ALIAS of C==M
+    ASSERT (!GB_aliased (C, M)) ;   // NO ALIAS of C==M
 
     //--------------------------------------------------------------------------
     // get inputs
@@ -66,7 +63,6 @@ GrB_Info GB_subassign_07
     const int64_t *restrict Cp = C->p ;
     const bool C_is_hyper = (Ch != NULL) ;
     const int64_t Cnvec = C->nvec ;
-    GB_GET_C_HYPER_HASH ;
     GB_GET_MASK ;
     GB_GET_ACCUM_SCALAR ;
 
@@ -119,7 +115,7 @@ GrB_Info GB_subassign_07
             // get jC, the corresponding vector of C
             //------------------------------------------------------------------
 
-            GB_LOOKUP_VECTOR_jC (fine_task, taskid) ;
+            GB_GET_jC ;
             int64_t cjnz = pC_end - pC_start ;
             bool cjdense = (cjnz == Cvlen) ;
 
@@ -141,7 +137,7 @@ GrB_Info GB_subassign_07
                     // update C(iC,jC), but only if M(iA,j) allows it
                     //----------------------------------------------------------
 
-                    bool mij = GBB (Mb, pM) && GB_MCAST (Mx, pM, msize) ;
+                    bool mij = GBB (Mb, pM) && GB_mcast (Mx, pM, msize) ;
                     if (mij)
                     { 
                         int64_t iA = GBI (Mi, pM, Mvlen) ;
@@ -169,7 +165,7 @@ GrB_Info GB_subassign_07
                     // update C(iC,jC), but only if M(iA,j) allows it
                     //----------------------------------------------------------
 
-                    bool mij = GBB (Mb, pM) && GB_MCAST (Mx, pM, msize) ;
+                    bool mij = GBB (Mb, pM) && GB_mcast (Mx, pM, msize) ;
                     if (mij)
                     {
                         int64_t iA = GBI (Mi, pM, Mvlen) ;
@@ -235,7 +231,7 @@ GrB_Info GB_subassign_07
             // get jC, the corresponding vector of C
             //------------------------------------------------------------------
 
-            GB_LOOKUP_VECTOR_jC (fine_task, taskid) ;
+            GB_GET_jC ;
             bool cjdense = ((pC_end - pC_start) == Cvlen) ;
 
             //------------------------------------------------------------------
@@ -256,7 +252,7 @@ GrB_Info GB_subassign_07
                     // update C(iC,jC), but only if M(iA,j) allows it
                     //----------------------------------------------------------
 
-                    bool mij = GBB (Mb, pM) && GB_MCAST (Mx, pM, msize) ;
+                    bool mij = GBB (Mb, pM) && GB_mcast (Mx, pM, msize) ;
                     if (mij)
                     {
                         int64_t iA = GBI (Mi, pM, Mvlen) ;

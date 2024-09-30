@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Check/cholmod_write: write a matrix to a file in Matrix Market format
-//------------------------------------------------------------------------------
-
-// CHOLMOD/Check Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Check/cholmod_write ================================================== */
+/* ========================================================================== */
 
 /* Write a matrix to a file in Matrix Market form.
  *
@@ -28,7 +22,12 @@
 
 #ifndef NCHECK
 
+#include "cholmod_config.h"
 #include "cholmod_internal.h"
+#include "cholmod_check.h"
+#include "cholmod_matrixops.h"
+#include <string.h>
+#include <ctype.h>
 
 #define MMLEN 1024
 #define MAXLINE MMLEN+6
@@ -140,7 +139,7 @@ static int print_value
     /* ---------------------------------------------------------------------- */
 
     /* change -inf to -HUGE_DOUBLE, and change +inf and nan to +HUGE_DOUBLE */
-    if (isnan (x) || x >= HUGE_DOUBLE)
+    if (CHOLMOD_IS_NAN (x) || x >= HUGE_DOUBLE)
     {
 	x = HUGE_DOUBLE ;
     }
@@ -341,7 +340,7 @@ static Int ntriplets
  * as A.
  *
  * Returns the symmetry in which the matrix was printed (1 to 7, see the
- * CHOLMOD_MM_* codes in CHOLMOD/Include/cholmod.h), or -1 on failure.
+ * CHOLMOD_MM_* codes in CHOLMOD/Include/cholmod_core.h), or -1 on failure.
  *
  * If A and Z are sorted on input, and either unsymmetric (stype = 0) or
  * symmetric-lower (stype < 0), and if A and Z do not overlap, then the triplets

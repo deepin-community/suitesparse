@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/MATLAB/resymbol: MATLAB interface for CHOLMOD symbolic re-analysis
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === CHOLMOD/MATLAB/resymbol mexFunction ================================== */
+/* ========================================================================== */
 
-// CHOLMOD/MATLAB Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/MATLAB Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * MATLAB(tm) is a Trademark of The MathWorks, Inc.
+ * -------------------------------------------------------------------------- */
 
 /* Usage:
  *	L = resymbol (L, A)
@@ -32,11 +32,11 @@ void mexFunction
 {
     double dummy = 0 ;
     double *Lx, *Lx2, *Lz, *Lz2 ;
-    int64_t *Li, *Lp, *Lnz2, *Li2, *Lp2, *ColCount ;
+    Long *Li, *Lp, *Lnz2, *Li2, *Lp2, *ColCount ;
     cholmod_sparse *A, Amatrix, *Lsparse, *S ;
     cholmod_factor *L ;
     cholmod_common Common, *cm ;
-    int64_t j, s, n, lnz, is_complex ;
+    Long j, s, n, lnz, is_complex ;
 
     /* ---------------------------------------------------------------------- */
     /* start CHOLMOD and set parameters */ 
@@ -81,8 +81,8 @@ void mexFunction
     /* ---------------------------------------------------------------------- */
 
     /* get the MATLAB L */
-    Lp = (int64_t *) mxGetJc (pargin [0]) ;
-    Li = (int64_t *) mxGetIr (pargin [0]) ;
+    Lp = (Long *) mxGetJc (pargin [0]) ;
+    Li = (Long *) mxGetIr (pargin [0]) ;
     Lx = mxGetPr (pargin [0]) ;
     Lz = mxGetPi (pargin [0]) ;
     is_complex = mxIsComplex (pargin [0]) ;

@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Partition/cholmod_nesdis: CHOLMOD nested dissection, using METIS
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Partition/cholmod_nesdis ============================================= */
+/* ========================================================================== */
 
-// CHOLMOD/Partition Module.  Copyright (C) 2005-2022, University of Florida.
-// All Rights Reserved.  Author: Timothy A. Davis.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Partition Module.
+ * Copyright (C) 2005-2006, Univ. of Florida.  Author: Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* CHOLMOD nested dissection and graph partitioning.
  *
@@ -36,9 +35,11 @@
  * Supports any xtype (pattern, real, complex, or zomplex).
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NPARTITION
+
+#include "cholmod_internal.h"
+#include "cholmod_partition.h"
+#include "cholmod_cholesky.h"
 
 /* ========================================================================== */
 /* === partition ============================================================ */
@@ -64,7 +65,7 @@
  * cholmod_metis_bisector).
  */
 
-static int64_t partition    /* size of separator or -1 if failure */
+static SuiteSparse_long partition    /* size of separator or -1 if failure */
 (
     /* inputs, not modified on output */
 #ifndef NDEBUG
@@ -585,7 +586,7 @@ static int64_t partition    /* size of separator or -1 if failure */
  * workspace: Flag (nrow)
  */
 
-static int64_t clear_flag (Int *Map, Int cn, cholmod_common *Common)
+static SuiteSparse_long clear_flag (Int *Map, Int cn, cholmod_common *Common)
 {
     Int nrow, i ;
     Int *Flag ;
@@ -822,7 +823,6 @@ static void find_components
     DEBUG (for (i = 0 ; i < n ; i++) ASSERT (Flag [i] < Common->mark)) ;
 }
 
-#endif
 
 /* ========================================================================== */
 /* === cholmod_bisect ======================================================= */
@@ -836,7 +836,7 @@ static void find_components
  *	and O(nnz(A)) temporary memory space.
  */
 
-int64_t CHOLMOD(bisect)	/* returns # of nodes in separator */
+SuiteSparse_long CHOLMOD(bisect)	/* returns # of nodes in separator */
 (
     /* ---- input ---- */
     cholmod_sparse *A,	/* matrix to bisect */
@@ -851,12 +851,9 @@ int64_t CHOLMOD(bisect)	/* returns # of nodes in separator */
     cholmod_common *Common
 )
 {
-
-#ifndef NPARTITION
-
     Int *Bp, *Bi, *Hash, *Cmap, *Bnw, *Bew, *Iwork ;
     cholmod_sparse *B ;
-    UInt hash ;
+    unsigned Int hash ;
     Int j, n, bnz, sepsize, p, pend ;
     size_t csize, s ;
     int ok = TRUE ;
@@ -1007,14 +1004,9 @@ int64_t CHOLMOD(bisect)	/* returns # of nodes in separator */
     B->ncol = n ;   /* restore size for memory usage statistics */
     CHOLMOD(free_sparse) (&B, Common) ;
     Common->mark = EMPTY ;
-    CLEAR_FLAG (Common) ;
-    ASSERT (check_flag (Common)) ;
+    CHOLMOD_CLEAR_FLAG (Common) ;
     CHOLMOD(free) (csize, sizeof (Int), Bew, Common) ;
     return (sepsize) ;
-#else
-    Common->status = CHOLMOD_NOT_INSTALLED ;
-    return (EMPTY) ;
-#endif
 }
 
 
@@ -1041,7 +1033,8 @@ int64_t CHOLMOD(bisect)	/* returns # of nodes in separator */
  *	Allocates an additional 3*n*sizeof(Int) temporary workspace
  */
 
-int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
+SuiteSparse_long CHOLMOD(nested_dissection)
+    /* returns # of components, or -1 if error */
 (
     /* ---- input ---- */
     cholmod_sparse *A,	/* matrix to order */
@@ -1058,14 +1051,11 @@ int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
     cholmod_common *Common
 )
 {
-
-#ifndef NPARTITION
-
     double prune_dense, nd_oksep ;
     Int *Bp, *Bi, *Bnz, *Cstack, *Imap, *Map, *Flag, *Head, *Next, *Bnw, *Iwork,
 	*Ipost, *NewParent, *Hash, *Cmap, *Cp, *Ci, *Cew, *Cnw, *Part, *Post,
 	*Work3n ;
-    UInt hash ;
+    unsigned Int hash ;
     Int n, bnz, top, i, j, k, cnode, cdense, p, cj, cn, ci, cnz, mark, c, uncol,
 	sepsize, parent, ncomponents, threshold, ndense, pstart, pdest, pend,
 	nd_compress, nd_camd, csize, jnext, nd_small, total_weight,
@@ -1200,8 +1190,7 @@ int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
 
     /* all nodes start out unmarked and unordered (Type 4, see below) */
     Common->mark = EMPTY ;
-    CLEAR_FLAG (Common) ;
-    ASSERT (check_flag (Common)) ;
+    CHOLMOD_CLEAR_FLAG (Common) ;
     ASSERT (Flag == Common->Flag) ;
     ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, 0, Common)) ;
 
@@ -1211,7 +1200,7 @@ int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
     }
 
     /* prune dense nodes from B */
-    if (isnan (prune_dense) || prune_dense < 0)
+    if (IS_NAN (prune_dense) || prune_dense < 0)
     {
 	/* only remove completely dense nodes */
 	threshold = n-2 ;
@@ -1262,8 +1251,7 @@ int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
 	CHOLMOD(free_sparse) (&B, Common) ;
 	CHOLMOD(free) (3*n, sizeof (Int), Work3n, Common) ;
 	Common->mark = EMPTY ;
-	CLEAR_FLAG (Common) ;
-        ASSERT (check_flag (Common)) ;
+	CHOLMOD_CLEAR_FLAG (Common) ;
 	return (1) ;
     }
 
@@ -1280,8 +1268,7 @@ int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
 	CHOLMOD(free) (csize, sizeof (Int), Cew, Common) ;
 	CHOLMOD(free) (3*n, sizeof (Int), Work3n, Common) ;
 	Common->mark = EMPTY ;
-	CLEAR_FLAG (Common) ;
-        ASSERT (check_flag (Common)) ;
+	CHOLMOD_CLEAR_FLAG (Common) ;
 	PRINT2 (("out of memory for C, etc\n")) ;
 	return (EMPTY) ;
     }
@@ -1507,8 +1494,7 @@ int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
 		CHOLMOD(free) (csize, sizeof (Int), Cew, Common) ;
 		CHOLMOD(free) (3*n, sizeof (Int), Work3n, Common) ;
 		Common->mark = EMPTY ;
-		CLEAR_FLAG (Common) ;
-                ASSERT (check_flag (Common)) ;
+		CHOLMOD_CLEAR_FLAG (Common) ;
 		return (EMPTY) ;
 	    }
 
@@ -1836,8 +1822,7 @@ int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
     /* ---------------------------------------------------------------------- */
 
     Common->mark = EMPTY ;
-    CLEAR_FLAG (Common) ;
-    ASSERT (check_flag (Common)) ;
+    CHOLMOD_CLEAR_FLAG (Common) ;
     ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, 0, Common)) ;
 
     /* ---------------------------------------------------------------------- */
@@ -1948,10 +1933,6 @@ int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
 
     ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, 0, Common)) ;
     return (ncomponents) ;
-#else
-    Common->status = CHOLMOD_NOT_INSTALLED ;
-    return (EMPTY) ;
-#endif
 }
 
 /* ========================================================================== */
@@ -1972,7 +1953,7 @@ int64_t CHOLMOD(nested_dissection) /* returns # of components, or -1 if error */
  * Returns the new number of nodes in the separator tree.
  */
 
-int64_t CHOLMOD(collapse_septree)
+SuiteSparse_long CHOLMOD(collapse_septree)
 (
     /* ---- input ---- */
     size_t n,		/* # of nodes in the graph */
@@ -1986,9 +1967,6 @@ int64_t CHOLMOD(collapse_septree)
     cholmod_common *Common
 )
 {
-
-#ifndef NPARTITION
-
     Int *First, *Count, *Csubtree, *W, *Map ;
     Int c, j, k, nc, sepsize, total_weight, parent, nc_new, first ;
     int collapse = FALSE, ok = TRUE ;
@@ -2043,7 +2021,6 @@ int64_t CHOLMOD(collapse_septree)
     /* find the first descendant of each node of the separator tree */
     /* ---------------------------------------------------------------------- */
 
-    ASSERT (ncomponents >= 1 && ncomponents <= n) ;
     for (c = 0 ; c < nc ; c++)
     {
 	First [c] = EMPTY ;
@@ -2180,8 +2157,5 @@ int64_t CHOLMOD(collapse_septree)
     /* ---------------------------------------------------------------------- */
 
     return (nc_new) ;
-#else
-    Common->status = CHOLMOD_NOT_INSTALLED ;
-    return (EMPTY) ;
-#endif
 }
+#endif

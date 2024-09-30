@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_mem_alloc_tail_block: allocate memory from Numeric->Memory
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_mem_alloc_tail_block ============================================= */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /* The UMF_mem_* routines manage the Numeric->Memory memory space. */
 
@@ -16,7 +16,7 @@
 /* (requires nunits+1, for header). */
 /* Returns the index into Numeric->Memory if successful, or 0 on failure. */
 
-Int UMF_mem_alloc_tail_block
+GLOBAL Int UMF_mem_alloc_tail_block
 (
     NumericType *Numeric,
     Int nunits

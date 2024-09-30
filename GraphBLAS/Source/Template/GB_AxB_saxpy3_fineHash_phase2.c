@@ -2,7 +2,7 @@
 // GB_AxB_saxpy3_fineHash_phase2: C=A*B (or with M in-place), fine Hash, phase2
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -60,8 +60,7 @@
                 bool hf_unlocked = false ;  // true if i found
                 bool hf_empty = false ;     // true if empty slot found
                 int64_t hash ;
-                for (hash = GB_HASHF (i, hash_bits) ; ;
-                    GB_REHASH (hash,i,hash_bits))
+                for (hash = GB_HASHF (i) ; ; GB_REHASH (hash,i))
                 { 
                     int64_t hf = Hf [hash] ;    // grab the entry
                     hf_unlocked = (hf == i_unlocked) ;
@@ -114,10 +113,10 @@
                     int64_t hf ;
                     GB_ATOMIC_READ
                     hf = Hf [hash] ;        // grab the entry
-                    #if GB_Z_HAS_ATOMIC_UPDATE
+                    #if GB_HAS_ATOMIC
                     if (hf == i_unlocked)  // if true, update C(i,j)
                     { 
-                        GB_Z_ATOMIC_UPDATE_HX (hash, t) ;   // Hx [hash] += t
+                        GB_ATOMIC_UPDATE_HX (hash, t) ;// Hx [.]+=t
                         break ;         // C(i,j) has been updated
                     }
                     #endif
@@ -136,7 +135,7 @@
                         { 
                             // C(i,j) is a new entry in C(:,j)
                             // Hx [hash] = t
-                            GB_Z_ATOMIC_WRITE_HX (hash, t) ;
+                            GB_ATOMIC_WRITE_HX (hash, t) ;
                             GB_ATOMIC_WRITE
                             Hf [hash] = i_unlocked ; // unlock entry
                             break ;
@@ -144,7 +143,8 @@
                         if (hf == i_unlocked) // f == 2
                         { 
                             // C(i,j) already appears in C(:,j)
-                            GB_Z_ATOMIC_UPDATE_HX (hash, t) ;  // Hx [hash] += t
+                            // Hx [hash] += t
+                            GB_ATOMIC_UPDATE_HX (hash, t) ;
                             GB_ATOMIC_WRITE
                             Hf [hash] = i_unlocked ; // unlock entry
                             break ;

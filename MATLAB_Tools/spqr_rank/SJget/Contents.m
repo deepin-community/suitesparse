@@ -27,8 +27,5 @@
 %   help SJget
 
 % Derived from the ssget toolbox on 18 March 2008.
-
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2007, Timothy A. Davis
 

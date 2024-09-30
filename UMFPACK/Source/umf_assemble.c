@@ -1,14 +1,14 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_assemble: degree update and numeical assembly
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_assemble ========================================================= */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*  Degree update and numerical assembly.  This is compiled twice (with and
- *  without FIXQ) for each real/complex int32_t/int64_t version, for a
+ *  without FIXQ) for each real/complex int/SuiteSparse_long version, for a
  *  total of 8 versions.*/
 
 #include "umf_internal.h"
@@ -317,9 +317,9 @@ PRIVATE void col_assemble
 /* ========================================================================== */
 
 #ifndef FIXQ
-void UMF_assemble
+GLOBAL void UMF_assemble
 #else
-void UMF_assemble_fixq
+GLOBAL void UMF_assemble_fixq
 #endif
 (
     NumericType *Numeric,

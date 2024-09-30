@@ -16,8 +16,7 @@ function lintest (A,b)
 %
 % See also linfactor, lintests, mldivide
 
-% LINFACTOR, Copyright (c) 2008, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2007, Timothy A. Davis
 
 %-------------------------------------------------------------------------------
 % warmup, to make sure functions are loaded, for accurate timings

@@ -2,7 +2,7 @@
 // GB_serialize: compress and serialize a GrB_Matrix into a blob
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -23,11 +23,11 @@
     GB_FREE (&Ab_Sblocks, Ab_Sblocks_size) ;    \
     GB_FREE (&Ai_Sblocks, Ai_Sblocks_size) ;    \
     GB_FREE (&Ax_Sblocks, Ax_Sblocks_size) ;    \
-    GB_serialize_free_blocks (&Ap_Blocks, Ap_Blocks_size, Ap_nblocks) ; \
-    GB_serialize_free_blocks (&Ah_Blocks, Ah_Blocks_size, Ah_nblocks) ; \
-    GB_serialize_free_blocks (&Ab_Blocks, Ab_Blocks_size, Ab_nblocks) ; \
-    GB_serialize_free_blocks (&Ai_Blocks, Ai_Blocks_size, Ai_nblocks) ; \
-    GB_serialize_free_blocks (&Ax_Blocks, Ax_Blocks_size, Ax_nblocks) ; \
+    GB_serialize_free_blocks (&Ap_Blocks, Ap_Blocks_size, Ap_nblocks, Context);\
+    GB_serialize_free_blocks (&Ah_Blocks, Ah_Blocks_size, Ah_nblocks, Context);\
+    GB_serialize_free_blocks (&Ab_Blocks, Ab_Blocks_size, Ab_nblocks, Context);\
+    GB_serialize_free_blocks (&Ai_Blocks, Ai_Blocks_size, Ai_nblocks, Context);\
+    GB_serialize_free_blocks (&Ax_Blocks, Ax_Blocks_size, Ax_nblocks, Context);\
 }
 
 #define GB_FREE_ALL                             \
@@ -50,7 +50,7 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
     // input:
     const GrB_Matrix A,             // matrix to serialize
     int32_t method,                 // method to use
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -113,14 +113,14 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
     // ensure all pending work is finished
     //--------------------------------------------------------------------------
 
-    GB_OK (GB_wait (A, "A to serialize", Werk)) ;
+    GB_OK (GB_wait (A, "A to serialize", Context)) ;
     ASSERT (A->nvec_nonempty >= 0) ;
 
     //--------------------------------------------------------------------------
     // determine maximum # of threads
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
 
     //--------------------------------------------------------------------------
     // parse the method
@@ -129,12 +129,10 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
     int32_t algo, level ;
     GB_serialize_method (&algo, &level, method) ;
     method = algo + level ;
-    GBURBLE ("(compression: %s%s%s%s:%d) ",
+    GBURBLE ("(compression: %s%s%s:%d) ",
         (algo == GxB_COMPRESSION_NONE ) ? "none" : "",
         (algo == GxB_COMPRESSION_LZ4  ) ? "LZ4" : "",
-        (algo == GxB_COMPRESSION_LZ4HC) ? "LZ4HC" : "",
-        (algo == GxB_COMPRESSION_ZSTD ) ? "ZSTD" : "",
-        level) ;
+        (algo == GxB_COMPRESSION_LZ4HC) ? "LZ4HC" : "", level) ;
 
     //--------------------------------------------------------------------------
     // get the content of the matrix
@@ -156,7 +154,7 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
     ASSERT (A->nzombies == 0) ;
     ASSERT (!A->jumbled) ;
     GrB_Type atype = A->type ;
-    int64_t typesize = atype->size ;
+    size_t typesize = atype->size ;
     int32_t typecode = (int32_t) (atype->code) ;
     int64_t anz = GB_nnz (A) ;
     int64_t anz_held = GB_nnz_held (A) ;
@@ -171,7 +169,6 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
     {
         case GxB_HYPERSPARSE : 
             Ah_len = sizeof (GrB_Index) * nvec ;
-            // fall through to the sparse case
         case GxB_SPARSE :
             Ap_len = sizeof (GrB_Index) * (nvec+1) ;
             Ai_len = sizeof (GrB_Index) * anz ;
@@ -179,7 +176,6 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
             break ;
         case GxB_BITMAP : 
             Ab_len = sizeof (int8_t) * anz_held ;
-            // fall through to the full case
         case GxB_FULL : 
             Ax_len = typesize * (iso ? 1 : anz_held) ;
             break ;
@@ -198,27 +194,27 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
     GB_OK (GB_serialize_array (&Ap_Blocks, &Ap_Blocks_size,
         &Ap_Sblocks, &Ap_Sblocks_size, &Ap_nblocks, &Ap_method,
         &Ap_compressed_size, dryrun,
-        (GB_void *) A->p, Ap_len, method, algo, level, Werk)) ;
+        (GB_void *) A->p, Ap_len, method, algo, level, Context)) ;
 
     GB_OK (GB_serialize_array (&Ah_Blocks, &Ah_Blocks_size,
         &Ah_Sblocks, &Ah_Sblocks_size, &Ah_nblocks, &Ah_method,
         &Ah_compressed_size, dryrun,
-        (GB_void *) A->h, Ah_len, method, algo, level, Werk)) ;
+        (GB_void *) A->h, Ah_len, method, algo, level, Context)) ;
 
     GB_OK (GB_serialize_array (&Ab_Blocks, &Ab_Blocks_size,
         &Ab_Sblocks, &Ab_Sblocks_size, &Ab_nblocks, &Ab_method,
         &Ab_compressed_size, dryrun,
-        (GB_void *) A->b, Ab_len, method, algo, level, Werk)) ;
+        (GB_void *) A->b, Ab_len, method, algo, level, Context)) ;
 
     GB_OK (GB_serialize_array (&Ai_Blocks, &Ai_Blocks_size,
         &Ai_Sblocks, &Ai_Sblocks_size, &Ai_nblocks, &Ai_method,
         &Ai_compressed_size, dryrun,
-        (GB_void *) A->i, Ai_len, method, algo, level, Werk)) ;
+        (GB_void *) A->i, Ai_len, method, algo, level, Context)) ;
 
     GB_OK (GB_serialize_array (&Ax_Blocks, &Ax_Blocks_size,
         &Ax_Sblocks, &Ax_Sblocks_size, &Ax_nblocks, &Ax_method,
         &Ax_compressed_size, dryrun,
-        (GB_void *) A->x, Ax_len, method, algo, level, Werk)) ;
+        (GB_void *) A->x, Ax_len, method, algo, level, Context)) ;
 
     //--------------------------------------------------------------------------
     // determine the size of the blob
@@ -298,11 +294,7 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
     int32_t sparsity_iso_csc = (4 * sparsity) + (iso ? 2 : 0) +
         (A->is_csc ? 1 : 0) ;
 
-    // size_t is 32 bits if GraphBLAS is compiled in ILP32 mode,
-    // so write a 64-bit blob size, regardless of the size of size_t
-    uint64_t blob_size_required64 = (uint64_t) blob_size_required ;
-    GB_BLOB_WRITE (blob_size_required64, uint64_t) ;
-
+    GB_BLOB_WRITE (blob_size_required, size_t) ;
     GB_BLOB_WRITE (typecode, int32_t) ;
     GB_BLOB_WRITE (version, int32_t) ;
     GB_BLOB_WRITE (vlen, int64_t) ;
@@ -331,11 +323,6 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
     { 
         // only copy the type_name for user-defined types
         memset (blob + s, 0, GxB_MAX_NAME_LEN) ;
-        #if GB_COMPILER_GCC
-        #if (__GNUC__ > 5)
-        #pragma GCC diagnostic ignored "-Wstringop-truncation"
-        #endif
-        #endif
         strncpy ((char *) (blob + s), atype->name, GxB_MAX_NAME_LEN-1) ;
         s += GxB_MAX_NAME_LEN ;
     }
@@ -373,7 +360,7 @@ GrB_Info GB_serialize               // serialize a matrix into a blob
         // GxB_Matrix_serialize: giving the blob to the user; remove it from
         // the list of malloc'd blocks
         #ifdef GB_MEMDUMP
-        printf ("removing blob %p size %ld from memtable\n", blob,  // MEMDUMP
+        printf ("removing blob %p size %ld from memtable\n", blob,
             blob_size_allocated) ;
         #endif
         GB_Global_memtable_remove (blob) ;

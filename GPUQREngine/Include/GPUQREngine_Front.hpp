@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Include/GPUQREngine_Front.hpp ===============================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // The Front is a principal class in the GPUQREngine.
 //
@@ -23,7 +17,7 @@
 #include "GPUQREngine_SparseMeta.hpp"
 #include "GPUQREngine_FrontState.hpp"
 
-template <typename Int = int64_t> class Front
+class Front
 {
 public:
     Int fids;           // Front id within a stage

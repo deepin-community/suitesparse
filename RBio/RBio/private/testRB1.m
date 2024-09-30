@@ -4,10 +4,9 @@ function testRB1
 % Example:
 %   testRB1
 %
-% See also ssget, RBread, RBreade, testRB2.
+% See also UFget, RBread, RBreade, testRB2.
 
-% RBio, Copyright (c) 2009-2022, Timothy A. Davis.  All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2006, Timothy A. Davis
 
 files = {
 'bcsstk01.rb'

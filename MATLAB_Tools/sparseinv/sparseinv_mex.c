@@ -1,7 +1,3 @@
-// SuiteSparse/MATLAB_TOOLS/sparsinv/sparseinv_mex.c
-// SPARSEINV, Copyright (c) 2011, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
 #include "sparseinv.h"
 
 /*

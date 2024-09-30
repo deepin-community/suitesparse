@@ -1,6 +1,3 @@
-# SFMULT, Copyright (c) 2009, Timothy A Davis. All Rights Reserved.
-# SPDX-License-Identifier: BSD-3-clause
-
 all: sfmult.mexglx
 
 diffs: kernel_diffs kernel_usage_diffs structure_diffs
@@ -55,4 +52,4 @@ clean:
 	rm -f *.o
 
 purge: clean
-	rm sfmult.mex*
+	rm sfmult.mexglx

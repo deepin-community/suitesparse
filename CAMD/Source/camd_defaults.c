@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// CAMD/Source/camd_defaults: set defaults for CAMD
-//------------------------------------------------------------------------------
+/* ========================================================================= */
+/* === CAMD_defaults ======================================================= */
+/* ========================================================================= */
 
-// CAMD, Copyright (c) 2007-2022, Timothy A. Davis, Yanqing Chen, Patrick R.
-// Amestoy, and Iain S. Duff.  All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
-//------------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
+/* CAMD, Copyright (c) Timothy A. Davis, Yanqing Chen,			     */
+/* Patrick R. Amestoy, and Iain S. Duff.  See ../README.txt for License.     */
+/* email: DrTimothyAldenDavis@gmail.com                                      */
+/* ------------------------------------------------------------------------- */
 
 /* User-callable.  Sets default control parameters for CAMD.  See camd.h
  * for details.
@@ -18,7 +18,7 @@
 /* === CAMD defaults ======================================================= */
 /* ========================================================================= */
 
-void CAMD_defaults
+GLOBAL void CAMD_defaults
 (
     double Control [ ]
 )

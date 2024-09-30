@@ -1,15 +1,15 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umfpack_solve: solve a linear system
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMFPACK_solve ======================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     User-callable.  Solves a linear system using the numerical factorization
-    computed by UMFPACK_numeric.  See umfpack.h for more details.
+    computed by UMFPACK_numeric.  See umfpack_solve.h for more details.
 
     For umfpack_*_solve:
 	Dynamic memory usage:  UMFPACK_solve calls UMF_malloc twice, for
@@ -39,14 +39,14 @@ PRIVATE Int init_count ;
 #endif
 #endif
 
-int
+GLOBAL Int
 #ifdef WSOLVE
 UMFPACK_wsolve
 #else
 UMFPACK_solve
 #endif
 (
-    int sys,
+    Int sys,
     const Int Ap [ ],
     const Int Ai [ ],
     const double Ax [ ],

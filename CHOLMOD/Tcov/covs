@@ -1,17 +1,9 @@
-#!/bin/bash
-
-# ------------------------------------------------------------------------------
-# CHOLMOD/Tcov Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-# All Rights Reserved.
-# SPDX-License-Identifier: GPL-2.0+
-# ------------------------------------------------------------------------------
-
+#!/bin/csh
 # usage: covs
 echo '================================================================='
-for file in $@
-do
+foreach file (*.c.?cov)
 	echo $file
-	grep "#####" -A5 -B5 $file | grep -v "\<_" | grep -v "return 0;" | \
+	grep "#####" $file | grep -v "\<_" | grep -v "return 0;" | \
             grep -v "#####:[ ]*[0-9]*:[{}]"
 	echo '================================================================='
-done
+	end

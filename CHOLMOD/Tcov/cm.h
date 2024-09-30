@@ -1,14 +1,3 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Tcov/cm.h: include file for CHOLMOD test programs
-//------------------------------------------------------------------------------
-
-// CHOLMOD/Tcov Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
-#define SUITESPARSE_BLAS_DEFINITIONS
 #include "cholmod.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,9 +5,47 @@
 #include <math.h>
 #include <signal.h>
 
+#define Size_max ((size_t) (-1))
+
+/* -------------------------------------------------------------------------- */
+/* double, SuiteSparse_long */
 /* -------------------------------------------------------------------------- */
 
-#include "cholmod_internal.h"
+#ifdef DLONG
+#define Real double
+#define Int SuiteSparse_long
+#define Int_max SuiteSparse_long_max
+#define CHOLMOD(name) cholmod_l_ ## name
+#define LONG
+#define DOUBLE
+#define ITYPE CHOLMOD_LONG
+#define DTYPE CHOLMOD_DOUBLE
+
+/* -------------------------------------------------------------------------- */
+/* double, int: this is the default */
+/* -------------------------------------------------------------------------- */
+
+#else
+
+#ifndef DINT
+#define DINT
+#endif
+#define INT
+#define DOUBLE
+
+#define Real double
+#define Int int
+#define Int_max INT_MAX
+#define CHOLMOD(name) cholmod_ ## name
+#define ITYPE CHOLMOD_INT
+#define DTYPE CHOLMOD_DOUBLE
+
+#endif
+
+/* -------------------------------------------------------------------------- */
+
+#define BLAS_OK cm->blas_ok
+#include "cholmod_blas.h"
 
 #define EMPTY (-1)
 #define TRUE 1
@@ -66,7 +93,6 @@
 #define NSMALL 200
 #define NLARGE 1000
 
-#undef  ERROR
 #define ERROR(status,message) \
     CHOLMOD(error) (status, __FILE__, __LINE__, message, cm)
 
@@ -81,7 +107,7 @@
 EXTERN double zero [2], one [2], minusone [2] ;
 EXTERN cholmod_common Common, *cm ;
 EXTERN cholmod_dense *M1 ;
-EXTERN int64_t my_tries ;
+EXTERN Int my_tries ;
 EXTERN double Zero [2] ;
 
 /* -------------------------------------------------------------------------- */
@@ -139,14 +165,14 @@ void ctest (cholmod_sparse *A) ;
 void amdtest (cholmod_sparse *A) ;
 double resid_sparse (cholmod_sparse *A, cholmod_sparse *X, cholmod_sparse *B) ;
 cholmod_dense *zeros (Int nrow, Int ncol, Int d, Int xtype) ;
-void huge (void) ;
-void camdtest (cholmod_sparse *A) ;
 
 /* -------------------------------------------------------------------------- */
 /* AMD, COLAMD, and CCOLAMD */
 /* -------------------------------------------------------------------------- */
 
-#ifdef CHOLMOD_INT64
+#ifdef LONG
+
+#define ID "%ld"
 
 #define AMD_order amd_l_order
 #define AMD_defaults amd_l_defaults
@@ -198,6 +224,8 @@ void camdtest (cholmod_sparse *A) ;
 #define SYMAMD_report symamd_l_report
 
 #else
+
+#define ID "%d"
 
 #define AMD_order amd_order
 #define AMD_defaults amd_defaults

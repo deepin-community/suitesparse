@@ -2,7 +2,7 @@
 // GB_bitmap_subref: C = A(I,J) where A is bitmap or full
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -10,14 +10,12 @@
 // C=A(I,J), where A is bitmap or full, symbolic and numeric.
 // See GB_subref for details.
 
-// JIT: needed.
-
 #include "GB_subref.h"
 #include "GB_subassign_IxJ_slice.h"
 
 #define GB_FREE_ALL             \
 {                               \
-    GB_phybix_free (C) ;        \
+    GB_phbix_free (C) ;         \
 }
 
 GrB_Info GB_bitmap_subref       // C = A(I,J): either symbolic or numeric
@@ -34,7 +32,7 @@ GrB_Info GB_bitmap_subref       // C = A(I,J): either symbolic or numeric
     const GrB_Index *J,         // index list for C = A(I,J), or GrB_ALL, etc.
     const int64_t nj,           // length of J, or special
     const bool symbolic,        // if true, construct C as symbolic
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -75,7 +73,7 @@ GrB_Info GB_bitmap_subref       // C = A(I,J): either symbolic or numeric
     int64_t imin, imax, jmin, jmax ;
 
     info = GB_ijproperties (I, ni, nI, avlen, &Ikind, Icolon,
-        &I_unsorted, &I_has_dupl, &I_contig, &imin, &imax, Werk) ;
+        &I_unsorted, &I_has_dupl, &I_contig, &imin, &imax, Context) ;
     if (info != GrB_SUCCESS)
     { 
         // I invalid
@@ -83,7 +81,7 @@ GrB_Info GB_bitmap_subref       // C = A(I,J): either symbolic or numeric
     }
 
     info = GB_ijproperties (J, nj, nJ, avdim, &Jkind, Jcolon,
-        &J_unsorted, &J_has_dupl, &J_contig, &jmin, &jmax, Werk) ;
+        &J_unsorted, &J_has_dupl, &J_contig, &jmin, &jmax, Context) ;
     if (info != GrB_SUCCESS)
     { 
         // J invalid
@@ -102,7 +100,7 @@ GrB_Info GB_bitmap_subref       // C = A(I,J): either symbolic or numeric
     // set C->iso = C_iso   OK
     GB_OK (GB_new_bix (&C, // bitmap or full, existing header
         ctype, nI, nJ, GB_Ap_null, C_is_csc,
-        sparsity, true, A->hyper_switch, -1, cnzmax, true, C_iso)) ;
+        sparsity, true, A->hyper_switch, -1, cnzmax, true, C_iso, Context)) ;
 
     //--------------------------------------------------------------------------
     // get C

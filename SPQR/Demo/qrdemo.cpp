@@ -2,14 +2,18 @@
 // === qrdemo.cpp ==============================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
 // A simple C++ demo of SuiteSparseQR.  The comments give the MATLAB equivalent
 // statements.  See also qrdemo.m
 
 #include "SuiteSparseQR.hpp"
 #include <complex>
+
+// SuiteSparseQR uses an integer defined in SuiteSparse_config.h called
+// SuiteSparse_long.  It is a 32-bit integer on a 32-bit platform, and a 64-bit
+// integer on a 64-bit platform.  For most platforms (except Windows),
+// SuiteSparse_long is just "long".
+
+#define Long SuiteSparse_long
 
 // =============================================================================
 // check_residual:  print the relative residual, norm (A*x-b)/norm(x)
@@ -23,9 +27,9 @@ void check_residual
     cholmod_common *cc
 )
 {
-    int64_t m = A->nrow ;
-    int64_t n = A->ncol ;
-    int64_t rnk ;
+    Long m = A->nrow ;
+    Long n = A->ncol ;
+    Long rnk ;
     double rnorm, anorm, xnorm, atrnorm ;
     double one [2] = {1,0}, minusone [2] = {-1,0}, zero [2] = {0,0} ;
     cholmod_dense *r, *atr ;
@@ -56,13 +60,13 @@ void check_residual
         // find the relative residual, except for least-squares systems
         rnorm /= (anorm * xnorm) ;
     }
-    printf ("relative norm(Ax-b): %8.1e rank: %6" PRId64 "  "
+    printf ("relative norm(Ax-b): %8.1e rank: %6ld  "
         "rel. norm(A'(Ax-b)) %8.1e\n", rnorm, rnk, atrnorm) ;
     cholmod_l_free_dense (&r, cc) ;
     cholmod_l_free_dense (&atr, cc) ;
 #else
     printf ("relative norm(Ax-b): not computed (requires CHOLMOD/MatrixOps)\n");
-    printf ("rank: %6" PRId64 "\n", rnk) ;
+    printf ("rank: %6ld\n", rnk) ;
 #endif
 }
 
@@ -74,7 +78,7 @@ int main (int argc, char **argv)
     cholmod_sparse *A ;
     cholmod_dense *X, *B ;
     int mtype ;
-    int64_t m, n ;
+    Long m, n ;
 
     // start CHOLMOD
     cc = &Common ;
@@ -92,8 +96,7 @@ int main (int argc, char **argv)
     m = A->nrow ;
     n = A->ncol ;
 
-    printf ("Matrix %6" PRId64 "-by-%-6" PRId64 " nnz: %6" PRId64 "\n",
-        m, n, cholmod_l_nnz (A, cc)) ;
+    printf ("Matrix %6ld-by-%-6ld nnz: %6ld\n", m, n, cholmod_l_nnz (A, cc)) ;
 
     // B = ones (m,1), a dense right-hand-side of the same type as A
     B = cholmod_l_ones (m, 1, A->xtype, cc) ;
@@ -124,7 +127,7 @@ int main (int argc, char **argv)
     {
         SuiteSparseQR_factorization <double> *QR ;
         cholmod_dense *Y ;
-        int64_t i ;
+        Long i ;
         double *Bx ;
 
         // factorize once

@@ -7,8 +7,7 @@ function [x1,x2,e1,e2] = testsolve (A,b)
 %   [x1,x2,e1,e2] = testsolve (A,b) ;
 % See also cholmod_test
 
-% Copyright 2006-2022, Timothy A. Davis, All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2007, Timothy A. Davis, http://www.suitesparse.com
 
 fprintf ('A: [n %6d real %d]    B: [sp:%d nrhs %d real %d]  ', ...
     size(A,1), isreal(A), issparse(b), size(b,2), isreal(b)) ;

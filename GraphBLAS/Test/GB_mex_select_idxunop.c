@@ -2,7 +2,7 @@
 // GB_mex_select_idxunop: C<Mask> = accum(C,select(A,y)) or select(A',y)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -271,15 +271,6 @@ void mexFunction
         FREE_ALL ;
         mexErrMsgTxt ("scalar failed") ;
     }
-
-    int f2 = 99 ;
-    GxB_Matrix_Option_get_INT32 (S, GxB_FORMAT, &f2) ;
-    if (fmt != GxB_BY_COL)
-    {
-        FREE_ALL ;
-        mexErrMsgTxt ("scalar failed") ;
-    }
-
     scalar = (GrB_Scalar) S ;
     GrB_Info info = GxB_Scalar_fprint (scalar, "scalar", GxB_SILENT, NULL) ;
     if (info != GrB_SUCCESS)

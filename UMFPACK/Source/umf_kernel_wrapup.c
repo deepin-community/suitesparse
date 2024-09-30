@@ -1,18 +1,18 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_kernel_wrapup: finish LU factorization after umf_kernel
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_kernel_wrapup ==================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /* The matrix is factorized.  Finish the LU data structure. */
 
 #include "umf_internal.h"
 #include "umf_kernel_wrapup.h"
 
-void UMF_kernel_wrapup
+GLOBAL void UMF_kernel_wrapup
 (
     NumericType *Numeric,
     SymbolicType *Symbolic,

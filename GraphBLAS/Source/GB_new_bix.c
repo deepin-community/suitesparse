@@ -2,7 +2,7 @@
 // GB_new_bix: create a matrix and allocate space
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -45,7 +45,8 @@ GrB_Info GB_new_bix             // create a new matrix, incl. A->b, A->i, A->x
     const int64_t nzmax,        // number of nonzeros the matrix must hold;
                                 // ignored if A is iso and full
     const bool numeric,         // if true, allocate A->x, else A->x is NULL
-    const bool A_iso            // if true, allocate A as iso
+    const bool A_iso,           // if true, allocate A as iso
+    GB_Context Context
 )
 {
 
@@ -61,7 +62,7 @@ GrB_Info GB_new_bix             // create a new matrix, incl. A->b, A->i, A->x
 
     bool preexisting_header = (*Ahandle != NULL) ;
     GrB_Info info = GB_new (Ahandle, type, vlen, vdim,
-        Ap_option, is_csc, sparsity, hyper_switch, plen) ;
+        Ap_option, is_csc, sparsity, hyper_switch, plen, Context) ;
     if (info != GrB_SUCCESS)
     { 
         // out of memory.
@@ -77,12 +78,11 @@ GrB_Info GB_new_bix             // create a new matrix, incl. A->b, A->i, A->x
     //--------------------------------------------------------------------------
 
     // set A->iso = A_iso   OK: burble in the caller
-    info = GB_bix_alloc (A, nzmax, sparsity, bitmap_calloc, numeric, A_iso) ;
+    info = GB_bix_alloc (A, nzmax, sparsity, bitmap_calloc, numeric, A_iso,
+        Context) ;
     if (info != GrB_SUCCESS)
     {
         // out of memory
-        // free all content of A
-        GB_phybix_free (A) ;
         if (!preexisting_header)
         { 
             // free the header *Ahandle itself unless it existed on input

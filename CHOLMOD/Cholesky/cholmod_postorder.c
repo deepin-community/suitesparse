@@ -1,18 +1,18 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Cholesky/cholmod_postorder: postordering of a tree
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Cholesky/cholmod_postorder =========================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* Compute the postorder of a tree. */
 
-#include "cholmod_internal.h"
-
 #ifndef NCHOLESKY
+
+#include "cholmod_internal.h"
+#include "cholmod_cholesky.h"
+
 
 /* ========================================================================== */
 /* === dfs ================================================================== */
@@ -135,11 +135,11 @@ static Int dfs		/* return the new value of k */
  * workspace: Head (n), Iwork (2*n)
  */
 
-Int CHOLMOD(postorder)	/* return # of nodes postordered */
+SuiteSparse_long CHOLMOD(postorder)	/* return # of nodes postordered */
 (
     /* ---- input ---- */
     Int *Parent,	/* size n. Parent [j] = p if p is the parent of j */
-    size_t n_input,
+    size_t n,
     Int *Weight,	/* size n, optional. Weight [j] is weight of node j */
     /* ---- output --- */
     Int *Post,		/* size n. Post [k] = j is kth in postordered tree */
@@ -151,7 +151,6 @@ Int CHOLMOD(postorder)	/* return # of nodes postordered */
     Int j, p, k, w, nextj ;
     size_t s ;
     int ok = TRUE ;
-    Int n = (Int) n_input ;
 
     /* ---------------------------------------------------------------------- */
     /* check inputs */
@@ -167,7 +166,7 @@ Int CHOLMOD(postorder)	/* return # of nodes postordered */
     /* ---------------------------------------------------------------------- */
 
     /* s = 2*n */
-    s = CHOLMOD(mult_size_t) (n_input, (size_t) 2, &ok) ;
+    s = CHOLMOD(mult_size_t) (n, 2, &ok) ;
     if (!ok)
     {
 	ERROR (CHOLMOD_TOO_LARGE, "problem too large") ;

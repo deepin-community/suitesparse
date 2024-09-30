@@ -1,11 +1,5 @@
 C-----------------------------------------------------------------------
-C AMD/Source/amd.f: Fortran version of AMD
-C-----------------------------------------------------------------------
-
-C AMD, Copyright (c) 1996-2022, Timothy A. Davis, Patrick R. Amestoy,
-C and C Iain S. Duff.  All Rights Reserved.
-C SPDX-License-Identifier: BSD-3-clause
-
+C AMD:  approximate minimum degree, with aggressive absorption
 C-----------------------------------------------------------------------
 
         SUBROUTINE AMD

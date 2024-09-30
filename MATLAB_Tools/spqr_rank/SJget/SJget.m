@@ -43,9 +43,8 @@ function Problem = SJget (matrix, SJ_Index, refresh_mat)
 
 %   See also SJgrep, SJweb, SJget_example, SJget_defaults, urlwrite.
 
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+%   Derived from the ssget toolbox on March 18, 2008, modified 2/1/2009
+%   Copyright 2007, Tim Davis, University of Florida.
 
 %-------------------------------------------------------------------------------
 % get the parameter settings

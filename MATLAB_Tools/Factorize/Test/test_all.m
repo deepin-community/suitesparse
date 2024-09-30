@@ -11,8 +11,7 @@ function test_all (performance)
 % See also factorize, inverse, test_performance, test_accuracy, test_disp,
 % test_errors
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
 if (nargin < 1)
     performance = 1 ;

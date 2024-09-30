@@ -2,12 +2,10 @@
 // GB_transpose: C=A' or C=op(A'), with typecasting
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed.  Only one variant possible.
 
 // CALLS:     GB_builder
 
@@ -49,7 +47,7 @@
     GB_FREE_WORKSPACE ;                 \
     GB_Matrix_free (&T) ;               \
     /* freeing C also frees A if transpose is done in-place */ \
-    GB_phybix_free (C) ;                \
+    GB_phbix_free (C) ;                 \
 }
 
 #include "GB_transpose.h"
@@ -72,7 +70,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         const GrB_Scalar scalar,    // scalar to bind to binary operator
         bool binop_bind1st,         // if true, binop(x,A) else binop(A,y)
         bool flipij,                // if true, flip i,j for user idxunop
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -112,7 +110,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
     // wait if A has pending tuples or zombies; leave jumbled unless avdim == 1
     if (GB_PENDING (A) || GB_ZOMBIES (A) || (avdim == 1 && GB_JUMBLED (A)))
     { 
-        GB_OK (GB_wait (A, "A", Werk)) ;
+        GB_OK (GB_wait (A, "A", Context)) ;
     }
     ASSERT (!GB_PENDING (A)) ;
     ASSERT (!GB_ZOMBIES (A)) ;
@@ -124,8 +122,12 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
     //--------------------------------------------------------------------------
 
     GrB_Type atype = A->type ;
+    size_t asize = atype->size ;
+    GB_Type_code acode = atype->code ;
+
     bool A_is_bitmap = GB_IS_BITMAP (A) ;
     bool A_is_hyper  = GB_IS_HYPERSPARSE (A) ;
+
     int64_t anz = GB_nnz (A) ;
     int64_t anz_held = GB_nnz_held (A) ;
     int64_t anvec = A->nvec ;
@@ -135,8 +137,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
     // determine the max number of threads to use
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
 
     //--------------------------------------------------------------------------
     // determine the type of C and get the unary, idxunop, binary operator
@@ -209,7 +210,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         op = (GB_Operator) GB_unop_one (ctype->code) ;
     }
     else if (user_idxunop)
-    { 
+    {
         // do not apply the user op until after the transpose; replace with
         // no operator at all, with no typecast
         op = NULL ;
@@ -223,7 +224,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
     size_t csize = ctype->size ;
 
     ASSERT (GB_IMPLIES (avlen == 0 || avdim == 0, anz == 0)) ;
-    GB_iso_code C_code_iso = GB_unop_code_iso (A, op, binop_bind1st) ;
+    GB_iso_code C_code_iso = GB_iso_unop_code (A, op, binop_bind1st) ;
     bool C_iso = (C_code_iso != GB_NON_ISO) ;
 
     ASSERT (GB_IMPLIES (A->iso, C_iso)) ;
@@ -252,14 +253,14 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         // set T->iso = false   OK
         GB_OK (GB_new_bix (&T, // hyper, existing header
             ctype, avdim, avlen, GB_Ap_calloc, C_is_csc, GxB_HYPERSPARSE,
-            true, A_hyper_switch, 1, 1, true, false)) ;
+            true, A_hyper_switch, 1, 1, true, false, Context)) ;
 
     }
-    else if (A_is_bitmap || GB_IS_FULL (A))
+    else if (A_is_bitmap || GB_as_if_full (A))
     {
 
         //----------------------------------------------------------------------
-        // transpose a bitmap/full matrix or vector
+        // transpose a bitmap/as-if-full matrix or vector
         //----------------------------------------------------------------------
 
         // A is either bitmap or as-is-full (full, or sparse or hypersparse
@@ -280,7 +281,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
             GBURBLE ("(cheap transpose) ") ;
             info = GB_new (&T, // bitmap or full, existing header
                 ctype, avdim, avlen, GB_Ap_null, C_is_csc,
-                T_sparsity, A_hyper_switch, 1) ;
+                T_sparsity, A_hyper_switch, 1, Context) ;
             ASSERT (info == GrB_SUCCESS) ;
         }
         else
@@ -289,7 +290,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
             // set T->iso = C_iso   OK
             GB_OK (GB_new_bix (&T, // bitmap or full, existing header
                 ctype, avdim, avlen, GB_Ap_null, C_is_csc, T_sparsity, true,
-                A_hyper_switch, 1, anz_held, true, C_iso)) ;
+                A_hyper_switch, 1, anz_held, true, C_iso, Context)) ;
         }
 
         T->magic = GB_MAGIC ;
@@ -328,13 +329,13 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         else if (op == NULL)
         { 
             // do not apply an operator; optional typecast to T->type
-            GB_OK (GB_transpose_ix (T, A, NULL, NULL, 0, nthreads)) ;
+            GB_transpose_ix (T, A, NULL, NULL, 0, nthreads) ;
         }
         else
         { 
             // apply an operator, T has type op->ztype
-            GB_OK (GB_transpose_op (T, C_code_iso, op, scalar, binop_bind1st, A,
-                NULL, NULL, 0, nthreads)) ;
+            GB_transpose_op (T, C_code_iso, op, scalar, binop_bind1st, A,
+                NULL, NULL, 0, nthreads) ;
         }
 
         ASSERT_MATRIX_OK (T, "T dense/bitmap", GB0) ;
@@ -364,13 +365,12 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
 
         info = GB_new (&T, // hyper; existing header
             ctype, 1, avlen, GB_Ap_null, C_is_csc,
-            GxB_HYPERSPARSE, A_hyper_switch, 0) ;
+            GxB_HYPERSPARSE, A_hyper_switch, 0, Context) ;
         ASSERT (info == GrB_SUCCESS) ;
 
         // allocate T->p, T->i, and optionally T->x, but not T->h
-        int64_t tplen = GB_IMAX (1, anz) ;
-        T->p = GB_MALLOC (tplen+1, int64_t, &(T->p_size)) ;
-        T->i = GB_MALLOC (anz    , int64_t, &(T->i_size)) ;
+        T->p = GB_MALLOC (anz+1, int64_t, &(T->p_size)) ;
+        T->i = GB_MALLOC (anz  , int64_t, &(T->i_size)) ;
         bool allocate_Tx = (op != NULL || C_iso) || (ctype != atype) ;
         if (allocate_Tx)
         { 
@@ -393,13 +393,14 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         { 
             // T->x = unop (A), binop (A,scalar), or binop (scalar,A), or
             // compute the iso value of T = 1, A, or scalar, without any op
-            GB_OK (GB_apply_op ((GB_void *) T->x, ctype, C_code_iso, op,
-                scalar, binop_bind1st, flipij, A, Werk)) ;
+            info = GB_apply_op ((GB_void *) T->x, ctype, C_code_iso, op,
+                scalar, binop_bind1st, flipij, A, Context) ;
+            ASSERT (info == GrB_SUCCESS) ;
         }
         else if (ctype != atype)
         { 
             // copy the values from A into T and cast from atype to ctype
-            GB_OK (GB_cast_matrix (T, A)) ;
+            GB_cast_matrix (T, A, Context) ;
         }
         else
         { 
@@ -437,7 +438,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         }
 
         // T->p = 0:anz and T->i = zeros (1,anz), newly allocated
-        T->plen = tplen ;
+        T->plen = anz ;
         T->nvec = anz ;
         T->nvec_nonempty = anz ;
 
@@ -453,7 +454,6 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         T->p [anz] = anz ;
 
         T->iso = C_iso ;
-        T->nvals = anz ;
         T->magic = GB_MAGIC ;
 
     }
@@ -494,7 +494,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         // and initialize the type and dimension of T.
         info = GB_new (&T, // sparse; existing header
             ctype, avdim, 1, GB_Ap_null, C_is_csc,
-            GxB_SPARSE, A_hyper_switch, 0) ;
+            GxB_SPARSE, A_hyper_switch, 0, Context) ;
         ASSERT (info == GrB_SUCCESS) ;
 
         T->iso = C_iso ;    // OK
@@ -530,13 +530,14 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         { 
             // T->x = unop (A), binop (A,scalar), or binop (scalar,A), or
             // compute the iso value of T = 1, A, or scalar, without any op
-            GB_OK (GB_apply_op ((GB_void *) T->x, ctype, C_code_iso, op,
-                scalar, binop_bind1st, flipij, A, Werk)) ;
+            info = GB_apply_op ((GB_void *) T->x, ctype, C_code_iso, op,
+                scalar, binop_bind1st, flipij, A, Context) ;
+            ASSERT (info == GrB_SUCCESS) ;
         }
         else if (ctype != atype)
         { 
             // copy the values from A into T and cast from atype to ctype
-            GB_OK (GB_cast_matrix (T, A)) ;
+            GB_cast_matrix (T, A, Context) ;
         }
         else
         { 
@@ -670,7 +671,6 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         ASSERT (T->nvec == 1) ;
         T->nvec_nonempty = (anz == 0) ? 0 : 1 ;
         T->p [1] = anz ;
-        T->nvals = anz ;
         T->magic = GB_MAGIC ;
         ASSERT (!GB_JUMBLED (T)) ;
 
@@ -692,7 +692,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
 
         int nworkspaces_bucket, nthreads_bucket ;
         bool use_builder = GB_transpose_method (A,
-            &nworkspaces_bucket, &nthreads_bucket) ;
+            &nworkspaces_bucket, &nthreads_bucket, Context) ;
 
         //----------------------------------------------------------------------
         // transpose the matrix with the selected method
@@ -723,18 +723,18 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
             // Construct the "row" indices of C, which are "column" indices of
             // A.  This array becomes the permanent T->i on output.
 
-            GB_OK (GB_extract_vector_list (iwork, A, Werk)) ;
+            GB_OK (GB_extract_vector_list (iwork, A, Context)) ;
 
             //------------------------------------------------------------------
             // allocate the output matrix and additional space (jwork and Swork)
             //------------------------------------------------------------------
 
-            // initialize the header of T, with no content,
-            // and initialize the type and dimension of T.
+            // initialize the header of T, with no content
+            // content, and initialize the type and dimension of T.
 
             info = GB_new (&T, // hyper, existing header
                 ctype, avdim, avlen, GB_Ap_null, C_is_csc,
-                GxB_HYPERSPARSE, A_hyper_switch, 0) ;
+                GxB_HYPERSPARSE, A_hyper_switch, 0, Context) ;
             ASSERT (info == GrB_SUCCESS) ;
 
             // if in_place, the prior A->p and A->h can now be freed
@@ -799,7 +799,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
             if (C_iso)
             { 
                 // apply the op to the iso scalar
-                GB_unop_iso (sscalar, ctype, C_code_iso, op, A, scalar) ;
+                GB_iso_unop (sscalar, ctype, C_code_iso, op, A, scalar) ;
                 S_input = sscalar ;     // S_input is used instead of Swork
                 Swork = NULL ;
                 stype = ctype ;
@@ -808,7 +808,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
             { 
                 // Swork = op (A)
                 info = GB_apply_op (Swork, ctype, C_code_iso, op, scalar,
-                    binop_bind1st, flipij, A, Werk) ;
+                    binop_bind1st, flipij, A, Context) ;
                 ASSERT (info == GrB_SUCCESS) ;
                 // GB_builder will not need to typecast Swork to T->x, and it
                 // may choose to transplant it into T->x
@@ -858,8 +858,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
                 anz,        // number of tuples
                 NULL,       // no dup operator needed (input has no duplicates)
                 stype,      // type of S_input or Swork
-                false,      // no burble (already burbled above)
-                Werk
+                Context
             )) ;
 
             // GB_builder always frees jwork, and either frees iwork or
@@ -880,7 +879,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
             // T = A' and typecast to ctype
             GB_OK (GB_transpose_bucket (T, C_code_iso, ctype, C_is_csc, A,
                 op, scalar, binop_bind1st,
-                nworkspaces_bucket, nthreads_bucket, Werk)) ;
+                nworkspaces_bucket, nthreads_bucket, Context)) ;
 
             ASSERT_MATRIX_OK (T, "T from bucket", GB0) ;
             ASSERT (GB_JUMBLED_OK (T)) ;
@@ -899,7 +898,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
     if (in_place)
     { 
         // free prior space of A, if transpose is done in-place
-        GB_phybix_free (A) ;
+        GB_phbix_free (A) ;
     }
 
     //--------------------------------------------------------------------------
@@ -910,7 +909,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
     C->hyper_switch = A_hyper_switch ;
     C->bitmap_switch = A_bitmap_switch ;
     C->sparsity_control = A_sparsity_control ;
-    GB_OK (GB_transplant (C, ctype, &T, Werk)) ;
+    GB_OK (GB_transplant (C, ctype, &T, Context)) ;
     ASSERT_MATRIX_OK (C, "C transplanted in GB_transpose", GB0) ;
     ASSERT_TYPE_OK (ctype, "C type in GB_transpose", GB0) ;
 
@@ -927,12 +926,12 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
             // but do not initialize the values.  These are computed by
             // GB_apply_op below.
             // set C->iso = false    OK: no need to burble
-            GB_OK (GB_convert_any_to_non_iso (C, false)) ;
+            GB_OK (GB_convert_any_to_non_iso (C, false, Context)) ;
         }
 
         // the positional unary op is applied in-place: C->x = op (C)
         GB_OK (GB_apply_op ((GB_void *) C->x, ctype, GB_NON_ISO, op,
-            scalar, binop_bind1st, flipij, C, Werk)) ;
+            scalar, binop_bind1st, flipij, C, Context)) ;
 
     }
     else if (user_idxunop)
@@ -942,7 +941,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
         { 
             // If C was constructed as iso; it needs to be expanded and
             // initialized first.
-            GB_OK (GB_convert_any_to_non_iso (C, true)) ;
+            GB_OK (GB_convert_any_to_non_iso (C, true, Context)) ;
         }
 
         if (C->type == op->ztype)
@@ -950,7 +949,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
             // the user-defined index unary op is applied in-place: C->x = op
             // (C) where the type of C does not change
             GB_OK (GB_apply_op ((GB_void *) C->x, ctype, GB_NON_ISO, op,
-                scalar, binop_bind1st, flipij, C, Werk)) ;
+                scalar, binop_bind1st, flipij, C, Context)) ;
         }
         else // op is a user-defined index unary operator
         { 
@@ -978,7 +977,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
             }
             // Cx_new = op (C)
             GB_OK (GB_apply_op (Cx_new, ctype, GB_NON_ISO, op,
-                scalar, false, flipij, C, Werk)) ;
+                scalar, false, flipij, C, Context)) ;
             // transplant Cx_new as C->x and finalize the type of C
             GB_FREE (&(C->x), C->x_size) ;
             C->x = Cx_new ;
@@ -993,7 +992,7 @@ GrB_Info GB_transpose           // C=A', C=(ctype)A' or C=op(A')
     //--------------------------------------------------------------------------
 
     ASSERT_MATRIX_OK (C, "C to conform in GB_transpose", GB0) ;
-    GB_OK (GB_conform (C, Werk)) ;
+    GB_OK (GB_conform (C, Context)) ;
     ASSERT_MATRIX_OK (C, "C output of GB_transpose", GB0) ;
     return (GrB_SUCCESS) ;
 }

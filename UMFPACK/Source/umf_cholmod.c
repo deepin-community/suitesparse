@@ -1,11 +1,6 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_cholmod: UMFPACK interface to CHOLMOD
-//------------------------------------------------------------------------------
-
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === umf_cholmod ========================================================== */
+/* ========================================================================== */
 
 /* umfpack_cholmod: user-defined ordering function to interface UMFPACK
  * to CHOLMOD.
@@ -58,22 +53,16 @@ int UMF_cholmod
                                [2]: flop count for chol, if A real */
 )
 {
-    user_info [0] = EMPTY ;
-    user_info [1] = EMPTY ;
-    user_info [2] = EMPTY ;
-    int ordering_option ;
-    Int *params ;
-    params = (Int *) user_params ;
-    ordering_option = params [0] ;
-
 #ifndef NCHOLMOD
     double dmax, flops, c, lnz ;
     cholmod_sparse Amatrix, *A, *AT, *S ;
     cholmod_factor *L ;
     cholmod_common cm ;
     Int *P, *ColCount ;
-    Int k, print_level ;
+    Int k, ordering_option, print_level, *params ;
 
+    params = (Int *) user_params ;
+    ordering_option = params [0] ;
     print_level = params [1] - 1 ;
     params [2] = -1 ;
 
@@ -105,7 +94,6 @@ int UMF_cholmod
             cm.postorder = TRUE ;
             break ;
 
-        case UMFPACK_ORDERING_METIS_GUARD:
         case UMFPACK_ORDERING_METIS:
             /* metis on A+A' if symmetric, A'A otherwise */
             cm.nmethods = 1 ;
@@ -240,16 +228,6 @@ int UMF_cholmod
 #else
     /* CHOLMOD and its supporting packages (CAMD, CCOLAMD, COLAMD, METIS)
       not installed */
-    if (ordering_option == UMFPACK_ORDERING_NONE)
-    {
-        int64_t k ;
-        for (k = 0 ; k < ncol ; k++)
-        {
-            Perm [k] = k ;
-        }
-        params [2] = UMFPACK_ORDERING_NONE ;
-        return (TRUE) ;
-    }
     return (FALSE) ;
 #endif
 }

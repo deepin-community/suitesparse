@@ -1,8 +1,7 @@
 classdef factorization_ldl_sparse < factorization
 %FACTORIZATION_LDL_SPARSE P'*A*P = L*D*L' where A is sparse and symmetric
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
     methods
 

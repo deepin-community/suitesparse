@@ -19,7 +19,6 @@ function [vnz,rnz,parent,c,leftmost,p,q] = cs_sqr (A)                       %#ok
 %
 %   See also CS_AMD, CS_QR.
 
-% CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 error ('cs_sqr mexFunction not found') ;

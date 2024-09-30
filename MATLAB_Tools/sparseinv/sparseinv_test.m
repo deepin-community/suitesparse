@@ -7,8 +7,7 @@ function sparseinv_test (extensive)
 %
 % See also sparseinv, sparseinv_install, ssget.
 
-% SPARSEINV, Copyright (c) 2011, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011, Timothy A. Davis, http://www.suitesparse.com
 
 if (nargin < 1)
     extensive = 0 ;

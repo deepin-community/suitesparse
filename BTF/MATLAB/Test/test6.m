@@ -1,14 +1,12 @@
 function test6
 %TEST6 test for BTF
-% Requires ssget
+% Requires UFget
 % Example:
 %   test6
-% See also btf, maxtrans, strongcomp, dmperm, ssget,
+% See also btf, maxtrans, strongcomp, dmperm, UFget,
 %   test1, test2, test3, test4, test5.
 
-% BTF, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-% Author: Timothy A. Davis.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2007, Timothy A. Davis, http://www.suitesparse.com
 
 quick2 = [ ...
  1522 -272  1463  1521   460 1507  -838 1533 -1533 -1456 -1512   734   211 ...
@@ -26,7 +24,7 @@ quick2 = [ ...
 -1344 1305 -1305   921 -1513 1307 -1307 1369 -1369  1374 -1374  1377 ...
 -1377  748  -748  -749  1510  922  -922 ] ;
 
-index = ssget ;
+index = UFget ;
 nmat = length (quick2) ;
 dopause = 0 ;
 
@@ -39,7 +37,7 @@ try
         waitbar (k/nmat, h) ;
 
         i = quick2 (k) ;
-        Prob = ssget (abs (i), index) ;
+        Prob = UFget (abs (i), index) ;
         disp (Prob) ;
         if (i < 0)
             fprintf ('transposed\n') ;

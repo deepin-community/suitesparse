@@ -8,9 +8,7 @@ function amd_demo
 %
 % See also: amd, amd2, amd_make
 
-% AMD, Copyright (c) 1996-2022, Timothy A. Davis, Patrick R. Amestoy, and
-% Iain S. Duff.  All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 1994-2007, Tim Davis, Patrick R. Amestoy, and Iain S. Duff. 
 
 % This orders the same matrix as the ANSI C demo, amd_demo.c.  It includes an
 % additional analysis of the matrix via MATLAB's symbfact routine.

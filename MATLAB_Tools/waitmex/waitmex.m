@@ -17,8 +17,7 @@ function waitmex
 %
 % See also waitex, waitexample, waitbar, pathtool.
 
-% waitmex, Copyright (c) 2007, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2007, T. Davis
 
 help waitmex
 

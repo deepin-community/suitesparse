@@ -2,8 +2,8 @@
 // gbmtimes: sparse matrix-matrix multiplication over the standard semiring
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 //------------------------------------------------------------------------------
 
@@ -13,9 +13,9 @@
 
 // The standard rules state that if A or B are full, then C is always full.
 // The rules here are slightly different:  C is full for (sparse or bitmap)
-// times full, or full times (sparse or bitmap), using the MATLAB rule.  C is
-// not full for hypersparse times full or full times hypersparse.  Instead, it
-// is left sparse (or whatever format GraphBLAS decides to use).
+// times full, or full times (sparse or bitmap), using this full.  C is not
+// full for hypersparse times full or full times hypersparse.  Instead, it is
+// left sparse (or whatever format GraphBLAS decides to use).
 
 // This method also allows for the inputs A and/or B to be transposed, but
 // this parameter is not passed by MATLAB to the mtimes method.
@@ -141,6 +141,11 @@ void mexFunction
     sparsity = gb_get_sparsity (A, B, sparsity) ;
     C = gb_new (ctype, cnrows, cncols, fmt, sparsity) ;
 
+    // zero = (ctype) 0
+    OK (GrB_Scalar_new (&zero, ctype)) ;
+    OK (GrB_Scalar_setElement_FP64 (zero, 0)) ;
+    OK (GrB_Scalar_wait (zero, GrB_MATERIALIZE)) ;
+
     //--------------------------------------------------------------------------
     // compute C = A*B
     //--------------------------------------------------------------------------
@@ -156,9 +161,6 @@ void mexFunction
         OK (GrB_Scalar_nvals (&nvals, scalar)) ;
         if (nvals == 0)
         {
-            // zero = (ctype) 0
-            OK (GrB_Scalar_new (&zero, ctype)) ;
-            OK (GrB_Scalar_setElement_FP64 (zero, 0)) ;
             scalar = zero ;
         }
         if (binop_bind1st)
@@ -202,9 +204,6 @@ void mexFunction
             sparsity = sparsity | GxB_FULL ;
             OK (GxB_Matrix_Option_set (C, GxB_SPARSITY_CONTROL, sparsity)) ;
             // C = 0
-            // zero = (ctype) 0
-            OK (GrB_Scalar_new (&zero, ctype)) ;
-            OK (GrB_Scalar_setElement_FP64 (zero, 0)) ;
             OK (GrB_Matrix_assign_Scalar (C, NULL, NULL, zero, GrB_ALL, cnrows,
                 GrB_ALL, cncols, NULL)) ;
             // C += A*B

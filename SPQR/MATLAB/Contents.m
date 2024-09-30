@@ -13,5 +13,4 @@
 % Example:
 %   x = spqr_solve (A,b) ;  % solves a least-squares problem (like x=A\b)
 
-% SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2008-2012, Timothy A. Davis, http://www.suitesparse.com

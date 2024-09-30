@@ -8,9 +8,7 @@ function install_SJget
 %
 % See also gallery.
 
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2012, Leslie Foster and Timothy A Davis
 
 % This is the file spqr_rank/private/install_SJget.m.  The SJget toolbox
 % is in spqr_rank/SJget.

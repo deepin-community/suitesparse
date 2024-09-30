@@ -39,8 +39,7 @@ function [objfiles, timestamp_out] = cs_make (f)
 %
 %   See also MEX.
 
-% CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 try
     % ispc does not appear in MATLAB 5.3

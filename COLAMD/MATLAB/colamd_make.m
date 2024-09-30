@@ -6,12 +6,8 @@ function colamd_make
 %
 % See also colamd, symamd
 
-% COLAMD, Copyright (c) 1998-2022, Timothy A. Davis, and Stefan Larimore.
-% SPDX-License-Identifier: BSD-3-clause
-
-% Developed in collaboration with J. Gilbert and E. Ng.
-% Acknowledgements: This work was supported by the National Science Foundation,
-% under grants DMS-9504974 and DMS-9803599.
+%    Copyright 1998-2007, Timothy A. Davis, and Stefan Larimore
+%    Developed in collaboration with J. Gilbert and E. Ng.
 
 details = 0 ;	    % 1 if details of each command are to be printed
 d = '' ;
@@ -24,9 +20,9 @@ if (~verLessThan ('matlab', '8.3.0'))
     d = ['-silent ' d] ;
 end
 
-src = '../Source/colamd_l.c ../../SuiteSparse_config/SuiteSparse_config.c' ;
+src = '../Source/colamd.c ../../SuiteSparse_config/SuiteSparse_config.c' ;
 cmd = sprintf ( ...
-    'mex -O %s -I../../SuiteSparse_config -I../Include -output ', d) ;
+    'mex -DDLONG -O %s -I../../SuiteSparse_config -I../Include -output ', d) ;
 s = [cmd 'colamd2mex colamdmex.c ' src] ;
 
 if (~(ispc || ismac))

@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-// GB_calloc_memory: wrapper for calloc (actually uses malloc and memset)
+// GB_calloc_memory: wrapper for calloc
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -12,33 +12,54 @@
 #include "GB.h"
 
 //------------------------------------------------------------------------------
-// GB_calloc_helper:  malloc/memset to allocate an initialized block
+// GB_calloc_helper:  use calloc or malloc/memset to allocate initialized block
 //------------------------------------------------------------------------------
 
 static inline void *GB_calloc_helper
 (
     // input/output:
-    size_t *size            // on input: # of bytes requested
+    size_t *size,           // on input: # of bytes requested
                             // on output: # of bytes actually allocated
+    // input:
+    GB_Context Context
 )
 {
     void *p = NULL ;
 
-    // make sure the block is at least 8 bytes in size
+    // determine the next higher power of 2
+    size_t size_requested = (*size) ;
     (*size) = GB_IMAX (*size, 8) ;
+    int k = GB_CEIL_LOG2 (*size) ;
 
-    p = GB_Global_malloc_function (*size) ;
+    // if available, get the block from the pool
+    if (GB_Global_free_pool_limit_get (k) > 0)
+    { 
+        // round up the size to the nearest power of two
+        (*size) = ((size_t) 1) << k ;
+        p = GB_Global_free_pool_get (k) ;
+        #ifdef GB_MEMDUMP
+        if (p != NULL) printf ("calloc from pool: %p %ld\n", p, *size) ;
+        #endif
+    }
+
+    if (p == NULL)
+    {
+        // no block in the free_pool, so allocate it
+        p = GB_Global_malloc_function (*size) ;
+        #ifdef GB_MEMDUMP
+        printf ("hard calloc %p %ld\n", p, *size) ;
+        #endif
+    }
 
     #ifdef GB_MEMDUMP
-    printf ("hard calloc %p %ld\n", p, *size) ; // MEMDUMP
-    GB_Global_memtable_dump ( ) ;
+    GB_Global_free_pool_dump (2) ; GB_Global_memtable_dump ( ) ;
     #endif
 
     if (p != NULL)
     { 
         // clear the block of memory with a parallel memset
-        int nthreads_max = GB_Context_nthreads_max ( ) ;
-        GB_memset (p, 0, (*size), nthreads_max) ;
+        GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
+        GB_memset (p, 0, size_requested, nthreads_max) ;
     }
 
     return (p) ;
@@ -48,12 +69,14 @@ static inline void *GB_calloc_helper
 // GB_calloc_memory
 //------------------------------------------------------------------------------
 
+GB_PUBLIC
 void *GB_calloc_memory      // pointer to allocated block of memory
 (
     size_t nitems,          // number of items to allocate
     size_t size_of_item,    // sizeof each item
     // output
-    size_t *size_allocated  // # of bytes actually allocated
+    size_t *size_allocated, // # of bytes actually allocated
+    GB_Context Context
 )
 {
 
@@ -73,8 +96,7 @@ void *GB_calloc_memory      // pointer to allocated block of memory
     size_of_item = GB_IMAX (1, size_of_item) ;
 
     bool ok = GB_size_t_multiply (&size, nitems, size_of_item) ;
-    if (!ok || (((uint64_t) nitems) > GB_NMAX)
-            || (((uint64_t) size_of_item) > GB_NMAX))
+    if (!ok || nitems > GB_NMAX || size_of_item > GB_NMAX)
     { 
         // overflow
         (*size_allocated) = 0 ;
@@ -106,7 +128,7 @@ void *GB_calloc_memory      // pointer to allocated block of memory
         }
         else
         { 
-            p = GB_calloc_helper (&size) ;
+            p = GB_calloc_helper (&size, Context) ;
         }
 
     }
@@ -117,7 +139,7 @@ void *GB_calloc_memory      // pointer to allocated block of memory
         // normal use, in production
         //----------------------------------------------------------------------
 
-        p = GB_calloc_helper (&size) ;
+        p = GB_calloc_helper (&size, Context) ;
     }
 
     //--------------------------------------------------------------------------

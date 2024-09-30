@@ -57,9 +57,7 @@ function Problem = ssread (directory, tmp)
 % Optionally uses the CHOLMOD mread mexFunction, for reading Problems in
 % Matrix Market format.
 
-% SuiteSparseCollection, Copyright (c) 2006-2019, Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2006-2007, Timothy A. Davis, http://www.suitesparse.com
 
 %-------------------------------------------------------------------------------
 % determine the Problem name from the directory name

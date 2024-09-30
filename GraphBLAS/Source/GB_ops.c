@@ -2,7 +2,7 @@
 // GB_ops.c: built-in types, functions, operators, and other externs
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -34,30 +34,30 @@
 // built-in types
 //------------------------------------------------------------------------------
 
-#define GB_TYPEDEF(prefix,type,ctype,name)                                  \
-    struct GB_Type_opaque GB_OPAQUE (type) =                                \
-    {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        sizeof (ctype),             /* sizeof the type */                   \
-        GB_ ## type ## _code,       /* type code */                         \
-        0, name,                    /* name_len and name */                 \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
-    } ;                                                                     \
-    GrB_Type prefix ## _ ## type = & GB_OPAQUE (type)
+#define GB_TYPEDEF(prefix,type,ctype,name)                  \
+    struct GB_Type_opaque GB_OPAQUE (type) =                \
+    {                                                       \
+        GB_MAGIC, 0,                                        \
+        sizeof (ctype),                                     \
+        GB_ ## type ## _code,                               \
+        name,                                               \
+        NULL                                                \
+    } ;                                                     \
+    GrB_Type prefix ## _ ## type = & GB_OPAQUE (type) ;
 
-GB_TYPEDEF (GrB, BOOL  , bool      , "bool"      ) ;
-GB_TYPEDEF (GrB, INT8  , int8_t    , "int8_t"    ) ;
-GB_TYPEDEF (GrB, INT16 , int16_t   , "int16_t"   ) ;
-GB_TYPEDEF (GrB, INT32 , int32_t   , "int32_t"   ) ;
-GB_TYPEDEF (GrB, INT64 , int64_t   , "int64_t"   ) ;
-GB_TYPEDEF (GrB, UINT8 , uint8_t   , "uint8_t"   ) ;
-GB_TYPEDEF (GrB, UINT16, uint16_t  , "uint16_t"  ) ;
-GB_TYPEDEF (GrB, UINT32, uint32_t  , "uint32_t"  ) ;
-GB_TYPEDEF (GrB, UINT64, uint64_t  , "uint64_t"  ) ;
-GB_TYPEDEF (GrB, FP32  , float     , "float"     ) ;
-GB_TYPEDEF (GrB, FP64  , double    , "double"    ) ;
-GB_TYPEDEF (GxB, FC32  , GxB_FC32_t, "GxB_FC32_t") ;
-GB_TYPEDEF (GxB, FC64  , GxB_FC64_t, "GxB_FC64_t") ;
+GB_TYPEDEF (GrB, BOOL  , bool      , "bool"          ) ;
+GB_TYPEDEF (GrB, INT8  , int8_t    , "int8_t"        ) ;
+GB_TYPEDEF (GrB, INT16 , int16_t   , "int16_t"       ) ;
+GB_TYPEDEF (GrB, INT32 , int32_t   , "int32_t"       ) ;
+GB_TYPEDEF (GrB, INT64 , int64_t   , "int64_t"       ) ;
+GB_TYPEDEF (GrB, UINT8 , uint8_t   , "uint8_t"       ) ;
+GB_TYPEDEF (GrB, UINT16, uint16_t  , "uint16_t"      ) ;
+GB_TYPEDEF (GrB, UINT32, uint32_t  , "uint32_t"      ) ;
+GB_TYPEDEF (GrB, UINT64, uint64_t  , "uint64_t"      ) ;
+GB_TYPEDEF (GrB, FP32  , float     , "float"         ) ;
+GB_TYPEDEF (GrB, FP64  , double    , "double"        ) ;
+GB_TYPEDEF (GxB, FC32  , GxB_FC32_t, "float complex" ) ;
+GB_TYPEDEF (GxB, FC64  , GxB_FC64_t, "double complex") ;
 
 //------------------------------------------------------------------------------
 // built-in descriptors
@@ -65,20 +65,20 @@ GB_TYPEDEF (GxB, FC64  , GxB_FC64_t, "GxB_FC64_t") ;
 
 #define o ((GrB_Desc_Value) GxB_DEFAULT)
 
-#define GB_DESC(name,out,mask,in0,in1)                                      \
-    struct GB_Descriptor_opaque GB_OPAQUE (desc_ ## name) =                 \
-    {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        "", 0,                      /* logger */                            \
-        (GrB_Desc_Value) (out),                                             \
-        (GrB_Desc_Value) (mask),                                            \
-        (GrB_Desc_Value) (in0),                                             \
-        (GrB_Desc_Value) (in1),                                             \
-        o,                          /* default: axb */                      \
-        0,                          /* default compression */               \
-        0,                          /* no sort */                           \
-        0                           /* import */                            \
-    } ;                                                                     \
+#define GB_DESC(name,out,mask,in0,in1)                                  \
+    struct GB_Descriptor_opaque GB_OPAQUE (desc_ ## name) =             \
+    {                                                                   \
+        GB_MAGIC, 0,            /* initialized */                       \
+        "", 0,                  /* logger */                            \
+        (double) GxB_DEFAULT,   /* chunk */                             \
+        (GrB_Desc_Value) (out),                                         \
+        (GrB_Desc_Value) (mask),                                        \
+        (GrB_Desc_Value) (in0),                                         \
+        (GrB_Desc_Value) (in1),                                         \
+        o, o,                   /* default: axb, #threads */            \
+        0,                      /* no sort */                           \
+        0                       /* default compression: LZ4 */          \
+    } ;                                                                 \
     GrB_Descriptor GRB (DESC_ ## name) = & GB_OPAQUE (desc_ ## name) ;
 
 //       name     outp         structure     complement  in0       in1
@@ -135,68 +135,68 @@ GB_DESC (RSCT0T1, GrB_REPLACE, GrB_STRUCTURE + GrB_COMP, GrB_TRAN, GrB_TRAN )
 // helper macros to define unary operators
 //------------------------------------------------------------------------------
 
-#define GB_OP1zx(op,name,z_t,ztype,x_t,xtype)                               \
+#define GB_OP1zx(op,str,z_t,ztype,x_t,xtype)                                \
     extern void GB_FUNC_T (op, xtype) (z_t *z, const x_t *x) ;              \
     struct GB_UnaryOp_opaque GB_OPAQUE (GB_OP (op)) =                       \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (ztype),        /* ztype */                             \
-        & GB_OPAQUE (xtype),        /* xtype */                             \
-        NULL,                       /* ytype */                             \
-        (GxB_unary_function) (& GB_FUNC_T (op, xtype)), NULL, NULL,         \
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _unop_code,    /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
-    }
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (ztype),                                                \
+        & GB_OPAQUE (xtype),                                                \
+        NULL,                                                               \
+        (GxB_unary_function) (& GB_FUNC_T (op, xtype)), NULL, NULL, NULL,   \
+        str,                                                                \
+        GB_ ## op ## _unop_code,                                            \
+        NULL                                                                \
+    } ;
 
-#define GRB_OP1z(op,name,z_t,ztype)                                         \
-    GB_OP1zx (op, name, z_t, ztype, GB_TYPE, GB_XTYPE) ;                    \
-    GrB_UnaryOp GRB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+#define GRB_OP1z(op,str,z_t,ztype)                                          \
+    GB_OP1zx (op, str, z_t, ztype, GB_TYPE, GB_XTYPE)                       \
+    GrB_UnaryOp GRB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
-#define GRB_OP1(op,name) GRB_OP1z (op, name, GB_TYPE, GB_XTYPE)
+#define GRB_OP1(op,str) GRB_OP1z (op, str, GB_TYPE, GB_XTYPE)
 
-#define GXB_OP1z(op,name,z_t,ztype)                                         \
-    GB_OP1zx (op, name, z_t, ztype, GB_TYPE, GB_XTYPE) ;                    \
-    GrB_UnaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+#define GXB_OP1z(op,str,z_t,ztype)                                          \
+    GB_OP1zx (op, str, z_t, ztype, GB_TYPE, GB_XTYPE)                       \
+    GrB_UnaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
-#define GXB_OP1(op,name) GXB_OP1z (op, name, GB_TYPE, GB_XTYPE)
+#define GXB_OP1(op,str) GXB_OP1z (op, str, GB_TYPE, GB_XTYPE)
 
 #define GXB_OP1_RENAME(op)                                                  \
-    GrB_UnaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+    GrB_UnaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
 //------------------------------------------------------------------------------
 // helper macros to define binary operators
 //------------------------------------------------------------------------------
 
-#define GB_OP2zxy(op,name,z_t,ztype,x_t,xtype,y_t,ytype)                    \
+#define GB_OP2zxy(op,str,z_t,ztype,x_t,xtype,y_t,ytype)                     \
     extern void GB_FUNC_T(op,xtype) (z_t *z, const x_t *x, const y_t *y) ;  \
     struct GB_BinaryOp_opaque GB_OPAQUE (GB_OP (op)) =                      \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (ztype),        /* ztype */                             \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (ztype),                                                \
         & GB_OPAQUE (xtype),                                                \
         & GB_OPAQUE (ytype),                                                \
-        NULL, NULL, (GxB_binary_function) (& GB_FUNC_T (op, xtype)),        \
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _binop_code,   /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
-    }
+        NULL, NULL, (GxB_binary_function) (& GB_FUNC_T (op, xtype)), NULL,  \
+        str,                                                                \
+        GB_ ## op ## _binop_code,                                           \
+        NULL                                                                \
+    } ;
 
-#define GRB_OP2z(op,name,z_t,ztype)                                          \
-    GB_OP2zxy (op, name, z_t, ztype, GB_TYPE, GB_XTYPE, GB_TYPE, GB_XTYPE) ; \
-    GrB_BinaryOp GRB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+#define GRB_OP2z(op,str,z_t,ztype)                                          \
+    GB_OP2zxy (op, str, z_t, ztype, GB_TYPE, GB_XTYPE, GB_TYPE, GB_XTYPE)   \
+    GrB_BinaryOp GRB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
-#define GRB_OP2(op,name) GRB_OP2z (op, name, GB_TYPE, GB_XTYPE)
+#define GRB_OP2(op,str) GRB_OP2z (op, str, GB_TYPE, GB_XTYPE)
 
-#define GXB_OP2z(op,name,z_t,ztype)                                          \
-    GB_OP2zxy (op, name, z_t, ztype, GB_TYPE, GB_XTYPE, GB_TYPE, GB_XTYPE) ; \
-    GrB_BinaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+#define GXB_OP2z(op,str,z_t,ztype)                                          \
+    GB_OP2zxy (op, str, z_t, ztype, GB_TYPE, GB_XTYPE, GB_TYPE, GB_XTYPE)   \
+    GrB_BinaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
-#define GXB_OP2(op,name) GXB_OP2z (op, name, GB_TYPE, GB_XTYPE)
+#define GXB_OP2(op,str) GXB_OP2z (op, str, GB_TYPE, GB_XTYPE)
 
-#define GXB_OP2shift(op,name) \
-    GB_OP2zxy (op, name, GB_TYPE, GB_XTYPE, GB_TYPE, GB_XTYPE, int8_t, INT8) ; \
-    GrB_BinaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+#define GXB_OP2shift(op,str) \
+    GB_OP2zxy (op, str, GB_TYPE, GB_XTYPE, GB_TYPE, GB_XTYPE, int8_t, INT8) \
+    GrB_BinaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
 //------------------------------------------------------------------------------
 // positional unary and binary operators
@@ -207,34 +207,34 @@ GB_DESC (RSCT0T1, GrB_REPLACE, GrB_STRUCTURE + GrB_COMP, GrB_TRAN, GrB_TRAN )
 // can only be implemented via its opcode.
 
 // helper macros to define positional unary operators
-#define GXB_OP1_POS(op,name,type)                                           \
+#define GXB_OP1_POS(op,str,type)                                            \
     struct GB_UnaryOp_opaque GB_OPAQUE (op ## _ ## type) =                  \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (type),         /* ztype */                             \
-        & GB_OPAQUE (type),         /* xtype */                             \
-        NULL,                       /* ytype */                             \
-        NULL, NULL, NULL,           /* no function pointer */               \
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _unop_code,    /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (type),     /* ztype */                                 \
+        & GB_OPAQUE (type),     /* xtype */                                 \
+        NULL,                   /* ytype */                                 \
+        NULL, NULL, NULL, NULL,                                             \
+        str,                                                                \
+        GB_ ## op ## _unop_code,                                            \
+        NULL                                                                \
     } ;                                                                     \
-    GrB_UnaryOp GXB (op ## _ ## type) = & GB_OPAQUE (op ## _ ## type)
+    GrB_UnaryOp GXB (op ## _ ## type) = & GB_OPAQUE (op ## _ ## type) ;
 
 // helper macros to define positional binary operators
-#define GXB_OP2_POS(op,name,type)                                           \
+#define GXB_OP2_POS(op,str,type)                                            \
     struct GB_BinaryOp_opaque GB_OPAQUE (op ## _ ## type) =                 \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (type),         /* ztype */                             \
-        & GB_OPAQUE (type),         /* xtype */                             \
-        & GB_OPAQUE (type),         /* ytype */                             \
-        NULL, NULL, NULL,           /* no function pointer */               \
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _binop_code,   /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (type),     /* ztype */                                 \
+        & GB_OPAQUE (type),     /* xtype */                                 \
+        & GB_OPAQUE (type),     /* ytype */                                 \
+        NULL, NULL, NULL, NULL,                                             \
+        str,                                                                \
+        GB_ ## op ## _binop_code,                                           \
+        NULL                                                                \
     } ;                                                                     \
-    GrB_BinaryOp GXB (op ## _ ## type) = & GB_OPAQUE (op ## _ ## type)
+    GrB_BinaryOp GXB (op ## _ ## type) = & GB_OPAQUE (op ## _ ## type) ;
 
 GXB_OP1_POS (POSITIONI , "positioni" , INT32) ;
 GXB_OP1_POS (POSITIONI , "positioni" , INT64) ;
@@ -267,112 +267,116 @@ GXB_OP2_POS (SECONDJ1  , "secondj1"  , INT64) ;
 // built-in index_unary operators
 //------------------------------------------------------------------------------
 
-// IndexUnaryOps that depend on i,j,y but not A(i,j), and result has
-// the same type as the scalar y: ROWINDEX, COLINDEX, DIAGINDEX
-#define GRB_IDXOP_POSITIONAL(op,name)                                       \
+// IndexUnaryOps that depend on i,j,thunk but not A(i,j), and result has
+// the same type as the thunk: ROWINDEX, COLINDEX, DIAGINDEX
+#define GRB_IDXOP_POSITIONAL(op,str)                                        \
     extern void GB_FUNC_T(op,GB_XTYPE) (GB_TYPE *z, const void *unused,     \
-        GrB_Index i, GrB_Index j, const GB_TYPE *y) ;                       \
+        GrB_Index i, GrB_Index j, const GB_TYPE *thunk) ;                   \
     struct GB_IndexUnaryOp_opaque GB_OPAQUE (GB_OP (op)) =                  \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (GB_XTYPE),     /* ztype */                             \
-        NULL,                       /* xtype */                             \
-        & GB_OPAQUE (GB_XTYPE),     /* ytype */                             \
-        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)), NULL,\
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _idxunop_code, /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (GB_XTYPE), /* ztype */                                 \
+        NULL,                   /* xtype */                                 \
+        & GB_OPAQUE (GB_XTYPE), /* thunk type */                            \
+        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)),      \
+            NULL, NULL,                                                     \
+        str,                                                                \
+        GB_ ## op ## _idxunop_code,                                         \
+        NULL                                                                \
     } ;                                                                     \
-    GrB_IndexUnaryOp GRB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+    GrB_IndexUnaryOp GRB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
-// GxB_IndexUnaryOps that depend on i,j,y but not A(i,j), and result has
-// the same type as the scalar y: FLIPDIAGINDEX
-#define GXB_IDXOP_POSITIONAL(op,name)                                       \
+// GxB_IndexUnaryOps that depend on i,j,thunk but not A(i,j), and result has
+// the same type as the thunk: FLIPDIAGINDEX
+#define GXB_IDXOP_POSITIONAL(op,str)                                        \
     extern void GB_FUNC_T(op,GB_XTYPE) (GB_TYPE *z, const void *unused,     \
-        GrB_Index i, GrB_Index j, const GB_TYPE *y) ;                       \
+        GrB_Index i, GrB_Index j, const GB_TYPE *thunk) ;                   \
     struct GB_IndexUnaryOp_opaque GB_OPAQUE (GB_OP (op)) =                  \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (GB_XTYPE),     /* ztype */                             \
-        NULL,                       /* xtype */                             \
-        & GB_OPAQUE (GB_XTYPE),     /* ytype */                             \
-        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)), NULL,\
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _idxunop_code, /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (GB_XTYPE), /* ztype */                                 \
+        NULL,                   /* xtype */                                 \
+        & GB_OPAQUE (GB_XTYPE), /* thunk type */                            \
+        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)),      \
+            NULL, NULL,                                                     \
+        str,                                                                \
+        GB_ ## op ## _idxunop_code,                                         \
+        NULL                                                                \
     } ;                                                                     \
-    GrB_IndexUnaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+    GrB_IndexUnaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
-// IndexUnaryOps that depend on i,j, and y but not A(i,j), and result is
-// bool: TRIL, TRIU, DIAG, OFFDIAG, COLLE, COLGT, ROWLE, ROWGT.
-// No suffix on the GrB name.
-#define GRB_IDXOP_POSITIONAL_BOOL(op,name)                                  \
+// IndexUnaryOps that depend on i,j, and thunk but not A(i,j), and result is
+// bool: TRIL, TRIU, DIAG, OFFDIAG, COLLE, COLGT, ROWLE, ROWGT
+#define GRB_IDXOP_POSITIONAL_BOOL(op,str)                                   \
     extern void GB_FUNC_T(op,GB_XTYPE) (bool *z, const void *unused,        \
-        GrB_Index i, GrB_Index j, const GB_TYPE *y) ;                       \
+        GrB_Index i, GrB_Index j, const GB_TYPE *thunk) ;                   \
     struct GB_IndexUnaryOp_opaque GB_OPAQUE (GB_OP (op)) =                  \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (BOOL),         /* ztype */                             \
-        NULL,                       /* xtype */                             \
-        & GB_OPAQUE (GB_XTYPE),     /* ytype */                             \
-        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)), NULL,\
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _idxunop_code, /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (BOOL),     /* ztype */                                 \
+        NULL,                   /* xtype */                                 \
+        & GB_OPAQUE (GB_XTYPE), /* thunk type */                            \
+        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)),      \
+            NULL, NULL,                                                     \
+        str,                                                                \
+        GB_ ## op ## _idxunop_code,                                         \
+        NULL                                                                \
     } ;                                                                     \
-    GrB_IndexUnaryOp GRB (op) = & GB_OPAQUE (GB_OP (op))
+    GrB_IndexUnaryOp GRB (op) = & GB_OPAQUE (GB_OP (op)) ;
 
 // GrB_IndexUnaryOps that depend on A(i,j), and result is bool: VALUE* ops
-#define GRB_IDXOP_VALUE(op,name)                                            \
+#define GRB_IDXOP_VALUE(op,str)                                             \
     extern void GB_FUNC_T(op,GB_XTYPE) (bool *z, const GB_TYPE *x,          \
-        GrB_Index i_unused, GrB_Index j_unused, const GB_TYPE *y) ;         \
+        GrB_Index i_unused, GrB_Index j_unused, const GB_TYPE *thunk) ;     \
     struct GB_IndexUnaryOp_opaque GB_OPAQUE (GB_OP (op)) =                  \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (BOOL),         /* ztype */                             \
-        & GB_OPAQUE (GB_XTYPE),     /* xtype */                             \
-        & GB_OPAQUE (GB_XTYPE),     /* ytype */                             \
-        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)), NULL,\
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _idxunop_code, /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (BOOL),     /* ztype */                                 \
+        & GB_OPAQUE (GB_XTYPE), /* xtype */                                 \
+        & GB_OPAQUE (GB_XTYPE), /* thunk type */                            \
+        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)),      \
+            NULL, NULL,                                                     \
+        str,                                                                \
+        GB_ ## op ## _idxunop_code,                                         \
+        NULL                                                                \
     } ;                                                                     \
-    GrB_IndexUnaryOp GRB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+    GrB_IndexUnaryOp GRB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
-// GxB* IndexUnaryOps that depend on A(i,j), result is bool: VALUE* complex ops
-#define GXB_IDXOP_VALUE(op,name)                                            \
+// GrB_IndexUnaryOps that depend on A(i,j), result is bool: VALUE* complex ops
+#define GXB_IDXOP_VALUE(op,str)                                             \
     extern void GB_FUNC_T(op,GB_XTYPE) (bool *z, const GB_TYPE *x,          \
-        GrB_Index i_unused, GrB_Index j_unused, const GB_TYPE *y) ;         \
+        GrB_Index i_unused, GrB_Index j_unused, const GB_TYPE *thunk) ;     \
     struct GB_IndexUnaryOp_opaque GB_OPAQUE (GB_OP (op)) =                  \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (BOOL),         /* ztype */                             \
-        & GB_OPAQUE (GB_XTYPE),     /* xtype */                             \
-        & GB_OPAQUE (GB_XTYPE),     /* ytype */                             \
-        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)), NULL,\
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _idxunop_code, /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (BOOL),     /* ztype */                                 \
+        & GB_OPAQUE (GB_XTYPE), /* xtype */                                 \
+        & GB_OPAQUE (GB_XTYPE), /* thunk type */                            \
+        NULL, (GxB_index_unary_function) (& GB_FUNC_T (op, GB_XTYPE)),      \
+            NULL, NULL,                                                     \
+        str,                                                                \
+        GB_ ## op ## _idxunop_code,                                         \
+        NULL                                                                \
     } ;                                                                     \
-    GrB_IndexUnaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op))
+    GrB_IndexUnaryOp GXB (GB_OP (op)) = & GB_OPAQUE (GB_OP (op)) ;
 
 //------------------------------------------------------------------------------
-// built-in select operators (DEPRECATED: do not use in any code)
+// built-in select operators
 //------------------------------------------------------------------------------
 
-#define GXB_SEL(op,name)                                                    \
+#define GXB_SEL(op,str)                                                     \
     struct GB_SelectOp_opaque GB_OPAQUE (op) =                              \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (BOOL),         /* ztype */                             \
-        NULL,                       /* xtype */                             \
-        NULL,                       /* thunk type */                        \
-        NULL, NULL, NULL,           /* no function pointer */               \
-        name, 0,                    /* name and name_len */                 \
-        GB_ ## op ## _selop_code,   /* opcode */                            \
-        NULL, 0, 0                  /* defn, alloc, hash */                 \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (BOOL),     /* ztype */                                 \
+        NULL,                   /* xtype */                                 \
+        NULL,                   /* thunk type */                            \
+        NULL, NULL, NULL, NULL,                                             \
+        str,                                                                \
+        GB_ ## op ## _selop_code,                                           \
+        NULL                                                                \
     } ;                                                                     \
-    GxB_SelectOp GXB (op) = & GB_OPAQUE (op)
+    GxB_SelectOp GXB (op) = & GB_OPAQUE (op) ;
 
 GXB_SEL (TRIL     , "tril"    ) ;
 GXB_SEL (TRIU     , "triu"    ) ;
@@ -487,14 +491,10 @@ GrB_BinaryOp GrB_LXNOR = & GB_OPAQUE (EQ_BOOL) ;
 // not valid to use in any other methods.
 struct GB_BinaryOp_opaque GB_OPAQUE (IGNORE_DUP) =
 {
-    GB_MAGIC2, 0,               // magic and header_size
-    NULL,                       // ztype
-    NULL,                       // xtype
-    NULL,                       // ytype
-    NULL, NULL, NULL,           // no function pointer
-    "ignore_dup", 0,            // name and name_len
-    GB_NOP_code,                // opcode
-    NULL, 0, 0                  // defn, alloc, and hash
+    GB_MAGIC2, 0,
+    NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
+    "ignore_dup", GB_NOP_code, NULL
 } ;
 GrB_BinaryOp GxB_IGNORE_DUP = & GB_OPAQUE (IGNORE_DUP) ;
 
@@ -512,24 +512,6 @@ GrB_BinaryOp GrB_ONEB_FP32   = & GB_OPAQUE (PAIR_FP32) ;
 GrB_BinaryOp GrB_ONEB_FP64   = & GB_OPAQUE (PAIR_FP64) ;
 GrB_BinaryOp GxB_ONEB_FC32   = & GB_OPAQUE (PAIR_FC32) ;
 GrB_BinaryOp GxB_ONEB_FC64   = & GB_OPAQUE (PAIR_FC64) ;
-
-// nonzombie function for generic case
-extern void GB_nonzombie_func (bool *z, const void *x,
-    int64_t i, GrB_Index j, const void *y) ;
-
-// GxB_NONZOMBIE: internal use only
-struct GB_IndexUnaryOp_opaque GB_OPAQUE (NONZOMBIE) =
-{
-    GB_MAGIC, 0,                // magic and header_size
-    & GB_OPAQUE (BOOL),         // ztype
-    NULL,                       // xtype
-    & GB_OPAQUE (INT64),        // ytype
-    NULL, (GxB_index_unary_function) &GB_nonzombie_func, NULL,
-    "nonzombie", 0,             // name and name_len
-    GB_NONZOMBIE_idxunop_code,  // opcode
-    NULL, 0, 0                  // defn, alloc, hash
-} ;
-GrB_IndexUnaryOp GxB_NONZOMBIE = & GB_OPAQUE (NONZOMBIE) ;
 
 //------------------------------------------------------------------------------
 // GrB_ALL
@@ -571,11 +553,11 @@ const GxB_Format_Value GxB_FORMAT_DEFAULT = GxB_BY_ROW ;
     ztype GB_OPAQUE (GB_EVAL2 (identity_, op)) = identity ;                 \
     struct GB_Monoid_opaque GB_OPAQUE (GB_EVAL2 (op, _MONOID)) =            \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (op),           /* additive operator */                 \
-        & GB_OPAQUE (GB_EVAL2 (identity_, op)),     /* identity */          \
-        NULL,                                       /* terminal */          \
-        0, 0, 0                     /* alloc id & term, hash */             \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (op),                                                   \
+        & GB_OPAQUE (GB_EVAL2 (identity_, op)),                             \
+        NULL,                                                               \
+        0, 0                                                                \
     } ;                                                                     \
     GrB_Monoid GXB (GB_EVAL2 (op, _MONOID)) =                               \
         & GB_OPAQUE (GB_EVAL2 (op, _MONOID)) ;
@@ -586,11 +568,11 @@ const GxB_Format_Value GxB_FORMAT_DEFAULT = GxB_BY_ROW ;
     ztype GB_OPAQUE (GB_EVAL2 (terminal_, op)) = terminal ;                 \
     struct GB_Monoid_opaque GB_OPAQUE (GB_EVAL2 (op, _MONOID)) =            \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
-        & GB_OPAQUE (op),           /* additive operator */                 \
-        & GB_OPAQUE (GB_EVAL2 (identity_, op)),     /* identity */          \
-        & GB_OPAQUE (GB_EVAL2 (terminal_, op)),     /* terminal */          \
-        0, 0, 0                     /* alloc id & term, hash */             \
+        GB_MAGIC, 0,                                                        \
+        & GB_OPAQUE (op),                                                   \
+        & GB_OPAQUE (GB_EVAL2 (identity_, op)),                             \
+        & GB_OPAQUE (GB_EVAL2 (terminal_, op)),                             \
+        0, 0                                                                \
     } ;                                                                     \
     GrB_Monoid GXB (GB_EVAL2 (op, _MONOID)) =                               \
         & GB_OPAQUE (GB_EVAL2 (op, _MONOID)) ;
@@ -759,10 +741,9 @@ GB_MONOID_DEF  ( BXNOR_UINT64 , uint64_t  , 0xFFFFFFFFFFFFFFFF )
 #define GXB_SEMIRING(add,mult)                                              \
     struct GB_Semiring_opaque GB_OPAQUE (GB_SEMIRING_NAME(add, mult)) =     \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
+        GB_MAGIC, 0,                                                        \
         & GB_OPAQUE (GB_EVAL4 (add, _, GB_XTYPE, _MONOID)),                 \
         & GB_OPAQUE (GB_EVAL3 (mult, _, GB_XTYPE)),                         \
-        NULL, 0, 0, 0               /* name, name_len, name_size, hash */   \
     } ;                                                                     \
     GrB_Semiring GXB (GB_SEMIRING_NAME (add, mult)) =                       \
          & GB_OPAQUE (GB_SEMIRING_NAME (add, mult)) ;
@@ -771,10 +752,9 @@ GB_MONOID_DEF  ( BXNOR_UINT64 , uint64_t  , 0xFFFFFFFFFFFFFFFF )
 #define GB_SEMIRING_COMPARE_DEFINE(add,mult)                                \
     struct GB_Semiring_opaque GB_OPAQUE (GB_SEMIRING_NAME(add, mult)) =     \
     {                                                                       \
-        GB_MAGIC, 0,                /* magic and header_size */             \
+        GB_MAGIC, 0,                                                        \
         & GB_OPAQUE (GB_EVAL2 (add, _BOOL_MONOID)),                         \
         & GB_OPAQUE (GB_EVAL3 (mult, _, GB_XTYPE)),                         \
-        NULL, 0, 0, 0               /* name, name_len, name_size, hash */   \
     } ;
 
 #define GXB_SEMIRING_COMPARE(add,mult)                                      \
@@ -994,20 +974,4 @@ GrB_Semiring GRB (GB_EVAL5 (add, _, mult, _SEMIRING_, xtype)) =     \
     GRB_SEMIRING (MAX, MIN, UINT64)
     GRB_SEMIRING (MAX, MIN, FP32)
     GRB_SEMIRING (MAX, MIN, FP64)
-
-//------------------------------------------------------------------------------
-// GxB_CONTEXT_WORLD
-//------------------------------------------------------------------------------
-
-struct GB_Context_opaque GB_OPAQUE (CONTEXT_WORLD) =
-{
-    GB_MAGIC,                       // magic: initialized
-    0,                              // header_size: statically allocated
-    // revised by GrB_init:
-    (double) GB_CHUNK_DEFAULT,      // chunk
-    1,                              // nthreads_max
-    -1,                             // gpu_id
-} ;
-
-GxB_Context GxB_CONTEXT_WORLD = & GB_OPAQUE (CONTEXT_WORLD) ;
 

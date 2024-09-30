@@ -3,11 +3,10 @@
 /* ========================================================================== */
 
 /* -----------------------------------------------------------------------------
- * Mongoose Graph Partitioning Library, Copyright (C) 2017-2018,
+ * Mongoose Graph Partitioning Library  Copyright (C) 2017-2018,
  * Scott P. Kolodziej, Nuri S. Yeralan, Timothy A. Davis, William W. Hager
  * Mongoose is licensed under Version 3 of the GNU General Public License.
  * Mongoose is also available under other licenses; contact authors for details.
- * SPDX-License-Identifier: GPL-3.0-only
  * -------------------------------------------------------------------------- */
 
 // #pragma once
@@ -35,9 +34,9 @@ namespace Mongoose
 {
 
 /* Type definitions */
-typedef int64_t Int;
+typedef SuiteSparse_long Int;
 #ifndef MAX_INT
-#define MAX_INT INT64_MAX
+#define MAX_INT SuiteSparse_long_max
 #endif
 
 /* Enumerations */

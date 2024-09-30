@@ -2,12 +2,10 @@
 // GB_ijsort:  sort an index array I and remove duplicates
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed.  Only one variant possible.
 
 // Sort an index array and remove duplicates:
 
@@ -34,7 +32,8 @@ GrB_Info GB_ijsort
                         // contains the sorted indices with duplicates removed.
     size_t *I2_size_handle,
     GrB_Index *restrict *p_I2k,  // output array of size ni2
-    size_t *I2k_size_handle
+    size_t *I2k_size_handle,
+    GB_Context Context
 )
 {
 
@@ -63,8 +62,7 @@ GrB_Info GB_ijsort
     // determine the number of threads to use
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
     int nthreads = GB_nthreads (ni, chunk, nthreads_max) ;
 
     //--------------------------------------------------------------------------

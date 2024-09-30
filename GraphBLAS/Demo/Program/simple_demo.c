@@ -2,7 +2,7 @@
 // GraphBLAS/Demo/Program/simple_demo.c: tests simple_rand
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -29,7 +29,6 @@
 */
 
 #include "simple_rand.h"
-#include "simple_rand.c"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -41,6 +40,7 @@ int main (void)
     int i ;
 
     fprintf (stderr, "simple_demo:\n") ;
+    double n = ((double) LEN) / 1e6 ;
 
     // calloc the space for more accurate timing
     x = (double *) calloc (LEN, sizeof (double)) ;
@@ -64,6 +64,8 @@ int main (void)
     }
 
     // generate random uint64_t numbers
+    double t1 ;
+
     for (i = 0 ; i < LEN ; i++)
     {
         simple_rand_i ( ) ;

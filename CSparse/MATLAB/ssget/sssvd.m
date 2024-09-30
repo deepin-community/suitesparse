@@ -16,8 +16,7 @@ function S = sssvd (matrix, ss_index)                                       %#ok
 %
 % See also ssget.
 
-% ssget, Copyright (c) 2009-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2017-2019, Timothy A. Davis, http://www.suitesparse.com
 
 if (nargin < 2)
     % load the SuiteSparse index

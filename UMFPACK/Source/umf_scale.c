@@ -1,18 +1,18 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_scale: scale a vector by the pivot value
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_scale ============================================================ */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /* Divide a vector of stride 1 by the pivot value. */
 
 #include "umf_internal.h"
 #include "umf_scale.h"
 
-void UMF_scale
+GLOBAL void UMF_scale
 (
     Int n,
     Entry pivot,

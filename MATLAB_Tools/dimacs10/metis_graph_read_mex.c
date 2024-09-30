@@ -1,11 +1,6 @@
-//------------------------------------------------------------------------------
-// dimacs10/metis_graph_mex.c
-//------------------------------------------------------------------------------
-
-// DIMACS10, Copyright (c) 2011, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === metis_graph_mex ====================================================== */
+/* ========================================================================== */
 
 /*
 METIS_GRAPH_MEX: reads a graph in METIS format.  This function is not normally
@@ -151,7 +146,7 @@ void mexFunction
 {
 
     FILE *f ;
-    char s [LEN+1], msg [LEN+120] ;
+    char s [LEN+1], msg [LEN+1] ;
     Int n, nzmax, fmt, ncon, nz, has_ew, i, j, k, status, t ;
     double e = 1, x, *Ti, *Tj, *Tx, *W, x1 = 0, x2 = 0, x3 = 0, x4 = 0 ;
 

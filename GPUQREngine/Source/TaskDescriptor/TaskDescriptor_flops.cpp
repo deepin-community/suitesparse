@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Source/TaskDescriptor_flops.cpp =============================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // This file contains functions that are responsible for computing the actual
 // flops performed by various GPU tasks in the GPUQREngine.
@@ -21,12 +15,11 @@
 // flopsFactorizeVT
 // -----------------------------------------------------------------------------
 
-int64_t flopsFactorizeVT(int numTiles)
+Int flopsFactorizeVT(int numTiles)
 {
-    int64_t ntiles = numTiles ;
-    int64_t m = TILESIZE * ntiles ;
-    int64_t n = TILESIZE;
-    int64_t v = TILESIZE;
+    Int m = TILESIZE * numTiles;
+    Int n = TILESIZE;
+    Int v = TILESIZE;
     return 2 * (m-1)                       +
            v * (6 + 4*m*n + 5*n + 2*m)     +
            ((-4*n -2*m -5) * (v*(v+1)/2))  +
@@ -38,11 +31,9 @@ int64_t flopsFactorizeVT(int numTiles)
 // flopsFactorize
 // -----------------------------------------------------------------------------
 
-int64_t flopsFactorize(int m_in, int n_in)
+Int flopsFactorize(int m, int n)
 {
-    int64_t m = m_in ;
-    int64_t n = n_in ;
-    int64_t v = MIN(m, n);
+    Int v = MIN(m, n);
     return 2 * (m-1)                    +
            v * (6 + 4*m*n + 5*n + 2*m)  +
            ((-4*n -2*m -4) * v*(v+1)/2) +
@@ -54,12 +45,10 @@ int64_t flopsFactorize(int m_in, int n_in)
 // flopsApply
 // -----------------------------------------------------------------------------
 
-int64_t flopsApply(int numTiles, int n_in)
+Int flopsApply(int numTiles, int n)
 {
-    int64_t ntiles = numTiles ;
-    int64_t n = n_in ;
-    int64_t m = TILESIZE * ntiles;
-    int64_t k = TILESIZE;
+    Int m = TILESIZE * numTiles;
+    Int k = TILESIZE;
     return k*n*(4*m - k + 3);
 }
 
@@ -68,7 +57,7 @@ int64_t flopsApply(int numTiles, int n_in)
 // -----------------------------------------------------------------------------
 
 #ifdef GPUQRENGINE_PIPELINING
-int64_t flopsApplyFactorize(int applyTiles, int factorizeTiles)
+Int flopsApplyFactorize(int applyTiles, int factorizeTiles)
 {
     return flopsApply(applyTiles, TILESIZE) + flopsFactorizeVT(factorizeTiles);
 }
@@ -78,7 +67,7 @@ int64_t flopsApplyFactorize(int applyTiles, int factorizeTiles)
 // getFlops
 // -----------------------------------------------------------------------------
 
-int64_t getFlops(const TaskDescriptor *task)
+Int getFlops(TaskDescriptor *task)
 {
     switch(task->Type)
     {
@@ -109,18 +98,18 @@ int64_t getFlops(const TaskDescriptor *task)
         case TASKTYPE_Apply2_Factorize1: return flopsApplyFactorize(2, 1);
         #endif
 
-        default: break ;
+        case TASKTYPE_SAssembly:         return 0;
+        case TASKTYPE_PackAssembly:      return 0;
     }
-    return (0) ;
 }
 
 // -----------------------------------------------------------------------------
 // getWeightedFlops
 // -----------------------------------------------------------------------------
 
-int64_t getWeightedFlops(const TaskDescriptor *task)
+Int getWeightedFlops(TaskDescriptor *task)
 {
-    int64_t flops = getFlops(task);
+    Int flops = getFlops(task);
     switch(task->Type)
     {
         case TASKTYPE_FactorizeVT_3x1:
@@ -144,7 +133,8 @@ int64_t getWeightedFlops(const TaskDescriptor *task)
         case TASKTYPE_Apply2_Factorize1: flops *= 10; break;
         #endif
 
-        default: break ;
+        case TASKTYPE_SAssembly:         break;
+        case TASKTYPE_PackAssembly:      break;
     }
     return flops;
 }

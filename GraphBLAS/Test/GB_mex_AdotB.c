@@ -2,7 +2,7 @@
 // GB_mex_AdotB: compute C=spones(Mask).*(A'*B)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -30,15 +30,15 @@
 GrB_Matrix A = NULL, B = NULL, C = NULL, Aconj = NULL, Mask = NULL ;
 GrB_Monoid add = NULL ;
 GrB_Semiring semiring = NULL ;
-GrB_Info adotb_complex (GB_Werk Werk) ;
-GrB_Info adotb (GB_Werk Werk) ;
+GrB_Info adotb_complex (GB_Context Context) ;
+GrB_Info adotb (GB_Context Context) ;
 GrB_Index anrows, ancols, bnrows, bncols, mnrows, mncols ;
 bool flipxy = false ;
 struct GB_Matrix_opaque C_header ;
 
 //------------------------------------------------------------------------------
 
-GrB_Info adotb_complex (GB_Werk Werk)
+GrB_Info adotb_complex (GB_Context Context)
 {
     GrB_Info info = GrB_Matrix_new (&Aconj, Complex, anrows, ancols) ;
     if (info != GrB_SUCCESS) return (info) ;
@@ -71,7 +71,7 @@ GrB_Info adotb_complex (GB_Werk Werk)
     {
         // C<M> = A'*B using dot product method
         info = GB_AxB_dot3 (C, false, NULL, Mask, false, Aconj, B, semiring,
-            flipxy, Werk) ;
+            flipxy, Context) ;
         mask_applied = true ;
     }
     else
@@ -79,7 +79,7 @@ GrB_Info adotb_complex (GB_Werk Werk)
         // C = A'*B using dot product method
         mask_applied = false ;  // no mask to apply
         info = GB_AxB_dot2 (C, false, NULL, NULL, false, false,
-            false, Aconj, B, semiring, flipxy, Werk) ;
+            false, Aconj, B, semiring, flipxy, Context) ;
     }
 
     GrB_Matrix_free_(&Aconj) ;
@@ -88,7 +88,7 @@ GrB_Info adotb_complex (GB_Werk Werk)
 
 //------------------------------------------------------------------------------
 
-GrB_Info adotb (GB_Werk Werk) 
+GrB_Info adotb (GB_Context Context) 
 {
     // create the Semiring for regular z += x*y
     GrB_Info info = GrB_Monoid_new_FP64_(&add, GrB_PLUS_FP64, (double) 0) ;
@@ -107,14 +107,14 @@ GrB_Info adotb (GB_Werk Werk)
         // C<M> = A'*B using dot product method
         info = GB_AxB_dot3 (C, false, NULL, Mask, false, A, B,
             semiring /* GxB_PLUS_TIMES_FP64 */,
-            flipxy, Werk) ;
+            flipxy, Context) ;
         mask_applied = true ;
     }
     else
     {
         mask_applied = false ;  // no mask to apply
         info = GB_AxB_dot2 (C, false, NULL, NULL, false, false,
-            false, A, B, semiring /* GxB_PLUS_TIMES_FP64 */, flipxy, Werk) ;
+            false, A, B, semiring /* GxB_PLUS_TIMES_FP64 */, flipxy, Context) ;
     }
 
     GrB_Monoid_free_(&add) ;
@@ -135,7 +135,7 @@ void mexFunction
 
     bool malloc_debug = GB_mx_get_global (true) ;
 
-    GB_WERK (USAGE) ;
+    GB_CONTEXT (USAGE) ;
 
     // check inputs
     if (nargout > 1 || nargin < 2 || nargin > 4)
@@ -221,11 +221,11 @@ void mexFunction
     if (A->type == Complex)
     {
         // C = A'*B, complex case
-        METHOD (adotb_complex (Werk)) ;
+        METHOD (adotb_complex (Context)) ;
     }
     else
     {
-        METHOD (adotb (Werk)) ;
+        METHOD (adotb (Context)) ;
     }
 
     // return C

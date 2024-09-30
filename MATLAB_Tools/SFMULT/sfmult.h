@@ -2,9 +2,6 @@
 // === sfmult.h ================================================================
 // =============================================================================
 
-// SFMULT, Copyright (c) 2009, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
 #ifndef _SFMULT_H
 #define _SFMULT_H
 

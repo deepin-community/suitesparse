@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// CAMD/Source/camd_aat: compute symmetry of A and nnz in each column of A+A'
-//------------------------------------------------------------------------------
+/* ========================================================================= */
+/* === CAMD_aat ============================================================ */
+/* ========================================================================= */
 
-// CAMD, Copyright (c) 2007-2022, Timothy A. Davis, Yanqing Chen, Patrick R.
-// Amestoy, and Iain S. Duff.  All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
-//------------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
+/* CAMD, Copyright (c) Timothy A. Davis, Yanqing Chen,			     */
+/* Patrick R. Amestoy, and Iain S. Duff.  See ../README.txt for License.     */
+/* email: DrTimothyAldenDavis@gmail.com                                      */
+/* ------------------------------------------------------------------------- */
 
 /* CAMD_aat:  compute the symmetry of the pattern of A, and count the number of
  * nonzeros each column of A+A' (excluding the diagonal).  Assumes the input
@@ -17,7 +17,7 @@
 
 #include "camd_internal.h"
 
-size_t CAMD_aat	/* returns nz in A+A' */
+GLOBAL size_t CAMD_aat	/* returns nz in A+A' */
 (
     Int n,
     const Int Ap [ ],

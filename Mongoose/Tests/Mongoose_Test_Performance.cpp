@@ -1,15 +1,3 @@
-//------------------------------------------------------------------------------
-// Mongoose/Tests/Mongoose_Test_Performance.cpp
-//------------------------------------------------------------------------------
-
-// Mongoose Graph Partitioning Library, Copyright (C) 2017-2018,
-// Scott P. Kolodziej, Nuri S. Yeralan, Timothy A. Davis, William W. Hager
-// Mongoose is licensed under Version 3 of the GNU General Public License.
-// Mongoose is also available under other licenses; contact authors for details.
-// SPDX-License-Identifier: GPL-3.0-only
-
-//------------------------------------------------------------------------------
-
 #include <string>
 #include "Mongoose_IO.hpp"
 #include "Mongoose_EdgeCut.hpp"
@@ -22,7 +10,7 @@ int runPerformanceTest(const std::string &inputFile, const std::string &outputFi
 {
     EdgeCut_Options *options;
     Graph *graph;
-    double t;
+    clock_t t;
     
     options = EdgeCut_Options::create();
 
@@ -43,9 +31,9 @@ int runPerformanceTest(const std::string &inputFile, const std::string &outputFi
     }
 
     // An edge separator should be computed with default options
-    t = SuiteSparse_time ();
+    t = clock();
     EdgeCut *result = edge_cut(graph, options);
-    t = SuiteSparse_time () - t;
+    t = clock() - t;
 
     if (!result)
     {
@@ -56,7 +44,7 @@ int runPerformanceTest(const std::string &inputFile, const std::string &outputFi
     }
     else
     {
-        double test_time = t ;
+        double test_time = ((double) t)/CLOCKS_PER_SEC;
         LogTest("Total Edge Separator Time: " << test_time << "s");
         Logger::printTimingInfo();
         LogTest("Cut Properties:");

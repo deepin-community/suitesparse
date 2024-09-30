@@ -21,102 +21,88 @@
 //******************************************************************************
 
 #pragma once
+#define GB_CUDA_KERNEL
 #include <limits>
 #include <cstdint>
-#include <cmath>
 #include <stdio.h>
 #include <cooperative_groups.h>
-#include "GB_cuda_kernel.h"
-#include "GB_mxm_shared_definitions.h"
-#include "GB_cuda_atomics.cuh"
-#include "GB_hash.h"
-#include "GB_hyper_hash_lookup.h"
-#include "GB_cuda_dot3_defn.h"
+#include "matrix.h"
 
 using namespace cooperative_groups;
 
-//------------------------------------------------------------------------------
-// GB_warp_ReduceSumPlus_int64
-//------------------------------------------------------------------------------
-
-template< int tile_sz>
+template< typename T, int tile_sz>
 __inline__ __device__ 
-int64_t GB_warp_ReduceSumPlus_int64( thread_block_tile<tile_sz> g, int64_t val)
+T warp_ReduceSumPlus( thread_block_tile<tile_sz> g, T val)
 {
     // Each iteration halves the number of active threads
     // Each thread adds its partial sum[i] to sum[lane+i]
-    /*
-    #pragma unroll
-    for (int i = tile_sz >> 1; i > 0; i >>= 1) {
+    for (int i = g.size() / 2; i > 0; i /= 2) {
+        //printf("thd%d   %d OP %d is %d\n", threadIdx.x, val, fold, OP( val, fold));
         val +=  g.shfl_down( val, i);
     }
-    */
-    val +=  g.shfl_down( val, 16);
-    val +=  g.shfl_down( val, 8);
-    val +=  g.shfl_down( val, 4);
-    val +=  g.shfl_down( val, 2);
-    val +=  g.shfl_down( val, 1);
     return val; // note: only thread 0 will return full sum
 }
 
-//------------------------------------------------------------------------------
-// GB_block_ReduceSum_int64
-//------------------------------------------------------------------------------
-
-template<int warpSize>
-__inline__ __device__
-int64_t GB_block_ReduceSum_int64(thread_block g, int64_t val)
+template< typename T, int tile_sz>
+__inline__ __device__ 
+T warp_Reduce( thread_block_tile<tile_sz> g, T val)
 {
-  static __shared__ int64_t shared[warpSize]; // Shared mem for 32 partial sums
+    // Each iteration halves the number of active threads
+    // Each thread adds its partial sum[i] to sum[lane+i]
+    for (int i = g.size() / 2; i > 0; i /= 2) {
+        T next = g.shfl_down( val, i) ;
+        val = GB_ADD( sum, next ) ; 
+    }
+    return val; // note: only thread 0 will return full sum
+}
+
+template<typename T, int warpSize>
+__inline__ __device__
+T block_ReduceSum(thread_block g, T val)
+{
+  static __shared__ T shared[warpSize]; // Shared mem for 32 partial sums
+  
 
   int lane = threadIdx.x & 31 ; // % warpSize;
   int wid  = threadIdx.x >> 5 ; // / warpSize;
   thread_block_tile<warpSize> tile = tiled_partition<warpSize>( g );
 
   // Each warp performs partial reduction
-  val = GB_warp_ReduceSumPlus_int64<warpSize>( tile, val);    
+  val = warp_ReduceSumPlus<T, warpSize>( tile, val);    
 
   // Wait for all partial reductions
   if (lane==0) shared[wid]=val; // Write reduced value to shared memory
-  g.sync();                     // Wait for all partial reductions
+  __syncthreads();              // Wait for all partial reductions
+    for(int i = threadIdx.x; i < warpSize; i+= blockDim.x) {
+            printf("blockIdx.x=%d, wid=%d, val=%lld\n", blockIdx.x, i, shared[i]);
+    }
 
-  //if (wid > 0 ) return val;
+//  if (wid > 0 || gridDim.x == 1 ) return val;
 
   //read from shared memory only if that warp existed
   val = (threadIdx.x <  (blockDim.x / warpSize ) ) ? shared[lane] : 0;
+  printf("thd%d warp loaded val = %d\n", threadIdx.x, lane, val);
 
-  // Final reduce within first warp
-  if (wid==0) val = GB_warp_ReduceSumPlus_int64<warpSize>( tile, val);
+  if (wid==0) val = warp_ReduceSumPlus<T, warpSize>( tile, val); //Final reduce within first warp
 
   return val;
 }
 
-//------------------------------------------------------------------------------
-// AxB_dot3_phase3_vsvs
-//------------------------------------------------------------------------------
-
-template<
-    typename T_C, typename T_A, typename T_B,
-    typename T_Z, typename T_X, typename T_Y, uint64_t srcode>
+template< typename T_C, typename T_A, typename T_B>
 __global__ void AxB_dot3_phase3_vsvs
 ( 
   int64_t start,
   int64_t end,
-  int64_t *Bucket,  // do the work in Bucket [start:end-1]
+  int64_t *Bucket,
   GrB_Matrix C,
   GrB_Matrix M,
   GrB_Matrix A,
   GrB_Matrix B,
-  int sz            // unused
+  int sz
 )
 {
-
-    // TODO: Figure out how to use graphblas-specific INFINITY macro
-    #ifndef INFINITY
-    #define INFINITY std::numeric_limits<T_C>::max()
-    #endif
-
-    int64_t dots = end - start;
+//    printf("start=%lu, end=%lu\n", start, end);
+   int dots = end - start;
    // sz = expected non-zeros per dot
 //   /*
 //   int m = (gridDim.x*blockDim.x)*256/sz;
@@ -125,130 +111,106 @@ __global__ void AxB_dot3_phase3_vsvs
 //
 //   int dots = (nvecs +m -1)/m;
 //   */
-    const T_A *__restrict__ Ax = (T_A *)A->x  ;
-    const T_B *__restrict__ Bx = (T_B *)B->x  ;
-          T_C *__restrict__ Cx = (T_C *)C->x  ;
-          int64_t *__restrict__ Ci = C->i ;
-    const int64_t *__restrict__ Mi = M->i ;
-    #if GB_M_IS_HYPER
-    const int64_t *__restrict__ Mh = M->h ;
-    #endif
+   const T_A *__restrict__ Ax = (T_A *)A->x  ;
+   const T_B *__restrict__ Bx = (T_B *)B->x  ;
+   T_C *__restrict__ Cx = (T_C *)C->x  ;
+   int64_t *__restrict__ Ci = C->i ;
+   const int64_t *__restrict__ Mi = M->i ;
+   const int64_t *__restrict__ Ai = A->i ;
+   const int64_t *__restrict__ Bi = B->i ;
+   const int64_t *__restrict__ Ap = A->p ;
+   const int64_t *__restrict__ Bp = B->p ;
 
-    #if GB_A_IS_HYPER || GB_A_IS_SPARSE
-    const int64_t *__restrict__ Ai = A->i ;
-    const int64_t *__restrict__ Ap = A->p ;
-    #endif
+   int pfirst, plast;
 
-    #if GB_B_IS_HYPER || GB_B_IS_SPARSE
-    const int64_t *__restrict__ Bi = B->i ;
-    const int64_t *__restrict__ Bp = B->p ;
-    #endif
+    //#define GB_PARTITION(k1,k2,n,tid,nthreads)                                  \
 
-    #if GB_A_IS_HYPER
-    const int64_t *__restrict__ A_Yp = A->Y->p ;
-    const int64_t *__restrict__ A_Yi = A->Y->i ;
-    const int64_t *__restrict__ A_Yx = (int64_t *) A->Y->x ;
-    const int64_t A_hash_bits = A->Y->vdim - 1 ;
-    #endif
+    GB_PARTITION (pfirst, plast, dots, blockIdx.x, gridDim.x ) ;
+//   if( threadIdx.x ==0 )
+//   {
+//   if( threadIdx.x ==0 )
+//   {
+//      printf("block%d %d dots/thrd, start,end = %ld,%ld pf,pl=%d,%d blockDim=%d\n",
+//               blockIdx.x, (dots + blockDim.x*gridDim.x -1)/(blockDim.x*gridDim.x),
+//               start, end, pfirst, plast, blockDim.x);
+//   }
+//   __syncthreads();
 
-    #if GB_B_IS_HYPER
-    const int64_t *__restrict__ B_Yp = B->Y->p ;
-    const int64_t *__restrict__ B_Yi = B->Y->i ;
-    const int64_t *__restrict__ B_Yx = (int64_t *) B->Y->x ;
-    const int64_t B_hash_bits = B->Y->vdim - 1 ;
-    #endif
 
-    //int64_t pfirst, plast;
+   int zc = 0 ;
+     
+   int64_t pair_id;
 
-    //GB_PARTITION (pfirst, plast, dots, blockIdx.x, gridDim.x ) ;
+   //for ( int tid= threadIdx.x +blockDim.x*blockIdx.x;
+   //          tid < dots;
+   //          tid += blockDim.x * gridDim.x)
+   for ( int tid = pfirst+ threadIdx.x ;
+             tid < plast;
+             tid += blockDim.x )
+   {
+         pair_id = Bucket[ start + tid ];
 
-    int64_t my_nzombies = 0 ;
+         int64_t i = Mi [pair_id] ;
+         int64_t j = Ci [pair_id]>>4 ; 
+         if (j < 0) continue; //don't operate on zombies
+       printf("start=%d, tid=%d, pair_id=%lu, (i,j)=%lu,%lu\n", pfirst, tid, pair_id,i,j);
+         int64_t pA       = Ap[i] ;
+         int64_t pA_end   = Ap[i+1] ;
+         int64_t pB       = Bp[j] ;
+         int64_t pB_end   = Bp[j+1] ;
 
-    int all_in_one = ( (end - start) == (M->p)[(M->nvec)] ) ;
+         T_A aki;
+         T_B bkj;
+         T_C cij ;
 
-  //for ( int64_t kk = pfirst+ threadIdx.x ;
-  //              kk < plast;
-  //              kk += blockDim.x )
-    for ( int64_t kk = start+ threadIdx.x +blockDim.x*blockIdx.x ;
-                  kk < end;
-                  kk += blockDim.x*gridDim.x )
-    {
-        int64_t pair_id = all_in_one ? kk : Bucket[ kk ];
+         bool cij_exists = false;
 
-        int64_t i = Mi [pair_id] ;
-        int64_t k = Ci [pair_id]>>4 ;
-
-        // j = k or j = Mh [k] if C and M are hypersparse
-        int64_t j = GBH_M (Mh, k) ;
-
-        // find A(:,i):  A is always sparse or hypersparse
-        int64_t pA, pA_end ;
-        #if GB_A_IS_HYPER
-        GB_hyper_hash_lookup (Ap, A_Yp, A_Yi, A_Yx, A_hash_bits,
-           i, &pA, &pA_end) ;
-        #else
-        pA       = Ap[i] ;
-        pA_end   = Ap[i+1] ;
-        #endif
-
-        // find B(:,j):  B is always sparse or hypersparse
-        int64_t pB, pB_end ;
-        #if GB_B_IS_HYPER
-        GB_hyper_hash_lookup (Bp, B_Yp, B_Yi, B_Yx, B_hash_bits,
-           j, &pB, &pB_end) ;
-        #else
-        pB       = Bp[j] ;
-        pB_end   = Bp[j+1] ;
-        #endif
-
-        GB_DECLAREA (aki) ;
-        GB_DECLAREB (bkj) ;
-        GB_DECLARE_IDENTITY (cij) ;         // GB_Z_TYPE cij = identity
-
-        bool cij_exists = false;
-
-        while (pA < pA_end && pB < pB_end )
-        {
+         while (pA < pA_end && pB < pB_end )
+         {
             int64_t ia = Ai [pA] ;
             int64_t ib = Bi [pB] ;
-            #if GB_IS_PLUS_PAIR_REAL_SEMIRING && GB_Z_IGNORE_OVERFLOW
-                cij += (ia == ib) ;
-            #else
-                if (ia == ib)
-                { 
-                    // A(k,i) and B(k,j) are the next entries to merge
-                    GB_DOT_MERGE (pA, pB) ;
-                    GB_DOT_TERMINAL (cij) ;   // break if cij == terminal
-                }
-            #endif
-            pA += ( ia <= ib);  // incr pA if A(ia,i) at or before B(ib,j)
-            pB += ( ib <= ia);  // incr pB if B(ib,j) at or before A(ia,i)
-        }
+            if( ia == ib)
+            { 
+                // A(k,i) and B(k,j) are the next entries to merge
+                #if defined ( GB_PHASE_1_OF_2 )
+                cij_exists = true ;
+                break ;
+                #else
+                GB_DOT_MERGE ;
+                //GB_DOT_TERMINAL (cij) ;         // break if cij == terminal
+                pA++ ;
+                pB++ ;
+                #endif
+            }
+            else 
+            {
+                // A(ia,i) appears before B(ib,j)
+                pA += ( ia < ib);
+                // B(ib,j) appears before A(ia,i)
+                pB += ( ib < ia);
+            }
+         }
+         if (cij_exists){
+            GB_PUTC ( Ci[pair_id] = i ) ;
+            GB_PUTC ( Cx[pair_id] = (T_C)cij ) ;
+         }
+         else{
+            printf(" %lld, %lld is zombie %d!\n",i,j,zc);
+            zc++; 
+            GB_PUTC( Ci[pair_id] = GB_FLIP( i ) ) ;
+         }
+   }
+  
+   __syncthreads();
 
+   printf("thd%d zombie count = %d\n",threadIdx.x,zc);
+   zc = block_ReduceSum<int , 32>( this_thread_block(), zc);
+   __syncthreads();
+   if( threadIdx.x == 0 && zc > 0) {
+      printf("block%d zombie count = %d\n", blockIdx.x, zc);
+      atomicAdd( (unsigned long long int*)&(C->nzombies), (unsigned long long int)zc);
+//      C->nzombies += (unsigned long long int)zc;
+      printf("blk:%d Czombie = %lld\n", blockIdx.x,C->nzombies);
+   }
 
-        GB_CIJ_EXIST_POSTCHECK ;
-        if (cij_exists)
-        {
-            GB_PUTC (cij, Cx, pair_id) ;        // Cx [pair_id] = (T_C) cij
-            Ci [pair_id] = i ;
-        }
-        else
-        {
-            // cij is a zombie
-            my_nzombies++;
-            Ci [pair_id] = GB_FLIP (i) ;
-        }
-    }
-
-    // FIXME: use this in spdn and vsdn:
-    this_thread_block().sync(); 
-
-    my_nzombies = GB_block_ReduceSum_int64<32>( this_thread_block(), my_nzombies);
-    this_thread_block().sync(); 
-
-    if( threadIdx.x == 0 && my_nzombies > 0)
-    {
-        GB_cuda_atomic_add <uint64_t>( &(C->nzombies), (uint64_t) my_nzombies) ;
-    }
 }
-

@@ -2,7 +2,7 @@
 // GraphBLAS/Demo/Include/graphblas_demos.h: include file for all demo programs
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -46,7 +46,7 @@
 #endif
 
 #ifndef GB_MICROSOFT
-#if ( defined (_MSC_VER) && !defined(__INTEL_COMPILER) )
+#if ( _MSC_VER && !__INTEL_COMPILER )
 #define GB_MICROSOFT 1
 #else
 #define GB_MICROSOFT 0
@@ -55,13 +55,14 @@
 
 #include "GraphBLAS.h"
 #include "simple_rand.h"
-// #include "usercomplex.h"
+#include "usercomplex.h"
 
 #undef MIN
 #undef MAX
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
+GB_PUBLIC
 GrB_Info read_matrix        // read a double-precision matrix
 (
     GrB_Matrix *A,          // handle of matrix to create
@@ -73,6 +74,7 @@ GrB_Info read_matrix        // read a double-precision matrix
     bool printstuff         // if true, print status to stdout
 ) ;
 
+GB_PUBLIC
 GrB_Info random_matrix      // create a random double-precision matrix
 (
     GrB_Matrix *A_output,   // handle of matrix to create
@@ -85,6 +87,7 @@ GrB_Info random_matrix      // create a random double-precision matrix
     bool A_complex          // if true, create a Complex matrix
 ) ;
 
+GB_PUBLIC
 GrB_Info get_matrix         // get a matrix from stdin, or create random one
 (
     GrB_Matrix *A_output,   // matrix to create
@@ -95,6 +98,7 @@ GrB_Info get_matrix         // get a matrix from stdin, or create random one
     bool spones             // if true, return all entries equal to 1
 ) ;
 
+GB_PUBLIC
 GrB_Info wathen             // construct a random Wathen matrix
 (
     GrB_Matrix *A_output,   // output matrix
@@ -105,12 +109,14 @@ GrB_Info wathen             // construct a random Wathen matrix
     double *rho_given       // nx-by-ny dense matrix, if NULL use random rho
 ) ;
 
+GB_PUBLIC
 GrB_Info triu               // C = triu (A,1)
 (
     GrB_Matrix *C_output,   // output matrix
     const GrB_Matrix A      // input matrix, boolean or double
 ) ;
 
+GB_PUBLIC
 GrB_Info isequal_type       // return GrB_SUCCESS if successful
 (
     bool *result,           // true if A == B, false if A != B or error
@@ -119,6 +125,7 @@ GrB_Info isequal_type       // return GrB_SUCCESS if successful
     GrB_BinaryOp op         // should be GrB_EQ_<type>, for the type of A and B
 ) ;
 
+GB_PUBLIC
 GrB_Info isequal            // return GrB_SUCCESS if successful
 (
     bool *result,           // true if A == B, false if A != B or error
@@ -132,6 +139,7 @@ GrB_Info isequal            // return GrB_SUCCESS if successful
 // import/export test
 //------------------------------------------------------------------------------
 
+GB_PUBLIC
 GrB_Info import_test (GrB_Matrix *C_handle, int format, bool dump) ;
 
 //------------------------------------------------------------------------------

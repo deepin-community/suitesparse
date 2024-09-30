@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Modify/cholmod_del: delete row/column from an LDL' factorization
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Modify/cholmod_rowdel ================================================ */
+/* ========================================================================== */
 
-// CHOLMOD/Modify Module.  Copyright (C) 2005-2022, Timothy A. Davis,
-// and William W. Hager.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Modify Module.
+ * Copyright (C) 2005-2006, Timothy A. Davis and William W. Hager.
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* Deletes a row and column from an LDL' factorization.  The row and column k
  * is set to the kth row and column of the identity matrix.  Optionally
@@ -18,10 +18,12 @@
  * is used, it can have any valid xtype).
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NGPL
 #ifndef NMODIFY
+
+#include "cholmod_internal.h"
+#include "cholmod_modify.h"
+
 
 /* ========================================================================== */
 /* === cholmod_rowdel ======================================================= */
@@ -395,7 +397,7 @@ int CHOLMOD(rowdel_mark)
 	    }
 	}
 
-	do_update = (dk > 0) ;
+	do_update = IS_GT_ZERO (dk) ;
 	if (!do_update)
 	{
 	    dk = -dk ;

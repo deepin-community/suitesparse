@@ -1,13 +1,9 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_triplet.h
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
-Int UMF_triplet_map_x
+GLOBAL Int UMF_triplet_map_x
 (
     Int n_row,
     Int n_col,
@@ -32,7 +28,7 @@ Int UMF_triplet_map_x
     , Int Map2 [ ]
 ) ;
 
-Int UMF_triplet_map_nox
+GLOBAL Int UMF_triplet_map_nox
 (
     Int n_row,
     Int n_col,
@@ -49,7 +45,7 @@ Int UMF_triplet_map_nox
     , Int Map2 [ ]
 ) ;
 
-Int UMF_triplet_nomap_x
+GLOBAL Int UMF_triplet_nomap_x
 (
     Int n_row,
     Int n_col,
@@ -72,7 +68,7 @@ Int UMF_triplet_nomap_x
 #endif
 ) ;
 
-Int UMF_triplet_nomap_nox
+GLOBAL Int UMF_triplet_nomap_nox
 (
     Int n_row,
     Int n_col,

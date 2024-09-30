@@ -2,8 +2,9 @@
 // GB_cuda_warmup.cu: warmup the GPU
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2019, All Rights Reserved.
+// http://suitesparse.com   See GraphBLAS/Doc/License.txt for license.
 
 //------------------------------------------------------------------------------
 
@@ -22,6 +23,11 @@ bool GB_cuda_warmup (int device)
 
     double gpu_memory_size = GB_Global_gpu_memorysize_get (device);
 
+    printf ("warming up device %d memsize %g sms %d\n",
+        device,
+        gpu_memory_size, 
+        GB_Global_gpu_sm_get (device)) ;
+
     size_t size = 0 ;
     void *p = GB_malloc_memory (1, 1, &size) ;
     if (p == NULL)
@@ -29,11 +35,11 @@ bool GB_cuda_warmup (int device)
         printf ("Hey!! where's da memory???\n") ;
         return (false) ;
     }
-//    printf ("oooo nice block of memory of size %lu\n", size) ;
+    printf ("oooo nice block of memory of size %lu\n", size) ;
     GB_free_memory ( &p, size) ;
-//    printf ("be free, block of memory of size %lu\n", size) ;
+    printf ("be free, block of memory of size %lu\n", size) ;
 
-//    printf ("good ol' cudaMalloc just to be sure\n");
+    printf ("good ol' cudaMalloc just to be sure\n");
     cudaMalloc ( &p, size ) ;
     if (p == NULL)
     {
@@ -42,7 +48,7 @@ bool GB_cuda_warmup (int device)
     }
     cudaFree (p) ;
 
-//    printf ("GPU %d nice and toasty now\n", device) ;
+    printf ("GPU %d nice and toasty now\n", device) ;
 
     // TODO check for jit cache? or in GB_init?
 

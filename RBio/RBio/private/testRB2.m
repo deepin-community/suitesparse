@@ -1,15 +1,16 @@
 function testRB2
-%testRB2: test the RBio toolbox.  ssget is required.
+%testRB2: test the RBio toolbox.  UFget is required.
+% Note that UFget requires the Nov 25, 2006, revision of the UF_Index.mat file,
+% or later, to access all the Problems used by this test.
 %
 % Example:
 %   testRB2
 %
-% See also ssget, RBread, RBreade, testRB1.
+% See also UFget, RBread, RBreade, testRB1.
 
-% RBio, Copyright (c) 2009-2022, Timothy A. Davis.  All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2006, Timothy A. Davis
 
-Problem = ssget ('Meszaros/farm') ;
+Problem = UFget ('Meszaros/farm') ;
 % disp (Problem) ;
 A = RBread ('farm.rb') ;
 if (~isequal (A, Problem.A))
@@ -21,7 +22,7 @@ if (any (mtype ~= 'ira'))
     error ('test failure: farm.rb') ;
 end
 
-Problem = ssget ('HB/bcsstk01') ;
+Problem = UFget ('HB/bcsstk01') ;
 % disp (Problem) ;
 A = RBread ('bcsstk01.rb') ;
 if (~isequal (A, Problem.A))
@@ -33,7 +34,7 @@ if (any (mtype ~= 'rsa'))
     error ('test failure: bcsstk01.rb') ;
 end
 
-Problem = ssget ('HB/lap_25') ;
+Problem = UFget ('HB/lap_25') ;
 % disp (Problem) ;
 A = RBread ('lap_25.rb') ;
 if (~isequal (A, Problem.A))
@@ -49,7 +50,7 @@ if (any (mtype ~= 'psa'))
     error ('test failure: bcsstk01.rb') ;
 end
 
-Problem = ssget ('HB/west0479') ;
+Problem = UFget ('HB/west0479') ;
 % disp (Problem) ;
 [A Z] = RBread ('west0479.rb') ;
 if (~isequal (A, Problem.A))

@@ -1,20 +1,20 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umfpack_symbolic: symbolic analysis
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMFPACK_symbolic ===================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     User-callable.  Performs a symbolic factorization.
-    See umfpack.h for details.
+    See umfpack_symbolic.h for details.
 */
 
 #include "umf_internal.h"
 
-int UMFPACK_symbolic
+GLOBAL Int UMFPACK_symbolic
 (
     Int n_row,
     Int n_col,

@@ -2,7 +2,7 @@
 // GB_helper.h: helper functions for @GrB interface
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -15,8 +15,9 @@
 
 #include "GB.h"
 
-double GB_helper0 (void) ;
+GB_PUBLIC double GB_helper0 (void) ;
 
+GB_PUBLIC
 void GB_helper1              // convert zero-based indices to one-based
 (
     double *restrict I_double,   // output array
@@ -24,12 +25,14 @@ void GB_helper1              // convert zero-based indices to one-based
     int64_t nvals                   // size of input and output arrays
 ) ;
 
+GB_PUBLIC
 void GB_helper1i             // convert zero-based indices to one-based
 (
     int64_t *restrict I,         // input/output array
     int64_t nvals                   // size of input/output array
 ) ;
 
+GB_PUBLIC
 bool GB_helper3              // return true if OK, false on error
 (
     int64_t *restrict List,      // size len, output array
@@ -38,6 +41,7 @@ bool GB_helper3              // return true if OK, false on error
     int64_t *List_max               // also compute the max entry in the list
 ) ;
 
+GB_PUBLIC
 bool GB_helper3i             // return true if OK, false on error
 (
     int64_t *restrict List,      // size len, output array
@@ -46,6 +50,7 @@ bool GB_helper3i             // return true if OK, false on error
     int64_t *List_max               // also compute the max entry in the list
 ) ;
 
+GB_PUBLIC
 bool GB_helper4              // return true if OK, false on error
 (
     const GrB_Index *restrict I, // array of size len
@@ -53,6 +58,7 @@ bool GB_helper4              // return true if OK, false on error
     GrB_Index *List_max             // find max (I) + 1
 ) ;
 
+GB_PUBLIC
 void GB_helper5              // construct pattern of S
 (
     GrB_Index *restrict Si,         // array of size anz
@@ -65,12 +71,14 @@ void GB_helper5              // construct pattern of S
     const GrB_Index anz
 ) ;
 
+GB_PUBLIC
 void GB_helper7              // Kx = uint64 (0:mnz-1)
 (
     uint64_t *restrict Kx,       // array of size mnz
     const GrB_Index mnz
 ) ;
 
+GB_PUBLIC
 void GB_helper8
 (
     GB_void *C,         // output array of size nvals * s
@@ -79,6 +87,7 @@ void GB_helper8
     size_t s            // size of each scalar
 ) ;
 
+GB_PUBLIC
 double GB_helper10       // norm (x-y,p), or -1 on error
 (
     GB_void *x_arg,             // float or double, depending on type parameter
@@ -89,8 +98,6 @@ double GB_helper10       // norm (x-y,p), or -1 on error
     int64_t p,                  // 0, 1, 2, INT64_MIN, or INT64_MAX
     GrB_Index n
 ) ;
-
-void GB_make_shallow (GrB_Matrix A) ;
 
 #endif
 

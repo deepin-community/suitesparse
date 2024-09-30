@@ -13,7 +13,6 @@ function c = cs_counts (A,mode)                                             %#ok
 %
 %   See also SYMBFACT.
 
-% CSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 error ('cs_counts mexFunction not found') ;

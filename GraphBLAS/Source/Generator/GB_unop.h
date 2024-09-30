@@ -1,15 +1,14 @@
-
 // SPDX-License-Identifier: Apache-2.0
-m4_divert(if_unop_apply_enabled)
+if_unop_apply_enabled
 GrB_Info GB (_unop_apply)
 (
-    GB_void *Cx,
-    const GB_void *Ax,
+    GB_ctype *Cx,
+    const GB_atype *Ax,
     const int8_t *restrict Ab,
     int64_t anz,
     int nthreads
 ) ;
-m4_divert(0)
+endif_unop_apply_enabled
 
 GrB_Info GB (_unop_tran)
 (

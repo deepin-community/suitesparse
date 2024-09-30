@@ -53,8 +53,7 @@ function [S name kind Problem] = dimacs10 (matrix)
 %
 % See also gallery, ssget.
 
-% DIMACS10, Copyright (c) 2011, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2012, Timothy A. Davis, http://www.suitesparse.com
 
 % matrices 139 to 212 added in July 2012
 % not yet in the collection (too large): clustering/uk-2007-05

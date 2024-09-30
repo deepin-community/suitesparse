@@ -1,81 +1,72 @@
 #-------------------------------------------------------------------------------
-# SuiteSparse/SuiteSparse_config/Makefile
+# SuiteSparse_config Makefile
 #-------------------------------------------------------------------------------
 
-# SuiteSparse_config, Copyright (c) 2012-2023, Timothy A. Davis.
-# All Rights Reserved.
-# SPDX-License-Identifier: BSD-3-clause
+SUITESPARSE ?= $(realpath $(CURDIR)/..)
+export SUITESPARSE
 
-#-------------------------------------------------------------------------------
-
-# A simple Makefile for SuiteSparse_config, which relies on cmake to do the
-# actual build.  All the work is done in cmake so this Makefile is just for
-# convenience.
-
-# To compile with an alternate compiler:
-#
-#       make CC=gcc CXX=g++
-#
-# To compile/install for system-wide usage and for local usage in
-# SuiteSparse/lib and SuiteSparse/include:
-#
-#       make
-#       sudo make install
-#
-# To compile/install for local usage (SuiteSparse/lib and SuiteSparse/include):
-#
-#       make local
-#       make install
-#
-# To clean up the files:
-#
-#       make clean
-
-JOBS ?= 8
+# version of SuiteSparse_config is also version of SuiteSparse meta-package
+LIBRARY = libsuitesparseconfig
+VERSION = 5.12.0
+SO_VERSION = 5
 
 default: library
 
-# default is to install only in /usr/local
-library:
-	( cd build && cmake $(CMAKE_OPTIONS) .. && cmake --build . --config Release -j${JOBS} )
+include SuiteSparse_config.mk
 
-# install only in SuiteSparse/lib and SuiteSparse/include
-local:
-	( cd build && cmake $(CMAKE_OPTIONS) -DLOCAL_INSTALL=1 .. && cmake --build . --config Release -j${JOBS} )
-
-# install only in /usr/local (default)
-global:
-	( cd build && cmake $(CMAKE_OPTIONS) -DLOCAL_INSTALL=0 .. && cmake --build . --config Release -j${JOBS} )
-
-debug:
-	( cd build ; cmake $(CMAKE_OPTIONS) -DCMAKE_BUILD_TYPE=Debug .. ; cmake --build . --config Debug )
+ccode: all
 
 all: library
 
-demos: library
+# compile and install in SuiteSparse/lib
+library: $(AR_TARGET)
+	$(MAKE) install INSTALL=$(SUITESPARSE)
 
-# just compile after running cmake; do not run cmake again
-remake:
-	( cd build ; cmake --build . )
+OBJ = SuiteSparse_config.o
 
-# just run cmake to set things up
-setup:
-	( cd build ; cmake $(CMAKE_OPTIONS) .. )
+SuiteSparse_config.o: SuiteSparse_config.c SuiteSparse_config.h
+	$(CC) $(CF) -c SuiteSparse_config.c
 
-install:
-	( cd build ; cmake --install . )
+static: $(AR_TARGET)
 
-# remove any installed libraries and #include files
+$(AR_TARGET): $(OBJ)
+	$(ARCHIVE) $(AR_TARGET) SuiteSparse_config.o
+	$(RANLIB) $(AR_TARGET)
+
+distclean: purge
+
+purge: clean
+	( cd xerbla ; $(MAKE) purge )
+	- $(RM) -r $(PURGE)
+
+clean:
+	( cd xerbla ; $(MAKE) clean )
+	- $(RM) -r $(CLEAN)
+
+# install SuiteSparse_config
+install: $(AR_TARGET) $(INSTALL_LIB)/$(SO_TARGET)
+
+$(INSTALL_LIB)/$(SO_TARGET): $(OBJ)
+	@mkdir -p $(INSTALL_LIB)
+	@mkdir -p $(INSTALL_INCLUDE)
+	@mkdir -p $(INSTALL_DOC)
+	$(CC) $(SO_OPTS) $^ -o $@ $(LDLIBS)
+	( cd $(INSTALL_LIB) ; ln -sf $(SO_TARGET) $(SO_PLAIN) )
+	( cd $(INSTALL_LIB) ; ln -sf $(SO_TARGET) $(SO_MAIN) )
+	$(CP) SuiteSparse_config.h $(INSTALL_INCLUDE)
+	$(CP) README.txt $(INSTALL_DOC)/SUITESPARSECONFIG_README.txt
+	chmod 755 $(INSTALL_LIB)/$(SO_TARGET)
+	chmod 755 $(INSTALL_LIB)/$(SO_PLAIN)
+	chmod 644 $(INSTALL_INCLUDE)/SuiteSparse_config.h
+	chmod 644 $(INSTALL_DOC)/SUITESPARSECONFIG_README.txt
+
+# uninstall SuiteSparse_config
 uninstall:
-	- xargs rm < build/install_manifest.txt
+	$(RM) $(INSTALL_LIB)/$(SO_TARGET)
+	$(RM) $(INSTALL_LIB)/$(SO_PLAIN)
+	$(RM) $(INSTALL_LIB)/$(SO_MAIN)
+	$(RM) $(INSTALL_INCLUDE)/SuiteSparse_config.h
+	$(RM) $(INSTALL_DOC)/SUITESPARSECONFIG_README.txt
+	( cd xerbla ; $(MAKE) uninstall )
 
-# remove all files not in the distribution
-clean: distclean
-
-purge: distclean
-
-distclean:
-	- $(RM) -rf build/* Config/*.tmp
-
-docs:
 

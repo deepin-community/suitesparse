@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_set_stats: sets statistics in Info array
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_set_stats ======================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     Sets statistics in Info array.  Calculates everything in double precision,
@@ -19,7 +19,7 @@
 #include "umf_set_stats.h"
 #include "umf_symbolic_usage.h"
 
-void UMF_set_stats
+GLOBAL void UMF_set_stats
 (
     double Info [ ],
     SymbolicType *Symbolic,

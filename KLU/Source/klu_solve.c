@@ -1,12 +1,6 @@
-//------------------------------------------------------------------------------
-// KLU/Source/klu_solve: solve x=A\b using the KLU factorization
-//------------------------------------------------------------------------------
-
-// KLU, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-// Authors: Timothy A. Davis and Ekanathan Palamadai.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === KLU_solve ============================================================ */
+/* ========================================================================== */
 
 /* Solve Ax=b using the symbolic and numeric objects from KLU_analyze
  * (or KLU_analyze_given) and KLU_factor.  Note that no iterative refinement is
@@ -17,7 +11,7 @@
 
 #include "klu_internal.h"
 
-int KLU_solve
+Int KLU_solve
 (
     /* inputs, not modified */
     KLU_symbolic *Symbolic,

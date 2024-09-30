@@ -2,11 +2,6 @@
 // === spqr_trapezoidal ========================================================
 // =============================================================================
 
-// SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
-
 // Permute the columns of a "squeezed" R, possibly rank-deficient, into
 // upper trapezoidal form.  On input, Qfill gives the column permutation of
 // A that gave the factor R (Q*R = A(:,Qfill).  On output, T is upper
@@ -17,19 +12,19 @@
 
 #include "spqr.hpp"
 
-template <typename Entry, typename Int> Int spqr_trapezoidal // rank of R; EMPTY on failure
+template <typename Entry> Long spqr_trapezoidal // rank of R; EMPTY on failure
 (
     // inputs, not modified
 
     // FUTURE : make R and T cholmod_sparse:
-    Int n,         // R is m-by-n (m is not needed here; can be economy R)
-    Int *Rp,       // size n+1, column pointers of R
-    Int *Ri,       // size rnz = Rp [n], row indices of R
+    Long n,         // R is m-by-n (m is not needed here; can be economy R)
+    Long *Rp,       // size n+1, column pointers of R
+    Long *Ri,       // size rnz = Rp [n], row indices of R
     Entry *Rx,      // size rnz, numerical values of R
 
-    Int bncols,    // number of columns of B
+    Long bncols,    // number of columns of B
 
-    Int *Qfill,    // size n+bncols, fill-reducing ordering.  Qfill [k] = j if
+    Long *Qfill,    // size n+bncols, fill-reducing ordering.  Qfill [k] = j if
                     // the jth column of A is the kth column of R.  If Qfill is
                     // NULL, then it is assumed to be the identity
                     // permutation.
@@ -39,19 +34,19 @@ template <typename Entry, typename Int> Int spqr_trapezoidal // rank of R; EMPTY
                                     // the matrix T is not created.
 
     // outputs, not allocated on input
-    Int **p_Tp,    // size n+1, column pointers of T
-    Int **p_Ti,    // size rnz, row indices of T
+    Long **p_Tp,    // size n+1, column pointers of T
+    Long **p_Ti,    // size rnz, row indices of T
     Entry **p_Tx,   // size rnz, numerical values of T
 
-    Int **p_Qtrap,  // size n+bncols, modified Qfill
+    Long **p_Qtrap,  // size n+bncols, modified Qfill
 
     // workspace and parameters
     cholmod_common *cc
 )
 {
     Entry *Tx ;
-    Int *Tp, *Ti, *Qtrap ;
-    Int rnz, i, rank, k, p, pend, len, t1nz, t2nz, k1, k2, p1, p2, found_dead,
+    Long *Tp, *Ti, *Qtrap ;
+    Long rnz, i, rank, k, p, pend, len, t1nz, t2nz, k1, k2, p1, p2, found_dead,
         is_trapezoidal ;
 
     // -------------------------------------------------------------------------
@@ -127,18 +122,18 @@ template <typename Entry, typename Int> Int spqr_trapezoidal // rank of R; EMPTY
 
     rnz = Rp [n] ;
 
-    Tp    = (Int  *) spqr_malloc <Int> (n+1,      sizeof (Int),  cc) ;
-    Ti    = (Int  *) spqr_malloc <Int> (rnz,      sizeof (Int),  cc) ;
-    Tx    = (Entry *) spqr_malloc <Int> (rnz,      sizeof (Entry), cc) ;
-    Qtrap = (Int  *) spqr_malloc <Int> (n+bncols, sizeof (Int),  cc) ;
+    Tp    = (Long  *) cholmod_l_malloc (n+1,      sizeof (Long),  cc) ;
+    Ti    = (Long  *) cholmod_l_malloc (rnz,      sizeof (Long),  cc) ;
+    Tx    = (Entry *) cholmod_l_malloc (rnz,      sizeof (Entry), cc) ;
+    Qtrap = (Long  *) cholmod_l_malloc (n+bncols, sizeof (Long),  cc) ;
 
     if (cc->status < CHOLMOD_OK)
     {
         // out of memory
-        spqr_free <Int> (n+1,      sizeof (Int),  Tp,    cc) ;
-        spqr_free <Int> (rnz,      sizeof (Int),  Ti,    cc) ;
-        spqr_free <Int> (rnz,      sizeof (Entry), Tx,    cc) ;
-        spqr_free <Int> (n+bncols, sizeof (Int),  Qtrap, cc) ;
+        cholmod_l_free (n+1,      sizeof (Long),  Tp,    cc) ;
+        cholmod_l_free (rnz,      sizeof (Long),  Ti,    cc) ;
+        cholmod_l_free (rnz,      sizeof (Entry), Tx,    cc) ;
+        cholmod_l_free (n+bncols, sizeof (Long),  Qtrap, cc) ;
         return (EMPTY) ;
     }
 
@@ -214,19 +209,21 @@ template <typename Entry, typename Int> Int spqr_trapezoidal // rank of R; EMPTY
     return (rank) ;
 }
 
-template int32_t spqr_trapezoidal <double, int32_t> // rank of R; EMPTY on failure
+
+// =============================================================================
+
+template Long spqr_trapezoidal <double>      // rank of R, or EMPTY on failure
 (
     // inputs, not modified
 
-    // FUTURE : make R and T cholmod_sparse:
-    int32_t n,         // R is m-by-n (m is not needed here; can be economy R)
-    int32_t *Rp,       // size n+1, column pointers of R
-    int32_t *Ri,       // size rnz = Rp [n], row indices of R
-    double *Rx,      // size rnz, numerical values of R
+    Long n,         // R is m-by-n (m is not needed here; can be economy R)
+    Long *Rp,       // size n+1, column pointers of R
+    Long *Ri,       // size rnz = Rp [n], row indices of R
+    double *Rx,     // size rnz, numerical values of R
 
-    int32_t bncols,    // number of columns of B
+    Long bncols,    // number of columns of B
 
-    int32_t *Qfill,    // size n+bncols, fill-reducing ordering.  Qfill [k] = j if
+    Long *Qfill,    // size n+bncols, fill-reducing ordering.  Qfill [k] = j if
                     // the jth column of A is the kth column of R.  If Qfill is
                     // NULL, then it is assumed to be the identity
                     // permutation.
@@ -236,29 +233,30 @@ template int32_t spqr_trapezoidal <double, int32_t> // rank of R; EMPTY on failu
                                     // the matrix T is not created.
 
     // outputs, not allocated on input
-    int32_t **p_Tp,    // size n+1, column pointers of T
-    int32_t **p_Ti,    // size rnz, row indices of T
-    double **p_Tx,   // size rnz, numerical values of T
+    Long **p_Tp,    // size n+1, column pointers of T
+    Long **p_Ti,    // size rnz, row indices of T
+    double **p_Tx,  // size rnz, numerical values of T
 
-    int32_t **p_Qtrap,  // size n+bncols, modified Qfill
+    Long **p_Qtrap,  // size n+bncols, modified Qfill
 
     // workspace and parameters
     cholmod_common *cc
 ) ;
 
-template int32_t spqr_trapezoidal <Complex, int32_t> // rank of R; EMPTY on failure
+// =============================================================================
+
+template Long spqr_trapezoidal <Complex>     // rank of R, or EMPTY on failure
 (
     // inputs, not modified
 
-    // FUTURE : make R and T cholmod_sparse:
-    int32_t n,         // R is m-by-n (m is not needed here; can be economy R)
-    int32_t *Rp,       // size n+1, column pointers of R
-    int32_t *Ri,       // size rnz = Rp [n], row indices of R
-    Complex *Rx,      // size rnz, numerical values of R
+    Long n,         // R is m-by-n (m is not needed here; can be economy R)
+    Long *Rp,       // size n+1, column pointers of R
+    Long *Ri,       // size rnz = Rp [n], row indices of R
+    Complex *Rx,    // size rnz, numerical values of R
 
-    int32_t bncols,    // number of columns of B
+    Long bncols,    // number of columns of B
 
-    int32_t *Qfill,    // size n+bncols, fill-reducing ordering.  Qfill [k] = j if
+    Long *Qfill,    // size n+bncols, fill-reducing ordering.  Qfill [k] = j if
                     // the jth column of A is the kth column of R.  If Qfill is
                     // NULL, then it is assumed to be the identity
                     // permutation.
@@ -268,75 +266,11 @@ template int32_t spqr_trapezoidal <Complex, int32_t> // rank of R; EMPTY on fail
                                     // the matrix T is not created.
 
     // outputs, not allocated on input
-    int32_t **p_Tp,    // size n+1, column pointers of T
-    int32_t **p_Ti,    // size rnz, row indices of T
-    Complex **p_Tx,   // size rnz, numerical values of T
+    Long **p_Tp,    // size n+1, column pointers of T
+    Long **p_Ti,    // size rnz, row indices of T
+    Complex **p_Tx, // size rnz, numerical values of T
 
-    int32_t **p_Qtrap,  // size n+bncols, modified Qfill
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-
-template int64_t spqr_trapezoidal <double, int64_t> // rank of R; EMPTY on failure
-(
-    // inputs, not modified
-
-    // FUTURE : make R and T cholmod_sparse:
-    int64_t n,         // R is m-by-n (m is not needed here; can be economy R)
-    int64_t *Rp,       // size n+1, column pointers of R
-    int64_t *Ri,       // size rnz = Rp [n], row indices of R
-    double *Rx,      // size rnz, numerical values of R
-
-    int64_t bncols,    // number of columns of B
-
-    int64_t *Qfill,    // size n+bncols, fill-reducing ordering.  Qfill [k] = j if
-                    // the jth column of A is the kth column of R.  If Qfill is
-                    // NULL, then it is assumed to be the identity
-                    // permutation.
-
-    int skip_if_trapezoidal,        // if R is already in trapezoidal form,
-                                    // and skip_if_trapezoidal is TRUE, then
-                                    // the matrix T is not created.
-
-    // outputs, not allocated on input
-    int64_t **p_Tp,    // size n+1, column pointers of T
-    int64_t **p_Ti,    // size rnz, row indices of T
-    double **p_Tx,   // size rnz, numerical values of T
-
-    int64_t **p_Qtrap,  // size n+bncols, modified Qfill
-
-    // workspace and parameters
-    cholmod_common *cc
-) ;
-
-template int64_t spqr_trapezoidal <Complex, int64_t> // rank of R; EMPTY on failure
-(
-    // inputs, not modified
-
-    // FUTURE : make R and T cholmod_sparse:
-    int64_t n,         // R is m-by-n (m is not needed here; can be economy R)
-    int64_t *Rp,       // size n+1, column pointers of R
-    int64_t *Ri,       // size rnz = Rp [n], row indices of R
-    Complex *Rx,      // size rnz, numerical values of R
-
-    int64_t bncols,    // number of columns of B
-
-    int64_t *Qfill,    // size n+bncols, fill-reducing ordering.  Qfill [k] = j if
-                    // the jth column of A is the kth column of R.  If Qfill is
-                    // NULL, then it is assumed to be the identity
-                    // permutation.
-
-    int skip_if_trapezoidal,        // if R is already in trapezoidal form,
-                                    // and skip_if_trapezoidal is TRUE, then
-                                    // the matrix T is not created.
-
-    // outputs, not allocated on input
-    int64_t **p_Tp,    // size n+1, column pointers of T
-    int64_t **p_Ti,    // size rnz, row indices of T
-    Complex **p_Tx,   // size rnz, numerical values of T
-
-    int64_t **p_Qtrap,  // size n+bncols, modified Qfill
+    Long **p_Qtrap, // size n+bncols, modified Qfill
 
     // workspace and parameters
     cholmod_common *cc

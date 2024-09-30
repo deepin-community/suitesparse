@@ -30,7 +30,6 @@ function ok = spok (A)                                                      %#ok
 %
 % See also sparse.
 
-% SPOK, Copyright (c) 2008-2011, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2008-2011, Timothy A. Davis, http://www.suitesparse.com
 
 error ('spok mexFunction not installed') ;

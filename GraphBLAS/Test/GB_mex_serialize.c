@@ -2,7 +2,7 @@
 // GB_mex_serialize: copy a matrix, using serialize/deserialize
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -25,8 +25,6 @@
 // GxB_COMPRESSION_LZ4HC 2001  // LZ4HC:1
 // ...
 // GxB_COMPRESSION_LZ4HC 2009  // LZ4HC:9
-
-// GxB_COMPRESSION_ZSTD  3000  // ZSTD with default level 3
 
 #define USAGE "C = GB_mex_serialize (A, method)"
 

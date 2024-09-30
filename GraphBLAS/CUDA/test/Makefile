@@ -12,7 +12,7 @@ INC += -I$(CUDA_DIR)/include -I../ -I../../Source -I../../Include -I../../Source
 
 CUDA_OPTS = -O2 --cudart=shared --gpu-architecture=compute_75\
         --relocatable-device-code true --device-c\
-        --std=c++17 -Xcompiler -fPIC
+        --std=c++11 -Xcompiler -fPIC
 
 %.o: %.cu
 	nvcc -c $(I) $(CUDA_OPTS) $(INC)  -o $@ $< 
@@ -59,7 +59,7 @@ CUDA_DIR ?= /usr/local/cuda
 CXXFLAGS += -pthread
 
 ifeq ($(CXX11),1)
-	CXXFLAGS += -std=c++17
+	CXXFLAGS += -std=c++14
 endif
 
 EMBED_BEGIN = -rdynamic -Wl,-b,binary,

@@ -1,15 +1,31 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_config.h: compile-time configuration of UMFPACK
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === umf_config.h ========================================================= */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
-    This file controls the compile-time configuration of UMFPACK.
+    This file controls the compile-time configuration of UMFPACK.  Modify the
+    SuiteSparse_config/SuiteSparse_config.mk file and this file if necessary,
+    to control these options.  The following flags may be given as options to
+    your C compiler (as in "cc -DNSUNPERF", for example).  These flags are
+    normally placed in your UMFPACK_CONFIG string, defined in the
+    SuiteSparse_config/SuiteSparse_config.mk file.
+
     All of these options, except for the timer, are for accessing the BLAS.
+
+	-DNSUNPERF
+
+	    Applies only to Sun Solaris.  If -DNSUNPERF is set, then the Sun
+	    Performance Library BLAS will not be used.
+
+	    The Sun Performance Library BLAS is used by default when compiling
+	    the C-callable libumfpack.a library on Sun Solaris.
+
+	-DLONGBLAS
 
 	-DNRECIPROCAL
 
@@ -123,6 +139,10 @@
 /* === BLAS ================================================================= */
 /* ========================================================================== */
 
+#define BLAS_OK blas_ok
+#include "cholmod_blas.h"
+
+
 /* -------------------------------------------------------------------------- */
 /* DGEMM */
 /* -------------------------------------------------------------------------- */
@@ -132,18 +152,17 @@
  * B is k-by-n with leading dimension ldb
  * C is m-by-n with leading dimension ldac */
 #ifdef COMPLEX
-#define BLAS_GEMM(m,n,k,A,B,ldb,C,ldac,ok) \
+#define BLAS_GEMM(m,n,k,A,B,ldb,C,ldac) \
 { \
     double alpha [2] = {-1,0}, beta [2] = {1,0} ; \
-    SUITESPARSE_BLAS_zgemm ("N", "T", m, n, k, alpha, A, ldac, B, ldb, \
-        beta, C, ldac, ok) ; \
+    BLAS_zgemm ("N", "T", m, n, k, alpha, (double *) A, ldac, \
+	(double *) B, ldb, beta, (double *) C, ldac) ; \
 }
 #else
-#define BLAS_GEMM(m,n,k,A,B,ldb,C,ldac,ok) \
+#define BLAS_GEMM(m,n,k,A,B,ldb,C,ldac) \
 { \
     double alpha = -1, beta = 1 ; \
-    SUITESPARSE_BLAS_dgemm ("N", "T", m, n, k, &alpha, A, ldac, B, ldb, \
-        &beta, C, ldac, ok) ; \
+    BLAS_dgemm ("N", "T", m, n, k, &alpha, A, ldac, B, ldb, &beta, C, ldac) ; \
 }
 #endif
 
@@ -157,16 +176,17 @@
    x is a column vector with stride 1
    y is a column vector with stride 1 */
 #ifdef COMPLEX
-#define BLAS_GER(m,n,x,y,A,d,ok) \
+#define BLAS_GER(m,n,x,y,A,d) \
 { \
     double alpha [2] = {-1,0} ; \
-    SUITESPARSE_BLAS_zgeru (m, n, alpha, x, 1, y, 1, A, d, ok) ; \
+    BLAS_zgeru (m, n, alpha, (double *) x, 1, (double *) y, 1, \
+	(double *) A, d) ; \
 }
 #else
-#define BLAS_GER(m,n,x,y,A,d,ok) \
+#define BLAS_GER(m,n,x,y,A,d) \
 { \
     double alpha = -1 ; \
-    SUITESPARSE_BLAS_dger (m, n, &alpha, x, 1, y, 1, A, d, ok) ; \
+    BLAS_dger (m, n, &alpha, x, 1, y, 1, A, d) ; \
 }
 #endif
 
@@ -179,16 +199,17 @@
    x is a column vector with stride 1
    y is a column vector with stride 1 */
 #ifdef COMPLEX
-#define BLAS_GEMV(m,n,A,x,y,d,ok) \
+#define BLAS_GEMV(m,n,A,x,y,d) \
 { \
     double alpha [2] = {-1,0}, beta [2] = {1,0} ; \
-    SUITESPARSE_BLAS_zgemv ("N", m, n, alpha, A, d, x, 1, beta, y, 1, ok) ; \
+    BLAS_zgemv ("N", m, n, alpha, (double *) A, d, (double *) x, 1, beta, \
+	(double *) y, 1) ; \
 }
 #else
-#define BLAS_GEMV(m,n,A,x,y,d,ok) \
+#define BLAS_GEMV(m,n,A,x,y,d) \
 { \
     double alpha = -1, beta = 1 ; \
-    SUITESPARSE_BLAS_dgemv ("N", m, n, &alpha, A, d, x, 1, &beta, y, 1, ok) ; \
+    BLAS_dgemv ("N", m, n, &alpha, A, d, x, 1, &beta, y, 1) ; \
 }
 #endif
 
@@ -201,14 +222,14 @@
  * B is a column vector (m-by-1) with leading dimension d
  * A is m-by-m with leading dimension d */
 #ifdef COMPLEX
-#define BLAS_TRSV(m,A,b,d,ok) \
+#define BLAS_TRSV(m,A,b,d) \
 { \
-    SUITESPARSE_BLAS_ztrsv ("L", "N", "U", m, A, d, b, 1, ok) ; \
+    BLAS_ztrsv ("L", "N", "U", m, (double *) A, d, (double *) b, 1) ; \
 }
 #else
-#define BLAS_TRSV(m,A,b,d,ok) \
+#define BLAS_TRSV(m,A,b,d) \
 { \
-    SUITESPARSE_BLAS_dtrsv ("L", "N", "U", m, A, d, b, 1, ok) ; \
+    BLAS_dtrsv ("L", "N", "U", m, A, d, b, 1) ; \
 }
 #endif
 
@@ -221,18 +242,17 @@
  * B is m-by-n with leading dimension ldb
  * A is n-by-n with leading dimension lda */
 #ifdef COMPLEX
-#define BLAS_TRSM_RIGHT(m,n,A,lda,B,ldb,ok) \
+#define BLAS_TRSM_RIGHT(m,n,A,lda,B,ldb) \
 { \
     double alpha [2] = {1,0} ; \
-    SUITESPARSE_BLAS_ztrsm ("R", "L", "T", "U", m, n, alpha, A, \
-        lda, B, ldb, ok) ; \
+    BLAS_ztrsm ("R", "L", "T", "U", m, n, alpha, (double *) A, lda, \
+	(double *) B, ldb) ; \
 }
 #else
-#define BLAS_TRSM_RIGHT(m,n,A,lda,B,ldb,ok) \
+#define BLAS_TRSM_RIGHT(m,n,A,lda,B,ldb) \
 { \
     double alpha = 1 ; \
-    SUITESPARSE_BLAS_dtrsm ("R", "L", "T", "U", m, n, &alpha, A, \
-        lda, B, ldb, ok) ; \
+    BLAS_dtrsm ("R", "L", "T", "U", m, n, &alpha, A, lda, B, ldb) ; \
 }
 #endif
 
@@ -243,17 +263,17 @@
 
 /* x = s*x, where x is a stride-1 vector of length n */
 #ifdef COMPLEX
-#define BLAS_SCAL(n,s,x,ok) \
+#define BLAS_SCAL(n,s,x) \
 { \
     double alpha [2] ; \
     alpha [0] = REAL_COMPONENT (s) ; \
     alpha [1] = IMAG_COMPONENT (s) ; \
-    SUITESPARSE_BLAS_zscal (n, alpha, x, 1, ok) ; \
+    BLAS_zscal (n, alpha, (double *) x, 1) ; \
 }
 #else
-#define BLAS_SCAL(n,s,x,ok) \
+#define BLAS_SCAL(n,s,x) \
 { \
     double alpha = REAL_COMPONENT (s) ; \
-    SUITESPARSE_BLAS_dscal (n, &alpha, x, 1, ok) ; \
+    BLAS_dscal (n, &alpha, (double *) x, 1) ; \
 }
 #endif

@@ -1,12 +1,10 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Cholesky/cholmod_spsolve: solve a linear system with sparse x and b
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Cholesky/cholmod_spsolve ============================================= */
+/* ========================================================================== */
 
-// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* Given an LL' or LDL' factorization of A, solve one of the following systems:
  *
@@ -25,9 +23,10 @@
  * All xtypes of x and b are supported (real, complex, and zomplex).
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCHOLESKY
+
+#include "cholmod_internal.h"
+#include "cholmod_cholesky.h"
 
 /* ========================================================================== */
 /* === EXPAND_AS_NEEDED ===================================================== */
@@ -112,7 +111,7 @@ cholmod_sparse *CHOLMOD(spsolve)	    /* returns the sparse solution X */
     block = MIN (nrhs, 4) ;
 
     /* initial size of X is at most 4*n */
-    nzmax = ((size_t) n) * ((size_t) block) ;
+    nzmax = n*block ;
 
     X = CHOLMOD(spzeros) (n, nrhs, nzmax, xtype, Common) ;
     B4 = CHOLMOD(zeros) (n, block, B->xtype, Common) ;
@@ -232,7 +231,7 @@ cholmod_sparse *CHOLMOD(spsolve)	    /* returns the sparse solution X */
 			for (i = 0 ; i < n ; i++)
 			{
 			    x = X4x [i + j_n] ;
-			    if (x != 0)
+			    if (IS_NONZERO (x))
 			    {
 				Xi [xnz] = i ;
 				Xx [xnz] = x ;
@@ -246,7 +245,7 @@ cholmod_sparse *CHOLMOD(spsolve)	    /* returns the sparse solution X */
 			{
 			    x = X4x [2*(i + j_n)  ] ;
 			    z = X4x [2*(i + j_n)+1] ;
-			    if ((x != 0) || (z != 0))
+			    if (IS_NONZERO (x) || IS_NONZERO (z))
 			    {
 				Xi [xnz] = i ;
 				Xx [2*xnz  ] = x ;
@@ -261,7 +260,7 @@ cholmod_sparse *CHOLMOD(spsolve)	    /* returns the sparse solution X */
 			{
 			    x = X4x [i + j_n] ;
 			    z = X4z [i + j_n] ;
-			    if ((x != 0) || (z != 0))
+			    if (IS_NONZERO (x) || IS_NONZERO (z))
 			    {
 				Xi [xnz] = i ;
 				Xx [xnz] = x ;
@@ -287,7 +286,7 @@ cholmod_sparse *CHOLMOD(spsolve)	    /* returns the sparse solution X */
 			for (i = 0 ; i < n ; i++)
 			{
 			    x = X4x [i + j_n] ;
-			    if (x != 0)
+			    if (IS_NONZERO (x))
 			    {
 				EXPAND_AS_NEEDED ;
 				Xi [xnz] = i ;
@@ -302,7 +301,7 @@ cholmod_sparse *CHOLMOD(spsolve)	    /* returns the sparse solution X */
 			{
 			    x = X4x [2*(i + j_n)  ] ;
 			    z = X4x [2*(i + j_n)+1] ;
-			    if ((x != 0) || (z != 0))
+			    if (IS_NONZERO (x) || IS_NONZERO (z))
 			    {
 				EXPAND_AS_NEEDED ;
 				Xi [xnz] = i ;
@@ -318,7 +317,7 @@ cholmod_sparse *CHOLMOD(spsolve)	    /* returns the sparse solution X */
 			{
 			    x = X4x [i + j_n] ;
 			    z = X4z [i + j_n] ;
-			    if ((x != 0) || (z != 0))
+			    if (IS_NONZERO (x) || IS_NONZERO (z))
 			    {
 				EXPAND_AS_NEEDED ;
 				Xi [xnz] = i ;

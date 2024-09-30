@@ -1,22 +1,18 @@
 // =============================================================================
 // === GPUQREngine/Source/LLBundle_AddTiles.cpp ================================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // This file contains two codes that add a rowtile to either the main bundle
 // or to the bundle's delta (if pipelined factorization is enabled).
 //
 // =============================================================================
-#include "GPUQREngine_LLBundle.hpp"
+
 #include "GPUQREngine_BucketList.hpp"
+
+
 #ifdef GPUQRENGINE_PIPELINING
-template <typename Int>
-void LLBundle <Int>::AddTileToDelta
+
+void LLBundle::AddTileToDelta
 (
     Int rowTile
 )
@@ -64,8 +60,7 @@ void LLBundle <Int>::AddTileToDelta
 
 #endif
 
-template <typename Int>
-void LLBundle <Int>::AddTileToSlots
+void LLBundle::AddTileToSlots
 (
     Int rowTile
 )
@@ -117,12 +112,3 @@ void LLBundle <Int>::AddTileToSlots
     /* Update last, if needed. */
     if (next[Last] != EMPTY) Last = next[Last];
 }
-
-template void LLBundle <int32_t>::AddTileToSlots
-(
-    int32_t rowTile
-) ;
-template void LLBundle <int64_t>::AddTileToSlots
-(
-    int64_t rowTile
-) ;

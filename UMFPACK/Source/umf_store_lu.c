@@ -1,11 +1,11 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umf_store_lu: store current front in LU factors
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMF_store_lu ========================================================= */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     Store the LU factors.  Called by the kernel.
@@ -20,9 +20,9 @@
 /* ========================================================================== */
 
 #ifdef DROP
-Int UMF_store_lu_drop
+GLOBAL Int UMF_store_lu_drop
 #else
-Int UMF_store_lu
+GLOBAL Int UMF_store_lu
 #endif
 (
     NumericType *Numeric,

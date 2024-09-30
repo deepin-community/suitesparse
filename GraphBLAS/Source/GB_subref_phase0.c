@@ -2,12 +2,10 @@
 // GB_subref_phase0: find vectors of C = A(I,J) and determine I,J properties
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed.  Only one variant possible.
 
 #include "GB_subref.h"
 
@@ -147,14 +145,6 @@ static inline void GB_find_Ap_start_end
     GB_WERK_POP (Count, int64_t) ;  \
 }
 
-#define GB_FREE_ALL                             \
-{                                               \
-    GB_FREE_WORKSPACE ;                         \
-    GB_FREE (&Ch, Ch_size) ;                    \
-    GB_FREE_WORK (&Ap_start, Ap_start_size) ;   \
-    GB_FREE_WORK (&Ap_end, Ap_end_size) ;       \
-}
-
 GrB_Info GB_subref_phase0
 (
     // output
@@ -177,7 +167,7 @@ GrB_Info GB_subref_phase0
     const GrB_Index *J,     // index list for C = A(I,J), or GrB_ALL, etc.
     const int64_t nj,       // length of J, or special
 //  const bool must_sort,   // true if C must be returned sorted
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -200,10 +190,6 @@ GrB_Info GB_subref_phase0
     ASSERT (J != NULL) ;
 
     GrB_Info info ;
-    GB_WERK_DECLARE (Count, int64_t) ;
-    int64_t *restrict Ch       = NULL ; size_t Ch_size = 0 ;
-    int64_t *restrict Ap_start = NULL ; size_t Ap_start_size = 0 ;
-    int64_t *restrict Ap_end   = NULL ; size_t Ap_end_size = 0 ;
 
     (*p_Ch        ) = NULL ;
     (*p_Ap_start  ) = NULL ;
@@ -240,7 +226,7 @@ GrB_Info GB_subref_phase0
     int64_t imin, imax, jmin, jmax ;
 
     info = GB_ijproperties (I, ni, nI, avlen, &Ikind, Icolon,
-        &I_unsorted, &I_has_dupl, &I_contig, &imin, &imax, Werk) ;
+        &I_unsorted, &I_has_dupl, &I_contig, &imin, &imax, Context) ;
     if (info != GrB_SUCCESS)
     { 
         // I invalid or out of memory
@@ -248,7 +234,7 @@ GrB_Info GB_subref_phase0
     }
 
     info = GB_ijproperties (J, nj, nJ, avdim, &Jkind, Jcolon,
-        &J_unsorted, &J_has_dupl, &J_contig, &jmin, &jmax, Werk) ;
+        &J_unsorted, &J_has_dupl, &J_contig, &jmin, &jmax, Context) ;
     if (info != GrB_SUCCESS)
     { 
         // J invalid or out of memory
@@ -262,10 +248,9 @@ GrB_Info GB_subref_phase0
     //--------------------------------------------------------------------------
 
     bool C_empty = (nI == 0 || nJ == 0) ;
-    bool A_is_hyper = (Ah != NULL) ;
 
     //--------------------------------------------------------------------------
-    // trim the hyperlist of A for (J = jbegin:jend case only)
+    // trim the hyperlist of A
     //--------------------------------------------------------------------------
 
     // Ah, Ap, and anvec are modified to include just the vectors in range
@@ -274,7 +259,9 @@ GrB_Info GB_subref_phase0
     // jmax is avdim-1, so there is nothing to trim from Ah.  If C is empty,
     // then Ah and Ap will not be accessed at all, so this can be skipped.
 
-    if (!C_empty && A_is_hyper && Jkind == GB_RANGE)
+    bool A_is_hyper = (Ah != NULL) ;
+
+    if (A_is_hyper && !C_empty)
     {
 
         //----------------------------------------------------------------------
@@ -313,32 +300,11 @@ GrB_Info GB_subref_phase0
     C_empty = C_empty || (anvec == 0) ;
 
     //--------------------------------------------------------------------------
-    // build the hyper_hash, if needed
-    //--------------------------------------------------------------------------
-
-    bool J_is_all_or_range = (Jkind == GB_ALL || Jkind == GB_RANGE) ;
-    bool J_is_long_stride = (Jkind == GB_STRIDE && anvec < nJ * 64) ;
-
-    bool use_hyper_hash = !C_empty && A_is_hyper &&
-            !J_is_all_or_range && !J_is_long_stride &&
-            (A->Y != NULL || nJ > anvec) ;
-    if (use_hyper_hash)
-    { 
-        GB_OK (GB_hyper_hash_build (A, Werk)) ;
-    }
-
-    const int64_t *restrict A_Yp = (use_hyper_hash) ? A->Y->p : NULL ;
-    const int64_t *restrict A_Yi = (use_hyper_hash) ? A->Y->i : NULL ;
-    const int64_t *restrict A_Yx = (use_hyper_hash) ? A->Y->x : NULL ;
-    const int64_t A_hash_bits = (use_hyper_hash) ? (A->Y->vdim - 1) : 0 ;
-
-    //--------------------------------------------------------------------------
     // determine # of threads to use
     //--------------------------------------------------------------------------
 
     #define NTASKS_PER_THREAD 8
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
     int nthreads = 1, ntasks = 1 ;
     int ntasks_max = nthreads_max * NTASKS_PER_THREAD ;
 
@@ -354,11 +320,11 @@ GrB_Info GB_subref_phase0
     // allocate workspace
     //--------------------------------------------------------------------------
 
+    GB_WERK_DECLARE (Count, int64_t) ;
     GB_WERK_PUSH (Count, ntasks_max+1, int64_t) ;
     if (Count == NULL)
     { 
         // out of memory
-        GB_FREE_ALL ;
         return (GrB_OUT_OF_MEMORY) ;
     }
 
@@ -370,6 +336,9 @@ GrB_Info GB_subref_phase0
     // if C(:,jC) is the (kC)th vector of C.  If NULL, then C is standard, and
     // jC == kC.  jC is in the range 0 to nJ-1.
 
+    int64_t *restrict Ch       = NULL ; size_t Ch_size = 0 ;
+    int64_t *restrict Ap_start = NULL ; size_t Ap_start_size = 0 ;
+    int64_t *restrict Ap_end   = NULL ; size_t Ap_end_size = 0 ;
     int64_t Cnvec = 0 ;
 
     int64_t jbegin = Jcolon [GxB_BEGIN] ;
@@ -396,14 +365,13 @@ GrB_Info GB_subref_phase0
         GB_GET_NTHREADS_AND_NTASKS (nJ) ;
 
     }
-    else if (J_is_all_or_range) // (Jkind == GB_ALL || Jkind == GB_RANGE)
+    else if (Jkind == GB_ALL || Jkind == GB_RANGE)
     { 
 
         //----------------------------------------------------------------------
         // J is ":" or jbegin:jend
         //----------------------------------------------------------------------
 
-        // For the case where J is jbegin:jend, Ah has been trimmed (see above).
         // Ch is a shifted copy of the trimmed Ah, of length Cnvec = anvec.  
         // so kA = kC, and jC = Ch [kC] = jA - jmin.  Ap has also been trimmed.
 
@@ -412,7 +380,7 @@ GrB_Info GB_subref_phase0
         GB_GET_NTHREADS_AND_NTASKS (anvec) ;
 
     }
-    else if (J_is_long_stride) // (Jkind == GB_STRIDE && anvec < nJ * 64)
+    else if (Jkind == GB_STRIDE && anvec < nJ * 64)
     {
 
         //----------------------------------------------------------------------
@@ -469,37 +437,20 @@ GrB_Info GB_subref_phase0
         GB_GET_NTHREADS_AND_NTASKS (nJ) ;
 
         // scan all of J and check each entry if it appears in Ah
-
         int tid ;
         #pragma omp parallel for num_threads(nthreads) schedule(dynamic,1)
         for (tid = 0 ; tid < ntasks ; tid++)
         {
-            int64_t jC_start, jC_end ;
+            int64_t jC_start, jC_end, my_Cnvec = 0 ;
             GB_PARTITION (jC_start, jC_end, nJ, tid, ntasks) ;
-            int64_t my_Cnvec = 0 ;
             for (int64_t jC = jC_start ; jC < jC_end ; jC++)
-            {
+            { 
                 int64_t jA = GB_ijlist (J, jC, Jkind, Jcolon) ;
                 bool found ;
                 int64_t kA = 0 ;
-                if (use_hyper_hash)
-                { 
-                    // find jA using the hyper_hash
-                    int64_t ignore1, ignore2 ;
-                    kA = GB_hyper_hash_lookup (Ap, A_Yp, A_Yi, A_Yx,
-                        A_hash_bits, jA, &ignore1, &ignore2) ;
-                    found = (kA >= 0) ;
-                }
-                else
-                { 
-                    // find jA using binary search
-                    int64_t kright = anvec-1 ;
-                    GB_BINARY_SEARCH (jA, Ah, kA, kright, found) ;
-                }
-                if (found)
-                { 
-                    my_Cnvec++ ;
-                }
+                int64_t kright = anvec-1 ;
+                GB_BINARY_SEARCH (jA, Ah, kA, kright, found) ;
+                if (found) my_Cnvec++ ;
             }
             Count [tid] = my_Cnvec ;
         }
@@ -522,7 +473,7 @@ GrB_Info GB_subref_phase0
         Ch = GB_MALLOC (Cnvec, int64_t, &Ch_size) ;
         if (Ch == NULL)
         { 
-            GB_FREE_ALL ;
+            GB_FREE_WORKSPACE ;
             return (GrB_OUT_OF_MEMORY) ;
         }
     }
@@ -534,7 +485,10 @@ GrB_Info GB_subref_phase0
         if (Ap_start == NULL || Ap_end == NULL)
         { 
             // out of memory
-            GB_FREE_ALL ;
+            GB_FREE_WORKSPACE ;
+            GB_FREE (&Ch, Ch_size) ;
+            GB_FREE_WORK (&Ap_start, Ap_start_size) ;
+            GB_FREE_WORK (&Ap_end, Ap_end_size) ;
             return (GrB_OUT_OF_MEMORY) ;
         }
     }
@@ -574,7 +528,7 @@ GrB_Info GB_subref_phase0
         }
 
     }
-    else if (J_is_all_or_range) // (Jkind == GB_ALL || Jkind == GB_RANGE)
+    else if (Jkind == GB_ALL || Jkind == GB_RANGE)
     {
 
         //----------------------------------------------------------------------
@@ -597,7 +551,7 @@ GrB_Info GB_subref_phase0
         }
 
     }
-    else if (J_is_long_stride) // (Jkind == GB_STRIDE && anvec < nJ * 64)
+    else if (Jkind == GB_STRIDE && anvec < nJ * 64)
     {
 
         //----------------------------------------------------------------------
@@ -679,20 +633,8 @@ GrB_Info GB_subref_phase0
                 int64_t jA = GB_ijlist (J, jC, Jkind, Jcolon) ;
                 bool found ;
                 int64_t kA = 0 ;
-                if (use_hyper_hash)
-                { 
-                    // find jA using the hyper_hash
-                    int64_t ignore1, ignore2 ;
-                    kA = GB_hyper_hash_lookup (Ap, A_Yp, A_Yi, A_Yx,
-                        A_hash_bits, jA, &ignore1, &ignore2) ;
-                    found = (kA >= 0) ;
-                }
-                else
-                { 
-                    // find jA using binary search
-                    int64_t kright = anvec-1 ;
-                    GB_BINARY_SEARCH (jA, Ah, kA, kright, found) ;
-                }
+                int64_t kright = anvec-1 ;
+                GB_BINARY_SEARCH (jA, Ah, kA, kright, found) ;
                 if (found)
                 { 
                     ASSERT (jA == Ah [kA]) ;
@@ -719,8 +661,8 @@ GrB_Info GB_subref_phase0
         int64_t kA = 0 ;
         int64_t pright = A->nvec - 1 ;
         int64_t pA_start_all, pA_end_all ;
-        bool found = GB_lookup (A->h != NULL,   // for debug only
-            A->h, A->p, A->vlen, &kA, pright, jA, &pA_start_all, &pA_end_all) ;
+        bool found = GB_lookup (A->h != NULL, A->h, A->p, A->vlen, &kA,
+            pright, jA, &pA_start_all, &pA_end_all) ;
         if (found && A->h != NULL)
         {
             ASSERT (jA == A->h [kA]) ;

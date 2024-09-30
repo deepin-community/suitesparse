@@ -1,11 +1,2 @@
-README.md
-AMD/Doc/AMD_UserGuide.pdf
-CAMD/Doc/CAMD_UserGuide.pdf
-CHOLMOD/Doc/CHOLMOD_UserGuide.pdf
-KLU/Doc/KLU_UserGuide.pdf
-LDL/Doc/ldl_userguide.pdf
+debian/tmp/usr/share/doc/suitesparse/*
 Mongoose/Doc/Mongoose_UserGuide.pdf
-SPEX/Doc/SPEX_UserGuide.pdf
-SPQR/Doc/spqr_user_guide.pdf
-UMFPACK/Doc/UMFPACK_QuickStart.pdf
-UMFPACK/Doc/UMFPACK_UserGuide.pdf

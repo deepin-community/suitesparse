@@ -1,1 +1,4 @@
+buildflags.patch
+mongoose-build.patch
 do-not-build-graphblas.patch
+texlive-2022.patch

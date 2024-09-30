@@ -58,9 +58,7 @@ function [U, S, V, stats] = spqr_ssp (A, varargin)
 %
 % See also spqr_basic, spqr_null, spqr_pinv, spqr_cod.
 
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2012, Leslie Foster and Timothy A Davis.
 
 % Outline of algorithm:
 %    Let B = A or B = A*N, if the optional input N is included

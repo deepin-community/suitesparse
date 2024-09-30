@@ -20,9 +20,8 @@ function list = SJgrep (expression, index)
 %
 % See also regexp, SJget.
 
-% spqr_rank, Copyright (c) 2012, Leslie Foster and Timothy A Davis.
-% All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+%   Derived from the ssget toolbox on March 18, 2008.
+%   Copyright 2007, Timothy A. Davis
 
 if (nargin < 2)
     index = SJget ;

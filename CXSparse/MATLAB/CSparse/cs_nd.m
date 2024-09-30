@@ -11,8 +11,7 @@ function p = cs_nd (A)
 %
 %   See also CS_AMD, CS_SEP, CS_ESEP, CS_NSEP, AMD.
 
-% CXSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 n = size (A,1) ;
 if (n == 1)

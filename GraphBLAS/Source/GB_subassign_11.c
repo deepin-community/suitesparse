@@ -2,12 +2,10 @@
 // GB_subassign_11: C(I,J)<M,repl> += scalar ; using S
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: needed.
 
 // Method 11: C(I,J)<M,repl> += scalar ; using S
 
@@ -20,9 +18,8 @@
 
 // C, M: not bitmap
 
-#include "GB_subassign_methods.h"
-#include "GB_assign_shared_definitions.h"
 #include "GB_unused.h"
+#include "GB_subassign_methods.h"
 
 GrB_Info GB_subassign_11
 (
@@ -42,8 +39,8 @@ GrB_Info GB_subassign_11
     const bool Mask_struct,
     const GrB_BinaryOp accum,
     const void *scalar,
-    const GrB_Type scalar_type,
-    GB_Werk Werk
+    const GrB_Type atype,
+    GB_Context Context
 )
 {
 
@@ -52,7 +49,7 @@ GrB_Info GB_subassign_11
     //--------------------------------------------------------------------------
 
     ASSERT (!GB_IS_BITMAP (C)) ; ASSERT (!GB_IS_FULL (C)) ;
-    ASSERT (!GB_any_aliased (C, M)) ;   // NO ALIAS of C==M
+    ASSERT (!GB_aliased (C, M)) ;   // NO ALIAS of C==M
 
     //--------------------------------------------------------------------------
     // S = C(I,J)
@@ -60,7 +57,7 @@ GrB_Info GB_subassign_11
 
     GB_EMPTY_TASKLIST ;
     GB_CLEAR_STATIC_HEADER (S, &S_header) ;
-    GB_OK (GB_subassign_symbolic (S, C, I, ni, J, nj, true, Werk)) ;
+    GB_OK (GB_subassign_symbolic (S, C, I, ni, J, nj, true, Context)) ;
 
     //--------------------------------------------------------------------------
     // get inputs
@@ -136,7 +133,7 @@ GrB_Info GB_subassign_11
                 // get S(iM_start:iM_end,j)
                 //--------------------------------------------------------------
 
-                GB_LOOKUP_VECTOR_FOR_IXJ (S, iM_start) ;
+                GB_GET_VECTOR_FOR_IXJ (S, iM_start) ;
                 int64_t pM_start = j * Mvlen ;
 
                 //--------------------------------------------------------------
@@ -148,7 +145,7 @@ GrB_Info GB_subassign_11
 
                     int64_t pM = pM_start + iM ;
                     bool Sfound = (pS < pS_end) && (GBI (Si, pS, Svlen) == iM) ;
-                    bool mij = Mb [pM] && GB_MCAST (Mx, pM, msize) ;
+                    bool mij = Mb [pM] && GB_mcast (Mx, pM, msize) ;
 
                     if (Sfound && !mij)
                     { 
@@ -242,7 +239,7 @@ GrB_Info GB_subassign_11
                     else if (iM < iS)
                     {
                         // S (i,j) is not present, M (i,j) is present
-                        if (GB_MCAST (Mx, pM, msize))
+                        if (GB_mcast (Mx, pM, msize))
                         { 
                             // ----[. A 1]--------------------------------------
                             // [. A 1]: action: ( insert )
@@ -254,7 +251,7 @@ GrB_Info GB_subassign_11
                     {
                         // both S (i,j) and M (i,j) present
                         GB_C_S_LOOKUP ;
-                        if (GB_MCAST (Mx, pM, msize))
+                        if (GB_mcast (Mx, pM, msize))
                         { 
                             // ----[C A 1] or [X A 1]---------------------------
                             // [C A 1]: action: ( =C+A ): apply accum
@@ -289,7 +286,7 @@ GrB_Info GB_subassign_11
                 while (pM < pM_end)
                 {
                     // S (i,j) is not present, M (i,j) is present
-                    if (GB_MCAST (Mx, pM, msize))
+                    if (GB_mcast (Mx, pM, msize))
                     { 
                         // ----[. A 1]------------------------------------------
                         // [. A 1]: action: ( insert )
@@ -338,7 +335,7 @@ GrB_Info GB_subassign_11
                 // get S(iM_start:iM_end,j)
                 //--------------------------------------------------------------
 
-                GB_LOOKUP_VECTOR_FOR_IXJ (S, iM_start) ;
+                GB_GET_VECTOR_FOR_IXJ (S, iM_start) ;
                 int64_t pM_start = j * Mvlen ;
 
                 //--------------------------------------------------------------
@@ -352,7 +349,7 @@ GrB_Info GB_subassign_11
                 {
                     int64_t pM = pM_start + iM ;
                     bool Sfound = (pS < pS_end) && (GBI (Si, pS, Svlen) == iM) ;
-                    bool mij = Mb [pM] && GB_MCAST (Mx, pM, msize) ;
+                    bool mij = Mb [pM] && GB_mcast (Mx, pM, msize) ;
 
                     if (!Sfound && mij)
                     { 
@@ -427,7 +424,7 @@ GrB_Info GB_subassign_11
                     else if (iM < iS)
                     {
                         // S (i,j) is not present, M (i,j) is present
-                        if (GB_MCAST (Mx, pM, msize))
+                        if (GB_mcast (Mx, pM, msize))
                         { 
                             // ----[. A 1]--------------------------------------
                             // [. A 1]: action: ( insert )
@@ -448,7 +445,7 @@ GrB_Info GB_subassign_11
                 while (pM < pM_end)
                 {
                     // S (i,j) is not present, M (i,j) is present
-                    if (GB_MCAST (Mx, pM, msize))
+                    if (GB_mcast (Mx, pM, msize))
                     { 
                         // ----[. A 1]------------------------------------------
                         // [. A 1]: action: ( insert )

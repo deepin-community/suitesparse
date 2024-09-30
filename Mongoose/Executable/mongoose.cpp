@@ -1,20 +1,9 @@
-//------------------------------------------------------------------------------
-// Mongoose/Executable/mongoose.cpp
-//------------------------------------------------------------------------------
 
-// Mongoose Graph Partitioning Library, Copyright (C) 2017-2018,
-// Scott P. Kolodziej, Nuri S. Yeralan, Timothy A. Davis, William W. Hager
-// Mongoose is licensed under Version 3 of the GNU General Public License.
-// Mongoose is also available under other licenses; contact authors for details.
-// SPDX-License-Identifier: GPL-3.0-only
-
-//------------------------------------------------------------------------------
-
-// #include "Mongoose_Internal.hpp"
-// #include "Mongoose_EdgeCut.hpp"
-// #include "Mongoose_IO.hpp"
+#include "Mongoose_Internal.hpp"
+#include "Mongoose_EdgeCut.hpp"
+#include "Mongoose_IO.hpp"
 #include "Mongoose_Logger.hpp"
-#include "Mongoose.hpp"
+#include "Mongoose_Version.hpp"
 
 #include <fstream>
 
@@ -24,7 +13,7 @@ int main(int argn, const char **argv)
 {
     SuiteSparse_start();
 
-    double t;
+    clock_t t;
     
     // Set Logger to report only Error messages
     Logger::setDebugLevel(Error);
@@ -83,9 +72,9 @@ int main(int argn, const char **argv)
     std::cout << "********************************************************************************" << std::endl;
 
     // An edge separator should be computed with default options
-    t = SuiteSparse_time ();
+    t = clock();
     EdgeCut *result = edge_cut(graph, options);
-    t = SuiteSparse_time () - t;
+    t = clock() - t;
 
     if (!result)
     {
@@ -93,12 +82,12 @@ int main(int argn, const char **argv)
         LogError("Error computing edge separator");
         options->~EdgeCut_Options();
         graph->~Graph();
-        // result->~EdgeCut();
+        result->~EdgeCut();
         return EXIT_FAILURE;
     }
     else
     {
-        double test_time = t ;
+        double test_time = ((double) t)/CLOCKS_PER_SEC;
         std::cout << "Total Edge Separator Time: " << test_time << "s\n";
         Logger::printTimingInfo();
         std::cout << "Cut Properties:\n";

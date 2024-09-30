@@ -13,5 +13,4 @@
 %   x = linfactor (F,b) ;   % solve Ax=b using F (the factorization of A)
 %   lintests ;              % test linfactor with various kinds of systems
 
-% LINFACTOR, Copyright (c) 2008, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2008, Timothy A. Davis, http://www.suitesparse.com

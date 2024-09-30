@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/MatrixOps/cholmod_vertcat: vertical concatenation: C=[A;B]
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === MatrixOps/cholmod_vertcat ============================================ */
+/* ========================================================================== */
 
-// CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* Vertical concatenation, C = [A ; B] in MATLAB notation.
  *
@@ -21,10 +20,12 @@
  * are supported only if "values" is FALSE.
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NGPL
 #ifndef NMATRIXOPS
+
+#include "cholmod_internal.h"
+#include "cholmod_matrixops.h"
+
 
 /* ========================================================================== */
 /* === cholmod_vertcat ====================================================== */

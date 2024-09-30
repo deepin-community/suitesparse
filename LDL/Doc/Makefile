@@ -1,26 +1,33 @@
-#------------------------------------------------------------------------------
-# LDL/Doc/Makefile: Create the User Guide
-#------------------------------------------------------------------------------
-
-# LDL, Copyright (c) 2005-2022 by Timothy A. Davis. All Rights Reserved.
-# SPDX-License-Identifier: LGPL-2.1+
+#-------------------------------------------------------------------------------
+# Makefile for the LDL documentation
+#-------------------------------------------------------------------------------
 
 default: ldl_userguide.pdf
-	- $(RM) -r *.dvi *.aux *.log *.bak *.bbl *.blg *.out
 
-ldl_userguide.pdf: ldl_userguide.tex ldl.bib ldl_version.tex
+include ../../SuiteSparse_config/SuiteSparse_config.mk
+
+#-------------------------------------------------------------------------------
+# clean-up:
+#-------------------------------------------------------------------------------
+
+distclean: purge
+
+purge: clean
+	- $(RM) -r $(PURGE)
+
+clean:
+	- $(RM) -r $(CLEAN)
+
+#-------------------------------------------------------------------------------
+# user guide:
+#-------------------------------------------------------------------------------
+
+ldl_userguide.pdf: ldl_userguide.tex ldl.bib
 	latex ldl_userguide
 	- bibtex ldl_userguide
 	latex ldl_userguide
 	latex ldl_userguide
+	dvips ldl_userguide -o ldl_userguide.ps
 	pdflatex ldl_userguide
 	pdflatex ldl_userguide
-
-# Remove all but the files in the original distribution
-clean:
-	- $(RM) -r *.dvi *.aux *.log *.bak *.bbl *.blg *.out
-
-purge: distclean
-
-distclean: clean
-
+	- $(RM) *.dvi *.aux *.log *.bak *.bbl *.blg *.ps

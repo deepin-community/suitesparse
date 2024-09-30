@@ -1,8 +1,7 @@
 function d = get_diag (A)
 %GET_DIAG extracts the diagonal of a matrix or vector.
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
 if (isempty (A))
     d = [ ] ;

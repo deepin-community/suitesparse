@@ -12,12 +12,10 @@ function klu_install (metis_path)
 %
 % See also klu, btf
 
-% KLU, Copyright (c) 2004-2022, University of Florida.  All Rights Reserved.
-% Authors: Timothy A. Davis and Ekanathan Palamadai.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2004-2016, Univ. of Florida
 
 if (nargin < 1)
-    metis_path = ['../../SuiteSparse_metis'] ;
+    metis_path = ['../../metis-5.1.0'] ;
 end
 
 % compile KLU and add to the path

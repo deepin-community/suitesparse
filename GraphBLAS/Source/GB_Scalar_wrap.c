@@ -2,7 +2,7 @@
 // GB_Scalar_wrap: wrap a C scalar inside a GraphBLAS scalar
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -14,7 +14,7 @@
 // automatically to the GPU when using CUDA.
 
 #include "GB.h"
-#include "GB_scalar_wrap.h"
+#include "GB_scalar.h"
 
 GrB_Scalar GB_Scalar_wrap   // create a new GrB_Scalar with one entry
 (
@@ -52,9 +52,6 @@ GrB_Scalar GB_Scalar_wrap   // create a new GrB_Scalar with one entry
     s->b = NULL ; s->b_size = 0 ; s->b_shallow = false ;
     s->i = NULL ; s->i_size = 0 ; s->i_shallow = false ;
     s->x = Sx   ; s->x_size = type->size ; s->x_shallow = true ;
-
-    s->Y = NULL ;
-    s->Y_shallow = false ;
 
     s->nvals = 0 ;
 

@@ -1,43 +1,34 @@
-#!/bin/bash
-
-# SPQR, Copyright (c) 2008-2022, Timothy A Davis. All Rights Reserved.
-# SPDX-License-Identifier: GPL-2.0+
+#!/bin/csh
 
 echo "Test coverage summary" > cov.out
 echo '=================================================================' >> cov.out
 
-for file in ../Source/*
-do
+foreach file (../Source/*)
 	gcov -o . $file >& /dev/null
-done
+	end
 
-for file in ../SPQRGPU/*
-do
+foreach file (../SPQRGPU/*)
 	gcov -o . $file >& /dev/null
-done
+	end
 
-for file in ../../SuiteSparse_GPURuntime/Source/*
-do
+foreach file (../../SuiteSparse_GPURuntime/Source/*)
 	gcov -o . $file >& /dev/null
-done
+	end
 
-for file in ../../GPUQREngine/Source/*p
-do
+foreach file (../../GPUQREngine/Source/*p)
 	gcov -o . $file >& /dev/null
-done
+	end
 
-for file in ../../GPUQREngine/Source/*/*p
-do
+foreach file (../../GPUQREngine/Source/*/*p)
 	gcov -o . $file >& /dev/null
-done
+	end
 
-for file in *.?cov
-do
+foreach file (*.?cov)
 	echo $file >> cov.out
 	grep "#####" $file | grep -v "__dev" | grep -v "__major" | \
 	    grep -v "#####:[ ]*[0-9]*:[{}]" | grep -v DEAD >> cov.out
 	echo '=================================================================' >> cov.out
-done
+	end
 
 echo -n "statements not tested: "
 grep "\#\#\#\#\#:" *v | grep -v DEAD | wc -l

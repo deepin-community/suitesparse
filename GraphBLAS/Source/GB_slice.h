@@ -2,7 +2,7 @@
 // GB_slice.h: definitions for GB_eslice and GB_pslice
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -10,6 +10,7 @@
 #ifndef GB_SLICE_H
 #define GB_SLICE_H
 
+GB_PUBLIC
 void GB_pslice                      // slice Ap
 (
     int64_t *restrict Slice,     // size ntasks+1

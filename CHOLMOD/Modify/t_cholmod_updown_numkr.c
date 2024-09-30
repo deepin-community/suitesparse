@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Modify/t_cholmod_updown_numkr: template for update/downdate
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Modify/t_cholmod_updown_numkr ======================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Modify Module.  Copyright (C) 2005-2022, Timothy A. Davis,
-// and William W. Hager. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Modify Module.  Copyright (C) 2005-2006,
+ * Timothy A. Davis and William W. Hager.
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* Supernodal numerical update/downdate of rank K = RANK, along a single path.
  * This routine operates on a simplicial factor, but operates on adjacent
@@ -345,7 +345,7 @@ static void NUMERIC (WDIM, RANK)
     double *Lx ;
     Int *Li, *Lp, *Lnz ;
     Int p, k ;
-    Int use_dbound = (Common->dbound > 0) ;
+    Int use_dbound = IS_GT_ZERO (Common->dbound) ;
 
     Li = L->i ;
     Lx = L->x ;
@@ -386,7 +386,7 @@ static void NUMERIC (WDIM, RANK)
     double *W0, *W1, *W2, *W3, *Lx ;
     Int *Li, *Lp, *Lnz ;
     Int j1, j2, j3, p0, p1, p2, p3, parent, lnz, pend, k ;
-    Int use_dbound = (Common->dbound > 0) ;
+    Int use_dbound = IS_GT_ZERO (Common->dbound) ;
 
     Li = L->i ;
     Lx = L->x ;

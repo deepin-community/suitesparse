@@ -1,4 +1,0 @@
-# False positives
-suitesparse source: source-is-missing [GraphBLAS/GraphBLAS/demo/html/graphblas_demo.html]
-suitesparse source: source-is-missing [GraphBLAS/GraphBLAS/demo/html/graphblas_demo2.html]
-suitesparse source: source-is-missing [MATLAB_Tools/Factorize/Doc/factorize_demo.html]

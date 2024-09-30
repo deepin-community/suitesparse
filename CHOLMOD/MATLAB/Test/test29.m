@@ -4,8 +4,7 @@ function test29
 %   spsym
 % See also cholmod_test
 
-% Copyright 2006-2022, Timothy A. Davis, All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2015, Timothy A. Davis, http://www.suitesparse.com
 
 rand ('state', 0) ;
 
@@ -74,14 +73,14 @@ if (~isequal (r, rtrue))
     error ('failed.  Incomplete test cases') ;
 end
 
-% test with the SuiteSparse Matrix Collection
+% test with the UF sparse matrix collection
 r = zeros (0,2) ;
 index = ssget ;
 for i = [168 27 2137 56 231 1621 -1621] ;
     Prob = ssget (abs (i),index)
     A = Prob.A ;
     if (i < 0)
-        % SSMC does not contain any matrices for which spsym(A) = 4.
+        % UF collection does not contain any matrices for which spsym(A) = 4.
         % (complex Hermitian with zero nonpos. diagonal).  So make one.
         fprintf ('setting A (5,5) = 0\n') ;
         A (5,5) = 0 ;

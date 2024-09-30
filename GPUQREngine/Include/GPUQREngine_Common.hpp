@@ -1,12 +1,6 @@
 // =============================================================================
 // === GPUQREngine/Include/GPUQREngine_Common.hpp ==============================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // This include file contains
 //    - Thread geometry and related manifest constants
@@ -20,7 +14,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "SuiteSparseGPU_internal.hpp"
+#include "SuiteSparseGPU_Runtime.hpp"
 
 
 /*** GPU Parameters **********************************************************/
@@ -49,6 +43,7 @@
 #define NUMTHREADS                     384
 #define PACKASSEMBLY_SHMEM_MAPINTS     2024
 
+
 /*** Common Macros ***********************************************************/
 
 // ceiling of a/b for two integers a and b
@@ -65,7 +60,7 @@
 #endif
 
 #define EMPTY       (-1)
-// #define Int         int64_t
+#define Int         SuiteSparse_long
 
 // To render the buckets for visualization in graphvis, uncomment this next
 // line, or compile the code with -DGPUQRENGINE_RENDER

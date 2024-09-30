@@ -1,10 +1,11 @@
-c-----------------------------------------------------------------------
-c UMFPACK/Demo/umf4zhb: Fortran demo program for UMFPACK
-c-----------------------------------------------------------------------
+c=======================================================================
+c== umf4zhb ============================================================
+c=======================================================================
 
-c UMFPACK, Copyright (c) 2005-2022, Timothy A. Davis, All Rights Reserved.
-c SPDX-License-Identifier: GPL-2.0+
-
+c-----------------------------------------------------------------------
+c UMFPACK Copyright (c) 2005-2012 by Timothy A. Davis,
+c http://www.suitesparse.com.  All Rights Reserved.
+c See ../Doc/License.txt for License.
 c-----------------------------------------------------------------------
 
 c umf4zhb:
@@ -72,8 +73,8 @@ c       read the matrix (1-based)
         read (5, valfmt, err = 998) (AA (p), p = 1, nz)
 
 	do 15 p = 1, nz
-	    Ax (p) = real (AA (p))
-	    Az (p) = aimag (AA (p))
+	    Ax (p) = dble (AA (p))
+	    Az (p) = imag (AA (p))
 15	continue
 
 c       ----------------------------------------------------------------
@@ -98,8 +99,8 @@ c       b = A*x
 40          continue
 50      continue
         do 32 i = 1,n
-            b  (i) = real (BB (i))
-            bz (i) = aimag (BB (i))
+            b  (i) = dble (BB (i))
+            bz (i) = imag (BB (i))
 32      continue
 
 c       ----------------------------------------------------------------

@@ -1,11 +1,9 @@
-//------------------------------------------------------------------------------
-// RBio/RBio/RBwrite.c: MATLAB mexFunction to write R/B file
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === RBio/RBio/RBwrite.c: MATLAB mexFunction to write R/B file ============ */
+/* ========================================================================== */
 
-// RBio, Copyright (c) 2009-2022, Timothy A. Davis.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* Copyright 2009, Timothy A. Davis, All Rights Reserved.
+   Refer to RBio/Doc/license.txt for the RBio license. */
 
 /*
 function mtype = RBwrite (filename, A, Z, title, key)                       %#ok
@@ -44,6 +42,7 @@ function mtype = RBwrite (filename, A, Z, title, key)                       %#ok
 #include "RBio.h"
 #define LEN 1024
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#define Long SuiteSparse_long
 
 void mexFunction
 (
@@ -53,8 +52,8 @@ void mexFunction
     const mxArray *pargin [ ]
 )
 {
-    int64_t nrow, ncol, ititle, zrow, zcol, i, mkind ;
-    int64_t *Ap, *Ai, *Zp, *Zi, *w, *cp ;
+    Long nrow, ncol, ititle, zrow, zcol, i, mkind ;
+    Long *Ap, *Ai, *Zp, *Zi, *w, *cp ;
     double *Ax, *Az ;
     char filename [LEN+1], title [73], key [9], mtype [4] ;
 
@@ -85,8 +84,8 @@ void mexFunction
         mexErrMsgTxt ("A must be sparse and double") ;
     }
 
-    Ap = (int64_t *) mxGetJc (pargin [1]) ;
-    Ai = (int64_t *) mxGetIr (pargin [1]) ;
+    Ap = (Long *) mxGetJc (pargin [1]) ;
+    Ai = (Long *) mxGetIr (pargin [1]) ;
     Ax = mxGetPr (pargin [1]) ;
     nrow = mxGetM (pargin [1]) ;
     ncol = mxGetN (pargin [1]) ;
@@ -146,8 +145,8 @@ void mexFunction
                 mexErrMsgTxt
                     ("Z must be sparse, double, real, and same size as A") ;
             }
-            Zp = (int64_t *) mxGetJc (pargin [2]) ;
-            Zi = (int64_t *) mxGetIr (pargin [2]) ;
+            Zp = (Long *) mxGetJc (pargin [2]) ;
+            Zi = (Long *) mxGetIr (pargin [2]) ;
         }
     }
 

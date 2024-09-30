@@ -2,12 +2,10 @@
 // GB_masker_phase1: find # of entries in R = masker (C,M,Z)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: needed.
 
 // GB_masker_phase1 counts the number of entries in each vector of R, for R =
 // masker (C,M,Z), and then does a cumulative sum to find Cp.  GB_masker_phase1
@@ -46,7 +44,7 @@ GrB_Info GB_masker_phase1           // count nnz in each R(:,j)
     const bool Mask_struct,         // if true, use the only structure of M
     const GrB_Matrix C,
     const GrB_Matrix Z,
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -104,7 +102,7 @@ GrB_Info GB_masker_phase1           // count nnz in each R(:,j)
     //--------------------------------------------------------------------------
 
     GB_task_cumsum (Rp, Rnvec, Rnvec_nonempty, TaskList, R_ntasks, R_nthreads,
-        Werk) ;
+        Context) ;
 
     //--------------------------------------------------------------------------
     // return the result

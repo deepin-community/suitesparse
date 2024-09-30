@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Partition/cholmod_csymamd: CHOLMOD interface to CSYMAMD
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Partition/cholmod_csymamd ============================================ */
+/* ========================================================================== */
 
-// CHOLMOD/Partition Module.  Copyright (C) 2005-2022, University of Florida.
-// All Rights Reserved.  Author: Timothy A. Davis.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Partition Module.
+ * Copyright (C) 2005-2013, Univ. of Florida.  Author: Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* CHOLMOD interface to the CSYMAMD ordering routine.  Finds a permutation
  * p such that the Cholesky factorization of PAP' is sparser than A.
@@ -19,11 +18,12 @@
  * Supports any xtype (pattern, real, complex, or zomplex).
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCAMD
 
+#include "cholmod_internal.h"
 #include "ccolamd.h"
+#include "cholmod_camd.h"
+
 #if (CCOLAMD_VERSION < CCOLAMD_VERSION_CODE (2,5))
 #error "CCOLAMD v2.0 or later is required"
 #endif
@@ -86,7 +86,7 @@ int CHOLMOD(csymamd)
     perm = Common->Head ;	/* size nrow+1 (i/l/l) */
 
     /* get parameters */
-#if defined ( CHOLMOD_INT64 )
+#ifdef LONG
     ccolamd_l_set_defaults (knobs) ;
 #else
     ccolamd_set_defaults (knobs) ;
@@ -98,20 +98,15 @@ int CHOLMOD(csymamd)
 	knobs [CCOLAMD_AGGRESSIVE]=Common->method[Common->current].aggressive ;
     }
     {
-        void * (*calloc_func) (size_t, size_t) ;
-        void (*free_func) (void *) ;
-        calloc_func = SuiteSparse_config_calloc_func_get ( ) ;
-        free_func   = SuiteSparse_config_free_func_get ( ) ;
-
-#if defined ( CHOLMOD_INT64 )
+#ifdef LONG
 	csymamd_l (nrow, A->i, A->p, perm, knobs, stats,
-                calloc_func,
-                free_func,
+                SuiteSparse_config.calloc_func,
+                SuiteSparse_config.free_func,
                 Cmember, A->stype) ;
 #else
 	csymamd (nrow, A->i, A->p, perm, knobs, stats,
-                calloc_func,
-                free_func,
+                SuiteSparse_config.calloc_func,
+                SuiteSparse_config.free_func,
                 Cmember, A->stype) ;
 #endif
 	ok = stats [CCOLAMD_STATUS] ;

@@ -1,0 +1,71 @@
+Description: Fix Mongoose build system
+ - top-level Makefile: do not try to build Mongoose dynamic library before
+   dynamic suitesparse_config has been compiled
+ - top-level Makefile: do not compile again when doing make install, since
+   this would run the demo a second time (and incidentally it requires
+   libsuitesparseconfig, so this would imply setting LD_LIBRARY_PATH at install
+   time)
+ - do not compile static Mongoose with PIC
+ - link mongoose executable against dynamic Mongoose library
+ - hardcode paths for static libsuitesparse_config
+ All this mess comes from the fact that upstream build system compiles
+ libsuitesparse_config.a with PIC by default (this is changed in Debian by
+ buildflags.patch).
+ Also clean LaTeX generated files when doing "make clean"
+Author: Sébastien Villemot <sebastien@debian.org>
+Forwarded: no
+Last-Update: 2021-03-17
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/Makefile
++++ b/Makefile
+@@ -154,7 +154,6 @@ endif
+ # both the dynamic and static libraries.
+ static: metis
+ 	( cd SuiteSparse_config && $(MAKE) static )
+-	( cd Mongoose  && $(MAKE) CMAKE_OPTIONS='$(CMAKE_OPTIONS)' static )
+ 	( cd AMD && $(MAKE) static )
+ 	( cd BTF && $(MAKE) static )
+ 	( cd CAMD && $(MAKE) static )
+@@ -312,6 +311,6 @@ mon:
+ 	( cd Mongoose && $(MAKE) CMAKE_OPTIONS='$(CMAKE_OPTIONS)' )
+ 
+ # compile and install Mongoose
+-moninstall: mon
++moninstall:
+ 	( cd Mongoose  && $(MAKE) CMAKE_OPTIONS='$(CMAKE_OPTIONS)' install )
+ 
+--- a/Mongoose/CMakeLists.txt
++++ b/Mongoose/CMakeLists.txt
+@@ -176,11 +176,10 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMA
+ 
+ # Build the Mongoose library
+ add_library(mongoose_lib ${MONGOOSE_LIB_FILES})
+-set_property(TARGET mongoose_lib PROPERTY POSITION_INDEPENDENT_CODE ON)
+ set_target_properties(mongoose_lib
+         PROPERTIES OUTPUT_NAME mongoose)
+ if ( SUITESPARSE_CONFIG_LIBRARY )
+-    target_link_libraries(mongoose_lib ${SUITESPARSE_CONFIG_LIBRARY})
++    target_link_libraries(mongoose_lib -L${CMAKE_CURRENT_SOURCE_DIR}/../static_lib -lsuitesparseconfig)
+ endif ()
+ 
+ if (UNIX AND NOT APPLE)
+@@ -238,7 +237,7 @@ endif ()
+ add_executable(mongoose_exe ${EXE_FILES})
+ set_target_properties(mongoose_exe
+         PROPERTIES OUTPUT_NAME mongoose)
+-target_link_libraries(mongoose_exe mongoose_lib)
++target_link_libraries(mongoose_exe mongoose_dylib)
+ 
+ install(TARGETS mongoose_exe
+         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+--- a/Mongoose/Makefile
++++ b/Mongoose/Makefile
+@@ -47,6 +47,7 @@ purge: distclean
+ 
+ # remove all files not in the distribution
+ distclean:
++	-make -C build purge
+ 	rm -rf build/* Lib/* MATLAB/*.mex*
+ 	rm -rf SuiteSparse_config/*.o SuiteSparse_config/*.a
+ 

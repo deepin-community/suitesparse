@@ -2,7 +2,7 @@
 // GrB_Matrix_wait: wait for a matrix to complete
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -28,16 +28,14 @@ GrB_Info GrB_Matrix_wait    // finish all work on a matrix
     GB_RETURN_IF_NULL_OR_FAULTY (A) ;
 
     //--------------------------------------------------------------------------
-    // finish all pending work on the matrix, including creating A->Y
+    // finish all pending work on the matrix
     //--------------------------------------------------------------------------
 
-    if (waitmode != GrB_COMPLETE &&
-        (GB_ANY_PENDING_WORK (A) || GB_NEED_HYPER_HASH (A)))
-    { 
+    if (waitmode != GrB_COMPLETE && GB_ANY_PENDING_WORK (A))
+    {
         GrB_Info info ;
         GB_BURBLE_START ("GrB_Matrix_wait") ;
-        GB_OK (GB_wait (A, "matrix", Werk)) ;
-        GB_OK (GB_hyper_hash_build (A, Werk)) ;
+        GB_OK (GB_wait (A, "matrix", Context)) ;
         GB_BURBLE_END ;
     }
 

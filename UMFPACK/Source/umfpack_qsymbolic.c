@@ -1,15 +1,15 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umfpack_qsymbolic: symbolic analysis
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMFPACK_qsymbolic ==================================================== */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     User-callable.  Performs a symbolic factorization.
-    See umfpack.h for details.
+    See umfpack_qsymbolic.h and umfpack_symbolic.h for details.
 
     Dynamic memory usage:  about (3.4nz + 8n + n) integers and n double's as
     workspace (via UMF_malloc, for a square matrix).  All of it is free'd via
@@ -30,10 +30,33 @@
 #include "umf_singletons.h"
 #include "umf_cholmod.h"
 
+typedef struct	/* SWType */
+{
+    Int *Front_npivcol ;    /* size n_col + 1 */
+    Int *Front_nrows ;	    /* size n_col */
+    Int *Front_ncols ;	    /* size n_col */
+    Int *Front_parent ;	    /* size n_col */
+    Int *Front_cols ;	    /* size n_col */
+    Int *InFront ;	    /* size n_row */
+    Int *Ci ;		    /* size Clen */
+    Int *Cperm1 ;	    /* size n_col */
+    Int *Rperm1 ;	    /* size n_row */
+    Int *InvRperm1 ;	    /* size n_row */
+    Int *Si ;		    /* size nz */
+    Int *Sp ;		    /* size n_col + 1 */
+    double *Rs ;	    /* size n_row */
+
+} SWType ;
+
+PRIVATE void free_work
+(
+    SWType *SW
+) ;
+
 PRIVATE void error
 (
     SymbolicType **Symbolic,
-    SWType **SW_Handle
+    SWType *SW
 ) ;
 
 /* worst-case usage for SW object */
@@ -634,7 +657,7 @@ PRIVATE void combine_ordering
 /* === symbolic_analysis ==================================================== */
 /* ========================================================================== */
 
-PRIVATE int symbolic_analysis
+PRIVATE Int symbolic_analysis
 (
     Int n_row,
     Int n_col,
@@ -668,15 +691,9 @@ PRIVATE int symbolic_analysis
     ),
     void *user_params,  /* passed to user_ordering function */
 
-    /* output: symbolic analysis: */
     void **SymbolicHandle,
-
-    /* optional output: further symbolic analysis: */
-    void **SW_Handle,
-
     const double Control [UMFPACK_CONTROL],
-    double User_Info [UMFPACK_INFO],
-    const int for_Paru
+    double User_Info [UMFPACK_INFO]
 )
 {
 
@@ -706,8 +723,8 @@ PRIVATE int symbolic_analysis
     Int do_singletons, ordering_option, print_level ;
     int ok ;
 
-    SymbolicType *Symbolic = NULL ;
-    SWType *SW = NULL ;
+    SymbolicType *Symbolic ;
+    SWType SWspace, *SW ;
 
 #ifndef NDEBUG
     UMF_dump_start ( ) ;
@@ -743,9 +760,8 @@ PRIVATE int symbolic_analysis
 
     /* get the ordering_option */
     ordering_option = GET_CONTROL (UMFPACK_ORDERING, UMFPACK_DEFAULT_ORDERING) ;
-    if (ordering_option < 0 || ordering_option > UMFPACK_ORDERING_METIS_GUARD)
+    if (ordering_option < 0 || ordering_option > UMFPACK_ORDERING_USER)
     {
-        // ordering unrecognized: punt to default ordering
         ordering_option = UMFPACK_DEFAULT_ORDERING ;
     }
     if (Quser == (Int *) NULL)
@@ -794,8 +810,8 @@ PRIVATE int symbolic_analysis
     Info [UMFPACK_NROW] = n_row ;
     Info [UMFPACK_NCOL] = n_col ;
     Info [UMFPACK_SIZE_OF_UNIT] = (double) (sizeof (Unit)) ;
-    Info [UMFPACK_SIZE_OF_INT] = (double) (sizeof (int32_t)) ;
-    Info [UMFPACK_SIZE_OF_LONG] = (double) (sizeof (int64_t)) ;
+    Info [UMFPACK_SIZE_OF_INT] = (double) (sizeof (int)) ;
+    Info [UMFPACK_SIZE_OF_LONG] = (double) (sizeof (SuiteSparse_long)) ;
     Info [UMFPACK_SIZE_OF_POINTER] = (double) (sizeof (void *)) ;
     Info [UMFPACK_SIZE_OF_ENTRY] = (double) (sizeof (Entry)) ;
     Info [UMFPACK_SYMBOLIC_DEFRAG] = 0 ;
@@ -895,7 +911,7 @@ PRIVATE int symbolic_analysis
 	/* :: int overflow, Clen too large :: */
 	/* Problem is too large for array indexing (Ci [i]) with an Int i. */
 	/* Cannot even analyze the problem to determine upper bounds on */
-	/* memory usage. Need to use the int64_t version, */
+	/* memory usage. Need to use the SuiteSparse_long version, */
         /* umfpack_*l_*. */
 	DEBUGm4 (("out of memory: symbolic int overflow\n")) ;
 	Info [UMFPACK_STATUS] = UMFPACK_ERROR_out_of_memory ;
@@ -928,7 +944,7 @@ PRIVATE int symbolic_analysis
 	/* dereferenced by UMFPACK_free_symbolic, as called by error ( ). */
 	DEBUGm4 (("out of memory: symbolic object\n")) ;
 	Info [UMFPACK_STATUS] = UMFPACK_ERROR_out_of_memory ;
-	error (&Symbolic, &SW) ;
+	error (&Symbolic, (SWType *) NULL) ;
 	return (UMFPACK_ERROR_out_of_memory) ;
     }
 
@@ -962,7 +978,7 @@ PRIVATE int symbolic_analysis
     {
 	DEBUGm4 (("out of memory: symbolic perm\n")) ;
 	Info [UMFPACK_STATUS] = UMFPACK_ERROR_out_of_memory ;
-	error (&Symbolic, &SW) ;
+	error (&Symbolic, (SWType *) NULL) ;
 	return (UMFPACK_ERROR_out_of_memory) ;
     }
 
@@ -983,7 +999,7 @@ PRIVATE int symbolic_analysis
 	if (!UMF_is_permutation (Quser, Cperm_init, n_col, n_col))
 	{
 	    Info [UMFPACK_STATUS] = UMFPACK_ERROR_invalid_permutation ;
-	    error (&Symbolic, &SW) ;
+	    error (&Symbolic, (SWType *) NULL) ;
 	    return (UMFPACK_ERROR_invalid_permutation) ;
 	}
     }
@@ -1011,15 +1027,7 @@ PRIVATE int symbolic_analysis
      * values themselves).
      */
 
-    SW = (SWType *) UMF_malloc (1, sizeof (SWType)) ;
-
-    if (!SW)
-    {
-	DEBUGm4 (("out of memory: SW\n")) ;
-	Info [UMFPACK_STATUS] = UMFPACK_ERROR_out_of_memory ;
-	error (&Symbolic, &SW) ;
-	return (UMFPACK_ERROR_out_of_memory) ;
-    }
+    SW = &SWspace ;	/* used for UMFPACK_symbolic only */
 
     /* Note that SW->Front_* does not include the dummy placeholder front. */
     /* This space is accounted for by the SYM_WORK_USAGE macro. */
@@ -1061,13 +1069,13 @@ PRIVATE int symbolic_analysis
     {
 	DEBUGm4 (("out of memory: symbolic work\n")) ;
 	Info [UMFPACK_STATUS] = UMFPACK_ERROR_out_of_memory ;
-	error (&Symbolic, &SW) ;
+	error (&Symbolic, SW) ;
 	return (UMFPACK_ERROR_out_of_memory) ;
     }
 
     DEBUG0 (("Symbolic UMF_malloc_count - init_count = "ID"\n",
 	UMF_malloc_count - init_count)) ;
-//  ASSERT (UMF_malloc_count == init_count + 17) ;
+    ASSERT (UMF_malloc_count == init_count + 17) ;
 
     /* ---------------------------------------------------------------------- */
     /* find the row and column singletons */
@@ -1091,7 +1099,7 @@ PRIVATE int symbolic_analysis
     {
 	DEBUGm4 (("matrix invalid: UMF_singletons\n")) ;
 	Info [UMFPACK_STATUS] = status ;
-	error (&Symbolic, &SW) ;
+	error (&Symbolic, SW) ;
 	return (status) ;
     }
     Info [UMFPACK_NEMPTY_COL] = nempty_col ;
@@ -1110,8 +1118,6 @@ PRIVATE int symbolic_analysis
     ASSERT (AMD_valid (n_row, n_col, Ap, Ai) == AMD_OK) ;
 
     Symbolic->n1 = n1 ;
-    Symbolic->n1r = n1r ;
-    Symbolic->n1c = n1c ;
     Symbolic->nempty = nempty ;
     ASSERT (n1 <= n_inner) ;
     n2 = nn - n1 - nempty ;
@@ -1225,18 +1231,10 @@ PRIVATE int symbolic_analysis
 
     if (strategy == UMFPACK_STRATEGY_AUTO)
     {
-        // in v5.7.9, these two values (tsym and tnzd), were hard-coded
-        // constants, equal to 0.5 and 0.9 respectively.  They are now Control
-        // parameters in v6.0.0.
-        double tsym = GET_CONTROL (UMFPACK_STRATEGY_THRESH_SYM,
-                           UMFPACK_DEFAULT_STRATEGY_THRESH_SYM) ;
-        double tnzd = GET_CONTROL (UMFPACK_STRATEGY_THRESH_NNZDIAG,
-                           UMFPACK_DEFAULT_STRATEGY_THRESH_NNZDIAG) ;
-        if ((sym >= tsym) && ((double) nzdiag >= (tnzd * ((double) n2))))
+        if (sym >= 0.5 && nzdiag >= 0.9 * n2)
         {
-            /* pattern is mostly symmetric (default 50% or more) and the
-             * diagonal is mostly zero-free (default 90% or more).  Use
-             * symmetric strategy. */
+            /* pattern is mostly symmetric (50% or more) and the diagonal is
+             * mostly zero-free (90% or more).  Use symmetric strategy. */
 	    strategy = UMFPACK_STRATEGY_SYMMETRIC ;
 	    DEBUG0 (("Strategy: select symmetric\n")) ;
         }
@@ -1304,11 +1302,6 @@ PRIVATE int symbolic_analysis
     if (strategy == UMFPACK_STRATEGY_SYMMETRIC && Quser == (Int *) NULL)
     {
 	/* symmetric strategy for a matrix with mostly symmetric pattern */
-        if (ordering_option == UMFPACK_ORDERING_METIS_GUARD)
-        {
-            // METIS_GUARD with the symmetric strategy always uses METIS 
-            ordering_option = UMFPACK_ORDERING_METIS ;
-        }
         Int ordering_used ;
 	Int *Qinv = Fr_npivcol ;
 	ASSERT (n_row == n_col && nn == n_row) ;
@@ -1322,7 +1315,7 @@ PRIVATE int symbolic_analysis
             DEBUGm4 (("symmetric ordering failed\n")) ;
             status = UMFPACK_ERROR_ordering_failed ;
             Info [UMFPACK_STATUS] = status ;
-	    error (&Symbolic, &SW) ;
+            error (&Symbolic, SW) ;
             return (status) ;
         }
 	/* combine the singleton ordering and the AMD ordering */
@@ -1378,47 +1371,6 @@ PRIVATE int symbolic_analysis
         nrow2 = n_row - n1 - nempty_row ;
         ncol2 = n_col - n1 - nempty_col ;
 
-        //----------------------------------------------------------------------
-        // METIS_GUARD ordering: select between METIS and COLAMD
-        //----------------------------------------------------------------------
-
-        if (ordering_option == UMFPACK_ORDERING_METIS_GUARD)
-        {
-            if (nrow2 == 0 || ncol2 == 0)
-            {
-                // pruned matrix is empty: use COLAMD instead of METIS
-                ordering_option = UMFPACK_ORDERING_AMD ;
-                DEBUG0 (("METIS_GUARD: pruned matrix is empty, using colamd\n")) ;
-            }
-            else
-            {
-                // limit on row degree of the pruned matrix C for METIS_GUARD
-                // ordering:
-                Int metis_guard = UMFPACK_DENSE_DEGREE_THRESHOLD (drow, ncol2) ;
-                if (max_rdeg > metis_guard)
-                {
-                    // A has at least one very dense row, so A'A is costly to
-                    // explicitly create.  Use COLAMD on A instead.  COLAMD
-                    // will find one or more dense rows during its ordering,
-                    // and it will ignore them.
-                    ordering_option = UMFPACK_ORDERING_AMD ;
-                }
-                else
-                {
-                    // OK to use METIS
-                    ordering_option = UMFPACK_ORDERING_METIS ;
-                }
-                DEBUG0 (("METIS_GUARD: max_rdeg "ID", metis_guard "ID
-                    ", ordering : %s\n", max_rdeg, metis_guard,
-                    (ordering_option == UMFPACK_ORDERING_METIS) ?
-                    "metis" : "colamd")) ;
-            }
-        }
-
-        //----------------------------------------------------------------------
-        // find the unsymmetric ordering
-        //----------------------------------------------------------------------
-
         if ((ordering_option == UMFPACK_ORDERING_USER
             || ordering_option == UMFPACK_ORDERING_NONE
             || ordering_option == UMFPACK_ORDERING_METIS
@@ -1428,7 +1380,7 @@ PRIVATE int symbolic_analysis
         {
 
             /* -------------------------------------------------------------- */
-            /* use the user-provided column ordering, or umf_cholmod */
+            /* use the user-provided column ordering */
             /* -------------------------------------------------------------- */
 
             double user_info [3] ;    /* not needed */
@@ -1481,7 +1433,7 @@ PRIVATE int symbolic_analysis
                 DEBUGm4 (("user ordering failed\n")) ;
                 status = UMFPACK_ERROR_ordering_failed ;
                 Info [UMFPACK_STATUS] = status ;
-	        error (&Symbolic, &SW) ;
+                error (&Symbolic, SW) ;
                 return (status) ;
             }
 
@@ -1774,7 +1726,7 @@ PRIVATE int symbolic_analysis
 	{
 	    /* :: internal error in umf_analyze :: */
 	    Info [UMFPACK_STATUS] = UMFPACK_ERROR_internal_error ;
-            error (&Symbolic, &SW) ;
+	    error (&Symbolic, SW) ;
 	    return (UMFPACK_ERROR_internal_error) ;
 	}
 	Info [UMFPACK_SYMBOLIC_DEFRAG] += analyze_compactions ;
@@ -1885,13 +1837,13 @@ PRIVATE int symbolic_analysis
     {
 	DEBUGm4 (("out of memory: rest of symbolic object\n")) ;
 	Info [UMFPACK_STATUS] = UMFPACK_ERROR_out_of_memory ;
-        error (&Symbolic, &SW) ;
+	error (&Symbolic, SW) ;
 	return (UMFPACK_ERROR_out_of_memory) ;
     }
     DEBUG0 (("Symbolic UMF_malloc_count - init_count = "ID"\n",
 	UMF_malloc_count - init_count)) ;
-//  ASSERT (UMF_malloc_count == init_count + 21
-//	+ (Symbolic->Esize != (Int *) NULL)) ;
+    ASSERT (UMF_malloc_count == init_count + 21
+	+ (Symbolic->Esize != (Int *) NULL)) ;
 
     Front_npivcol = Symbolic->Front_npivcol ;
     Front_parent = Symbolic->Front_parent ;
@@ -2106,7 +2058,7 @@ PRIVATE int symbolic_analysis
      * matrix A.  It is used to construct the Diagonal_map.
      */
 
-    if (prefer_diagonal || for_Paru)
+    if (prefer_diagonal)
     {
 	Int *Diagonal_map ;
 	ASSERT (n_row == n_col && nn == n_row) ;
@@ -2120,7 +2072,7 @@ PRIVATE int symbolic_analysis
 	    /* :: out of memory (diagonal map) :: */
 	    DEBUGm4 (("out of memory: Diagonal map\n")) ;
 	    Info [UMFPACK_STATUS] = UMFPACK_ERROR_out_of_memory ;
-            error (&Symbolic, &SW) ;
+	    error (&Symbolic, SW) ;
 	    return (UMFPACK_ERROR_out_of_memory) ;
 	}
 
@@ -2642,23 +2594,13 @@ PRIVATE int symbolic_analysis
      * return routine, below).
      */
 
-    if (SW_Handle != NULL)
-    {
-        /* do not free the workspace; return it to umfpack_*_paru_symbolic */
-        (*SW_Handle) = (void *) SW ;
-        SW = NULL ;
-    }
-    else
-    {
-        /* free the workspace; this is the normal case for UMFPACK */
-        UMFPACK_paru_free_sw ((void **) (&SW)) ;
+    free_work (SW) ;
 
-        DEBUG0 (("(3)Symbolic UMF_malloc_count - init_count = "ID"\n",
-            UMF_malloc_count - init_count)) ;
-        ASSERT (UMF_malloc_count == init_count + 12
-            + (Symbolic->Esize != (Int *) NULL)
-            + (Symbolic->Diagonal_map != (Int *) NULL)) ;
-    }
+    DEBUG0 (("(3)Symbolic UMF_malloc_count - init_count = "ID"\n",
+	UMF_malloc_count - init_count)) ;
+    ASSERT (UMF_malloc_count == init_count + 12
+	+ (Symbolic->Esize != (Int *) NULL)
+	+ (Symbolic->Diagonal_map != (Int *) NULL)) ;
 
     /* ---------------------------------------------------------------------- */
     /* get the time used by UMFPACK_*symbolic */
@@ -2673,23 +2615,16 @@ PRIVATE int symbolic_analysis
 
 
 /* ========================================================================== */
-/* === UMFPACK_paru_free_sw ================================================= */
+/* === free_work ============================================================ */
 /* ========================================================================== */
 
-void UMFPACK_paru_free_sw
+PRIVATE void free_work
 (
-    void **SW_Handle
+    SWType *SW
 )
 {
-    SWType *SW ;
-    if (!SW_Handle)
-    {
-        return ;
-    }
-    SW = *((SWType **) SW_Handle) ;
     if (SW)
     {
-        /* free the content of the SW object */
 	SW->InvRperm1 = (Int *) UMF_free ((void *) SW->InvRperm1) ;
 	SW->Rs = (double *) UMF_free ((void *) SW->Rs) ;
 	SW->Si = (Int *) UMF_free ((void *) SW->Si) ;
@@ -2703,13 +2638,9 @@ void UMFPACK_paru_free_sw
 	SW->Cperm1 = (Int *) UMF_free ((void *) SW->Cperm1) ;
 	SW->Rperm1 = (Int *) UMF_free ((void *) SW->Rperm1) ;
 	SW->InFront = (Int *) UMF_free ((void *) SW->InFront) ;
-    
-        /* finally, free the header of SW itself */
-        SW = (SWType *) UMF_free ((void *) SW) ;
     }
-
-    (*SW_Handle) = NULL ;
 }
+
 
 /* ========================================================================== */
 /* === error ================================================================ */
@@ -2720,11 +2651,11 @@ void UMFPACK_paru_free_sw
 PRIVATE void error
 (
     SymbolicType **Symbolic,
-    SWType **SW_Handle
+    SWType *SW
 )
 {
 
-    UMFPACK_paru_free_sw ((void **) SW_Handle) ;
+    free_work (SW) ;
     UMFPACK_free_symbolic ((void **) Symbolic) ;
     ASSERT (UMF_malloc_count == init_count) ;
 }
@@ -2734,7 +2665,7 @@ PRIVATE void error
 /* === UMFPACK_qsymbolic ==================================================== */
 /* ========================================================================== */
 
-int UMFPACK_qsymbolic
+GLOBAL Int UMFPACK_qsymbolic
 (
     Int n_row,
     Int n_col,
@@ -2762,12 +2693,7 @@ int UMFPACK_qsymbolic
         (void *) NULL,
         (void *) NULL,
 
-        SymbolicHandle,
-
-        /* do not return SW to the caller */
-        (void *) NULL,
-
-        Control, User_Info, 0)) ;
+        SymbolicHandle, Control, User_Info)) ;
 }
 
 
@@ -2775,7 +2701,7 @@ int UMFPACK_qsymbolic
 /* === UMFPACK_fsymbolic ==================================================== */
 /* ========================================================================== */
 
-int UMFPACK_fsymbolic
+GLOBAL Int UMFPACK_fsymbolic
 (
     Int n_row,
     Int n_col,
@@ -2818,81 +2744,9 @@ int UMFPACK_fsymbolic
 
         /* user ordering not provided */
         (Int *) NULL,
-
         /* user ordering functions used instead */
         user_ordering,
         user_params,
 
-        SymbolicHandle,
-
-        /* do not return SW to the caller */
-        (void *) NULL,
-
-        Control, User_Info, 0)) ;
+        SymbolicHandle, Control, User_Info)) ;
 }
-
-
-/* ========================================================================== */
-/* === UMFPACK_paru_symbolic ================================================ */
-/* ========================================================================== */
-
-int UMFPACK_paru_symbolic
-(
-    Int n_row,
-    Int n_col,
-    const Int Ap [ ],
-    const Int Ai [ ],
-    const double Ax [ ],
-#ifdef COMPLEX
-    const double Az [ ],
-#endif
-
-    /* user-provided ordering */
-    const Int Quser [ ],
-
-    /* user-provided ordering function */
-    int (*user_ordering)    /* TRUE if OK, FALSE otherwise */
-    (
-        /* inputs, not modified on output */
-        Int,            /* nrow */
-        Int,            /* ncol */
-        Int,            /* sym: if TRUE and nrow==ncol do A+A', else do A'A */
-        Int *,          /* Ap, size ncol+1 */
-        Int *,          /* Ai, size nz */
-        /* output */
-        Int *,          /* size ncol, fill-reducing permutation */
-        /* input/output */
-        void *,         /* user_params (ignored by UMFPACK) */
-        double *        /* user_info[0..2], optional output for symmetric case.
-                           user_info[0]: max column count for L=chol(P(A+A')P')
-                           user_info[1]: nnz (L)
-                           user_info[2]: flop count for chol, if A real */
-    ),
-    void *user_params,  /* passed to user_ordering function */
-
-    void **SymbolicHandle,  /* symbolic analysis */
-    void **SW_Handle,       /* additional symbolic analysis information */
-    const double Control [UMFPACK_CONTROL],
-    double User_Info [UMFPACK_INFO]
-)
-{
-    return (symbolic_analysis (n_row, n_col, Ap, Ai, Ax,
-#ifdef COMPLEX
-        Az,
-#endif
-        /* user-provided ordering */
-        Quser,
-
-        /* user ordering functions */
-        user_ordering,
-        user_params,
-
-        /* return the symbolic analysis object to the caller */
-        SymbolicHandle,
-
-        /* also return SW to the caller */
-        SW_Handle,
-
-        Control, User_Info, 1)) ;
-}
-

@@ -81,8 +81,7 @@ classdef factorization
 %
 % See also mldivide, lu, chol, ldl, qr, svd.
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
     properties (SetAccess = protected)
         % The abstract class holds a QR, LU, Cholesky factorization:

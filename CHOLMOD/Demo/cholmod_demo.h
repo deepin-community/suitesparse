@@ -1,15 +1,17 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Demo/cholmod_demo.h: include file for CHOLMOD demos
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Demo/cholmod_demo.h ================================================== */
+/* ========================================================================== */
 
-// CHOLMOD/Demo Module.  Copyright (C) 2005-2022, Timothy A. Davis,
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Demo Module.  Copyright (C) 2005-2013, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 #include "cholmod.h"
+#include <string.h>
+#include <ctype.h>
+#include <stdio.h>
 #include <time.h>
+#include <stdlib.h>
 #define TRUE 1
 #define FALSE 0
 
@@ -19,3 +21,4 @@
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define ABS(a)   (((a) >= (0)) ? (a) : -(a))
 
+#include "cholmod_function.h"

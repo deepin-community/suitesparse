@@ -1,12 +1,10 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Cholesky/cholmod_resymbol: recompute symbolic pattern of L
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Cholesky/cholmod_resymbol ============================================ */
+/* ========================================================================== */
 
-// CHOLMOD/Cholesky Module.  Copyright (C) 2005-2022, Timothy A. Davis
-// All Rights Reserved.
-// SPDX-License-Identifier: LGPL-2.1+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Cholesky Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * -------------------------------------------------------------------------- */
 
 /* Recompute the symbolic pattern of L.  Entries not in the symbolic pattern
  * are dropped.  L->Perm can be used (or not) to permute the input matrix A.
@@ -24,9 +22,10 @@
  *	Allocates up to 2 copies of its input matrix A (pattern only).
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NCHOLESKY
+
+#include "cholmod_internal.h"
+#include "cholmod_cholesky.h"
 
 /* ========================================================================== */
 /* === cholmod_resymbol ===================================================== */
@@ -440,7 +439,7 @@ int CHOLMOD(resymbol_noperm)
 
 	/* flag the diagonal entry */
 	/* mark = CHOLMOD(clear_flag) (Common) ; */
-	CLEAR_FLAG (Common) ;
+	CHOLMOD_CLEAR_FLAG (Common) ;
 	mark = Common->mark ;
 
 	Flag [k] = mark ;
@@ -597,8 +596,8 @@ int CHOLMOD(resymbol_noperm)
     /* ---------------------------------------------------------------------- */
 
     /* CHOLMOD(clear_flag) (Common) ; */
-    CLEAR_FLAG (Common) ;
-    ASSERT (check_flag (Common)) ;
+    CHOLMOD_CLEAR_FLAG (Common) ;
+
     DEBUG (CHOLMOD(dump_factor) (L, "ReSymbol final L (i, x):", Common)) ;
     ASSERT (CHOLMOD(dump_work) (TRUE, TRUE, 0, Common)) ;
     return (TRUE) ;

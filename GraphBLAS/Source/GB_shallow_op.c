@@ -2,7 +2,7 @@
 // GB_shallow_op:  create a shallow copy and apply a unary operator to a matrix
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -26,8 +26,9 @@
 
 #include "GB_apply.h"
 
-#define GB_FREE_ALL GB_phybix_free (C) ;
+#define GB_FREE_ALL GB_phbix_free (C) ;
 
+GB_PUBLIC
 GrB_Info GB_shallow_op      // create shallow matrix and apply operator
 (
     GrB_Matrix C,           // output C, of type op*->ztype, static header
@@ -37,7 +38,7 @@ GrB_Info GB_shallow_op      // create shallow matrix and apply operator
         bool binop_bind1st,         // if true, binop(x,A) else binop(A,y)
         bool flipij,                // if true, flip i,j for user idxunop
     const GrB_Matrix A,     // input matrix to typecast
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -59,7 +60,7 @@ GrB_Info GB_shallow_op      // create shallow matrix and apply operator
     bool op_is_positional = GB_OPCODE_IS_POSITIONAL (opcode) ;
     if (GB_IS_UNARYOP_CODE (opcode))
     {
-        ASSERT_OP_OK (op, "unop for shallow_op", GB0) ;
+        ASSERT_UNARYOP_OK (op, "unop for shallow_op", GB0) ;
         if (!op_is_positional)
         { 
             ASSERT (GB_Type_compatible (op->xtype, A->type)) ;
@@ -68,7 +69,7 @@ GrB_Info GB_shallow_op      // create shallow matrix and apply operator
     }
     else if (GB_IS_BINARYOP_CODE (opcode))
     {
-        ASSERT_OP_OK (op, "binop for shallow_op", GB0) ;
+        ASSERT_BINARYOP_OK (op, "binop for shallow_op", GB0) ;
         if (!op_is_positional)
         { 
             op_intype = (binop_bind1st) ? op->xtype : op->ytype ;
@@ -76,8 +77,8 @@ GrB_Info GB_shallow_op      // create shallow matrix and apply operator
         }
     }
     else // GB_IS_INDEXUNARYOP_CODE (opcode)
-    { 
-        ASSERT_OP_OK (op, "ixdunop for shallow_op", GB0) ;
+    {
+        ASSERT_INDEXUNARYOP_OK (op, "ixdunop for shallow_op", GB0) ;
         op_intype = op->xtype ;
         ASSERT (GB_Type_compatible (op_intype, A->type)) ;
     }
@@ -86,7 +87,7 @@ GrB_Info GB_shallow_op      // create shallow matrix and apply operator
     // construct a shallow copy of A for the pattern of C
     //--------------------------------------------------------------------------
 
-    GB_iso_code C_code_iso = GB_unop_code_iso (A, op, binop_bind1st) ;
+    GB_iso_code C_code_iso = GB_iso_unop_code (A, op, binop_bind1st) ;
     bool C_iso = (C_code_iso != GB_NON_ISO) ;
 
     // initialized the header for C, but do not allocate C->{p,h,b,i,x}
@@ -94,7 +95,7 @@ GrB_Info GB_shallow_op      // create shallow matrix and apply operator
     GrB_Info info ;
     info = GB_new (&C, // any sparsity, existing header
         ztype, A->vlen, A->vdim, GB_Ap_null, C_is_csc,
-        GB_sparsity (A), A->hyper_switch, 0) ;
+        GB_sparsity (A), A->hyper_switch, 0, Context) ;
     ASSERT (info == GrB_SUCCESS) ;
 
     //--------------------------------------------------------------------------
@@ -111,20 +112,13 @@ GrB_Info GB_shallow_op      // create shallow matrix and apply operator
     C->nvec = A->nvec ;
     C->nvec_nonempty = A->nvec_nonempty ;
     C->jumbled = A->jumbled ;           // C is jumbled if A is jumbled
-    C->nvals = A->nvals ;
+    C->nvals = A->nvals ;               // if A bitmap 
     C->magic = GB_MAGIC ;
     C->iso = C_iso ;                    // OK
     if (C_iso)
     { 
         GB_BURBLE_MATRIX (A, "(iso apply) ") ;
     }
-
-    //--------------------------------------------------------------------------
-    // make a shallow copy of the A->Y hyper_hash
-    //--------------------------------------------------------------------------
-
-    C->Y = A->Y ;
-    C->Y_shallow = (A->Y != NULL) ;
 
     //--------------------------------------------------------------------------
     // check for empty matrix
@@ -192,7 +186,7 @@ GrB_Info GB_shallow_op      // create shallow matrix and apply operator
     }
 
     GB_OK (GB_apply_op ((GB_void *) C->x, C->type, C_code_iso, op,
-        scalar, binop_bind1st, flipij, A, Werk)) ;
+        scalar, binop_bind1st, flipij, A, Context)) ;
 
     //--------------------------------------------------------------------------
     // return the result

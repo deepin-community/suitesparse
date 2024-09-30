@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/Modify/cholmod_rowadd: add row/column to an LDL' factorization
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === Modify/cholmod_rowadd ================================================ */
+/* ========================================================================== */
 
-// CHOLMOD/Modify Module.  Copyright (C) 2005-2022, Timothy A. Davis,
-// and William W. Hager. All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/Modify Module.
+ * Copyright (C) 2005-2006, Timothy A. Davis and William W. Hager.
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* Adds a row and column to an LDL' factorization, and optionally updates the
  * solution to Lx=b.
@@ -17,10 +17,12 @@
  * numeric identity matrix before the row is added.
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NGPL
 #ifndef NMODIFY
+
+#include "cholmod_internal.h"
+#include "cholmod_modify.h"
+
 
 /* ========================================================================== */
 /* === cholmod_rowadd ======================================================= */
@@ -344,8 +346,7 @@ int CHOLMOD(rowadd_mark)
 	    {
 		/* out of memory, L is now simplicial symbolic */
 		/* CHOLMOD(clear_flag) (Common) ; */
-		CLEAR_FLAG (Common) ;
-                ASSERT (check_flag (Common)) ;
+		CHOLMOD_CLEAR_FLAG (Common) ;
 		for (i = 0 ; i < n ; i++)
 		{
 		    W [i] = 0 ;
@@ -531,7 +532,7 @@ int CHOLMOD(rowadd_mark)
     /* ensure abs (dk) >= dbound, if dbound is given */
     /* ---------------------------------------------------------------------- */
 
-    dk = (Common->dbound > 0) ? (CHOLMOD(dbound) (dk, Common)) : dk ;
+    dk = (IS_GT_ZERO (Common->dbound)) ? (CHOLMOD(dbound) (dk, Common)) : dk ;
 
     PRINT2 (("D [k = "ID"] = %g\n", k, dk)) ;
 
@@ -621,7 +622,7 @@ int CHOLMOD(rowadd_mark)
     PRINT1 (("rowadd update lnz = "ID"\n", lnz)) ;
     if (lnz > 0)
     {
-	do_update = (dk < 0) ;
+	do_update = IS_LT_ZERO (dk) ;
 	if (do_update)
 	{
 	    dk = -dk ;

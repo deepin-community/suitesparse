@@ -5,8 +5,7 @@ function ex3
 %   ex3
 % See also: cs_demo
 
-% CXSparse, Copyright (c) 2006-2022, Timothy A. Davis. All Rights Reserved.
-% SPDX-License-Identifier: LGPL-2.1+
+% Copyright 2006-2012, Timothy A. Davis, http://www.suitesparse.com
 
 t1 = zeros (50,1) ;
 t2 = zeros (50,1) ;

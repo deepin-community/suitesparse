@@ -2,7 +2,7 @@
 // GB_AxB_saxpy3_fineGus_phase2: C=A*B, saxpy3 method, fine Gustavson, phase2
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -31,18 +31,16 @@
             GB_MULT_A_ik_B_kj ;     // t = A(i,k) * B(k,j)
             int8_t f ;
 
-            #if GB_IS_ANY_MONOID && GB_Z_HAS_ATOMIC_WRITE
+            #if GB_IS_ANY_MONOID
 
                 //--------------------------------------------------------------
-                // C(i,j) += t ; ANY monoids with atomic write
+                // C(i,j) += t ; with the ANY monoid
                 //--------------------------------------------------------------
-            
-                // the double complex ANY monoid cannot use this method
 
                 GB_ATOMIC_READ
                 f = Hf [i] ;            // grab the entry
                 if (f == 2) continue ;  // check if already updated
-                GB_Z_ATOMIC_WRITE_HX (i, t) ;   // Hx [i] = t
+                GB_ATOMIC_WRITE_HX (i, t) ;    // Hx [i] = t
 
             #else
 
@@ -50,7 +48,7 @@
                 // C(i,j) += t ; with all other monoids
                 //--------------------------------------------------------------
 
-                #if GB_Z_HAS_ATOMIC_UPDATE
+                #if GB_HAS_ATOMIC
 
                     // if C(i,j) is already present (f==2), and the monoid can
                     // be done atomically, then do the atomic update.  No need
@@ -58,8 +56,8 @@
                     GB_ATOMIC_READ
                     f = Hf [i] ;        // grab the entry
                     if (f == 2)         // if true, update C(i,j)
-                    { 
-                        GB_Z_ATOMIC_UPDATE_HX (i, t) ;  // Hx [i] += t
+                    {
+                        GB_ATOMIC_UPDATE_HX (i, t) ; // Hx [i] += t
                         continue ;      // C(i,j) has been updated
                     }
 
@@ -74,12 +72,12 @@
                 if (f == 0)
                 { 
                     // C(i,j) is a new entry
-                    GB_Z_ATOMIC_WRITE_HX (i, t) ;   // Hx [i] = t
+                    GB_ATOMIC_WRITE_HX (i, t) ;    // Hx [i] = t
                 }
                 else // f == 2
                 { 
                     // C(i,j) already appears in C(:,j)
-                    GB_Z_ATOMIC_UPDATE_HX (i, t) ;  // Hx [i] += t
+                    GB_ATOMIC_UPDATE_HX (i, t) ;   // Hx [i] += t
                 }
 
             #endif

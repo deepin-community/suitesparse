@@ -2,12 +2,10 @@
 // GB_hyper_prune: remove empty vectors from a hypersparse Ap, Ah list
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-
-// JIT: not needed.  Only one variant possible.
 
 // Removes empty vectors from a hypersparse list.  On input, *Ap and *Ah are
 // assumed to be NULL.  The input arrays Ap_old and Ah_old are not modified,
@@ -19,15 +17,14 @@
 GrB_Info GB_hyper_prune
 (
     // output, not allocated on input:
-    int64_t *restrict *p_Ap, size_t *p_Ap_size,      // size plen+1
-    int64_t *restrict *p_Ah, size_t *p_Ah_size,      // size plen
+    int64_t *restrict *p_Ap, size_t *p_Ap_size,      // size nvec+1
+    int64_t *restrict *p_Ah, size_t *p_Ah_size,      // size nvec
     int64_t *p_nvec,                // # of vectors, all nonempty
-    int64_t *p_plen,                // size of Ap and Ah
     // input, not modified
     const int64_t *Ap_old,          // size nvec_old+1
     const int64_t *Ah_old,          // size nvec_old
     const int64_t nvec_old,         // original number of vectors
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -53,8 +50,7 @@ GrB_Info GB_hyper_prune
     // determine the # of threads to use
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
     int nthreads = GB_nthreads (nvec_old, chunk, nthreads_max) ;
 
     //--------------------------------------------------------------------------
@@ -81,15 +77,14 @@ GrB_Info GB_hyper_prune
     }
 
     int64_t nvec ;
-    GB_cumsum (W, nvec_old, &nvec, nthreads, Werk) ;
+    GB_cumsum (W, nvec_old, &nvec, nthreads, Context) ;
 
     //--------------------------------------------------------------------------
     // allocate the result
     //--------------------------------------------------------------------------
 
-    int64_t plen = GB_IMAX (1, nvec) ;
-    Ap = GB_MALLOC (plen+1, int64_t, &Ap_size) ;
-    Ah = GB_MALLOC (plen  , int64_t, &Ah_size) ;
+    Ap = GB_MALLOC (nvec+1, int64_t, &Ap_size) ;
+    Ah = GB_MALLOC (nvec  , int64_t, &Ah_size) ;
     if (Ap == NULL || Ah == NULL)
     { 
         // out of memory
@@ -124,7 +119,6 @@ GrB_Info GB_hyper_prune
     (*p_Ap) = Ap ; (*p_Ap_size) = Ap_size ;
     (*p_Ah) = Ah ; (*p_Ah_size) = Ah_size ;
     (*p_nvec) = nvec ;
-    (*p_plen) = plen ;
     return (GrB_SUCCESS) ;
 }
 

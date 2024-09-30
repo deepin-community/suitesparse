@@ -7,11 +7,11 @@
 % ordering methods for MATLAB.  They are typically faster (sometimes much
 % faster) and typically provide better orderings than their MATLAB counterparts:
 % 
-%       colamd          approximate column minimum degree ordering
+%       colamd          a replacement for colmmd.
 %
 %                       Typical usage:  p = colamd (A) ;
 %
-%       symamd          symmetric variant based on colamd.
+%       symamd          a replacement for symmmd.  Based on colamd.
 %
 %                       Typical usage:  p = symamd (A) ;
 %
@@ -20,12 +20,11 @@
 %
 % See also colamd, symamd
 
-% COLAMD, Copyright (c) 1998-2022, Timothy A. Davis, and Stefan Larimore.
-% SPDX-License-Identifier: BSD-3-clause
+% Minor changes:  in MATLAB 7, symmmd and colmmd are flagged as "obsolete".
+% This demo checks if they exist, so it should still work when they are removed.
 
-% Developed in collaboration with J. Gilbert and E. Ng.
-% Acknowledgements: This work was supported by the National Science Foundation,
-% under grants DMS-9504974 and DMS-9803599.
+%    Copyright 1998-2007, Timothy A. Davis, and Stefan Larimore
+%    Developed in collaboration with J. Gilbert and E. Ng.
 
 %-------------------------------------------------------------------------------
 % Print the introduction, the help info, and compile the mexFunctions
@@ -75,6 +74,21 @@ x = Q * (U \ (L \ (P * b))) ;
 fprintf (1, '\nFlop count for [L,U,P] = lu (A*Q):          %d\n', fl) ;
 fprintf (1, 'residual:                                     %e\n', norm (A*x-b));
 
+try
+    fprintf (1, '\n\nSolving via lu (PAQ = LU), where Q is from colmmd:\n') ;
+    q = colmmd (A) ;
+    I = speye (n) ;
+    Q = I (:, q) ;
+    [L,U,P] = lu (A*Q) ;
+    fl = luflops (L, U) ;
+    x = Q * (U \ (L \ (P * b))) ;
+    fprintf (1, '\nFlop count for [L,U,P] = lu (A*Q):          %d\n', fl) ;
+    fprintf (1, 'residual:                                     %e\n', ...
+	norm (A*x-b)) ;
+catch
+    fprintf (1, 'colmmd is obsolete; test skipped\n') ;
+end
+
 fprintf (1, '\n\nSolving via lu (PA = LU), without regard for sparsity:\n') ;
 [L,U,P] = lu (A) ;
 fl = luflops (L, U) ;
@@ -111,6 +125,20 @@ fprintf (1, 'colamd2 ordering quality: \n') ;
 fprintf (1, 'nz in Cholesky factors of A(:,p)''A(:,p):  %d\n', sum (lnz)) ;
 fprintf (1, 'flop count for Cholesky of A(:,p)''A(:,p): %d\n', sum (lnz.^2)) ;
 
+try
+    tic ;
+    p = colmmd (A) ;
+    t = toc ;
+    lnz = symbfact (A (:,p), 'col') ;
+    fprintf (1, '\n\nColmmd run time:                          %f\n', t) ;
+    fprintf (1, 'colmmd ordering quality: \n') ;
+    fprintf (1, 'nz in Cholesky factors of A(:,p)''A(:,p):  %d\n', sum (lnz)) ;
+    fprintf (1, 'flop count for Cholesky of A(:,p)''A(:,p): %d\n', ...
+	sum (lnz.^2)) ;
+catch
+    fprintf (1, 'colmmd is obsolete; test skipped\n') ;
+end
+
 %-------------------------------------------------------------------------------
 % Large demo for symamd2
 %-------------------------------------------------------------------------------
@@ -136,3 +164,15 @@ fprintf (1, 'symamd2 ordering quality: \n') ;
 fprintf (1, 'nz in Cholesky factors of A(p,p):  %d\n', sum (lnz)) ;
 fprintf (1, 'flop count for Cholesky of A(p,p): %d\n', sum (lnz.^2)) ;
 
+try
+    tic ;
+    p = symmmd (A) ;
+    t = toc ;
+    lnz = symbfact (A (p,p), 'sym') ;
+    fprintf (1, '\n\nSymmmd run time:                   %f\n', t) ;
+    fprintf (1, 'symmmd ordering quality: \n') ;
+    fprintf (1, 'nz in Cholesky factors of A(p,p):  %d\n', sum (lnz)) ;
+    fprintf (1, 'flop count for Cholesky of A(p,p): %d\n', sum (lnz.^2)) ;
+catch
+    fprintf (1, 'symmmd is obsolete\n') ;
+end

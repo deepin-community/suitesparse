@@ -2,7 +2,7 @@
 // GB_AxB_dot3_one_slice: slice the entries and vectors of a single matrix
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ GrB_Info GB_AxB_dot3_one_slice
     int *p_nthreads,                // # of threads to use
     // input:
     const GrB_Matrix M,             // matrix to slice
-    GB_Werk Werk
+    GB_Context Context
 )
 {
 
@@ -71,8 +71,7 @@ GrB_Info GB_AxB_dot3_one_slice
     // determine # of threads to use
     //--------------------------------------------------------------------------
 
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
 
     //--------------------------------------------------------------------------
     // get M

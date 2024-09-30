@@ -1,2 +1,0 @@
-# C++ code, so we don't try to provide a symbols file
-libmongoose3: no-symbols-control-file usr/lib/*/libmongoose.so.3.*

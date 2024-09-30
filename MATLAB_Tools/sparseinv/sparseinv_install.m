@@ -8,8 +8,7 @@ function sparseinv_install
 %
 % See also sparseinv, sparseinv_test
 
-% SPARSEINV, Copyright (c) 2011, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011, Timothy A. Davis, http://www.suitesparse.com
 
 is64 = ~isempty (strfind (computer, '64')) ;
 if (is64)

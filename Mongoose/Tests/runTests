@@ -1,23 +1,10 @@
-#!/usr/bin/env python3
-
-#-------------------------------------------------------------------------------
-# Mongoose/Tests/runTests
-#-------------------------------------------------------------------------------
-
-# Mongoose Graph Partitioning Library, Copyright (C) 2017-2018,
-# Scott P. Kolodziej, Nuri S. Yeralan, Timothy A. Davis, William W. Hager
-# Mongoose is licensed under Version 3 of the GNU General Public License.
-# Mongoose is also available under other licenses; contact authors for details.
-# SPDX-License-Identifier: GPL-3.0-only
-
-#-------------------------------------------------------------------------------
-
-
+#!/usr/bin/env python
+from __future__ import absolute_import, print_function, unicode_literals
 from subprocess import call, check_output
 import os       # For filesystem access
 import sys      # For sys.exit()
 import argparse # For parsing command-line arguments
-import urllib.request, urllib.parse, urllib.error   # For downloading the ssget index
+import urllib   # For downloading the ssget index
 import ssl
 import tarfile  # For un-tar/unzipping matrix files
 import csv      # For reading the ssget index
@@ -42,12 +29,11 @@ def main():
 def runTests(args):
     # Create or locate matrix temporary storage directory
     matrix_dir = getMatrixDirectory(args)
-    print("Matrix directory: " + matrix_dir)
 
     # Download the matrix stats csv file
     stats_file = downloadStatsFile(matrix_dir)
     
-    with open(stats_file, 'r') as f:
+    with open(stats_file, 'rb') as f:
         reader = csv.reader(f)
 
         # Matrix IDs are not listed in the stats file - we just have to keep count
@@ -76,9 +62,9 @@ def runTests(args):
                         else:
                             # Download matrix if it doesn't exist
                             print("Downloading " + matrix_name)
-                            url = "https://sparse.tamu.edu/MM/" + matrix_name
-                            with urllib.request.urlopen(url) as response, open(gzip_path, 'wb') as out_file:
-                                shutil.copyfileobj(response, out_file)
+                            sslcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+                            testfile = urllib.URLopener(context=sslcontext)
+                            testfile.retrieve("https://sparse.tamu.edu/MM/" + matrix_name, gzip_path)
                             tar = tarfile.open(gzip_path, mode='r:gz')
                             tar.extractall(path=matrix_dir) # Extract the matrix from the tar.gz file
                             tar.close()
@@ -158,12 +144,13 @@ def getMatrixDirectory(args):
     return matrix_dir
 
 def downloadStatsFile(matrix_dir):
-    print("downloading: ssstats.csv to " + matrix_dir)
-    url = "http://sparse.tamu.edu/files/ssstats.csv"
-    stats_file = matrix_dir + "/ssstats.csv"
-    with urllib.request.urlopen(url) as response, open(stats_file, 'wb') as out_file:
-        shutil.copyfileobj(response, out_file)
+    sslcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    downloader = urllib.URLopener(context=sslcontext)
+    downloader.retrieve(
+        "https://sparse.tamu.edu/files/ssstats.csv",
+        matrix_dir + "/ssstats.csv")
 
+    stats_file = matrix_dir + "/ssstats.csv"
     return stats_file
 
 def runCoverageUtility(args):

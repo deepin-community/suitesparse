@@ -1,24 +1,20 @@
 // =============================================================================
 // === GPUQREngine/Source/BucketList_AdvanceBundles.cpp ========================
 // =============================================================================
-
-// GPUQREngine, Copyright (c) 2013, Timothy A Davis, Sencer Nuri Yeralan,
-// and Sanjay Ranka.  All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
 //
 // AdvanceBundles advances existing bundles, leaving the First tile behind
 // and keeping a Shadow copy to support subsequent Apply tasks.
 //
 // =============================================================================
+
+
 #include "GPUQREngine_BucketList.hpp"
-template <typename Int>
-void BucketList<Int>::AdvanceBundles()
+
+void BucketList::AdvanceBundles()
 {
     for (int i = 0; i < numBundles; i++)
     {
-        LLBundle <Int>& bundle = Bundles[i];
+        LLBundle& bundle = Bundles[i];
 
         /* An advancing bundle is removed from its native bucket. */
         bundleCount[bundle.NativeBucket]--;
@@ -43,6 +39,3 @@ void BucketList<Int>::AdvanceBundles()
         }
     }
 }
-
-template void BucketList<int32_t>::AdvanceBundles() ;
-template void BucketList<int64_t>::AdvanceBundles() ;

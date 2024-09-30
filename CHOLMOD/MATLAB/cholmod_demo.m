@@ -7,15 +7,14 @@ function cholmod_demo
 % sparse matrix problem used in the MATLAB BENCH command.
 %
 % See CHOLMOD/MATLAB/Test/cholmod_test.m for a lengthy test using matrices from
-% the SuiteSparse Matrix Collection.
+% the UF sparse matrix collection.
 %
 % Example:
 %   cholmod_demo
 %
 % See also BENCH
 
-% Copyright 2006-2022, Timothy A. Davis, All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+%   Copyright 2006-2007, Timothy A. Davis, http://www.suitesparse.com
 
 help cholmod_demo
 

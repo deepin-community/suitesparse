@@ -1,15 +1,15 @@
 //------------------------------------------------------------------------------
-// gbidxunopinfo : print a GraphBLAS GrB_IndexUnaryOp (for illustration only)
+// gbselectopinfo : print a GraphBLAS selectop (for illustration only)
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 //------------------------------------------------------------------------------
 
 // Usage:
 
-// gbidxunopinfo (idxunop)
+// gbselectopinfo (selectop)
 
 #include "gb_interface.h"
 
@@ -31,28 +31,36 @@ void mexFunction
     gb_usage (nargin >= 1 && nargin <= 2 && nargout == 0, USAGE) ;
 
     //--------------------------------------------------------------------------
-    // construct the GraphBLAS GrB_IndexUnaryOp and print it
+    // construct the GraphBLAS selectop and print it
     //--------------------------------------------------------------------------
 
     #define LEN 256
     char opstring [LEN+2] ;
     gb_mxstring_to_string (opstring, LEN, pargin [0], "select operator") ;
 
-    GrB_Type type = GrB_FP64 ;
+    GrB_Type type = NULL ;
     if (nargin > 1)
     { 
         type = gb_mxstring_to_type (pargin [1]) ;
         CHECK_ERROR (type == NULL, "unknown type") ;
     }
 
+    GxB_SelectOp selop = NULL ;
     GrB_IndexUnaryOp idxunop = NULL ;
     bool ignore1, ignore2 ;
     int64_t ignore3 = 0 ;
 
-    gb_mxstring_to_idxunop (&idxunop, &ignore1, &ignore2, &ignore3,
+    gb_mxstring_to_selectop (&idxunop, &selop, &ignore1, &ignore2, &ignore3,
         pargin [0], type) ;
 
-    OK (GxB_IndexUnaryOp_fprint (idxunop, opstring, GxB_COMPLETE, NULL)) ;
+    if (selop != NULL)
+    { 
+        OK (GxB_SelectOp_fprint (selop, opstring, GxB_COMPLETE, NULL)) ;
+    }
+    else
+    { 
+        OK (GxB_IndexUnaryOp_fprint (idxunop, opstring, GxB_COMPLETE, NULL)) ;
+    }
 
     GB_WRAPUP ;
 }

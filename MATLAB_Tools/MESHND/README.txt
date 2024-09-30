@@ -22,5 +22,4 @@
 %   subplot (1,2,2) ; spy (A (p,p)) ;
 %
 
-% MESHND, Copyright (c) 2009, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+Copyright 2007-2009, Timothy A. Davis, http://www.suitesparse.com

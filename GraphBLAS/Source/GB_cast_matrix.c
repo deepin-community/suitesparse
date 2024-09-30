@@ -2,7 +2,7 @@
 // GB_cast_matrix: copy or typecast the values from A into C
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -19,12 +19,12 @@
 // are false positives.
 
 #include "GB.h"
-#define GB_FREE_ALL ;
 
-GrB_Info GB_cast_matrix     // copy or typecast the values from A into C
+void GB_cast_matrix         // copy or typecast the values from A into C
 (
     GrB_Matrix C,
-    GrB_Matrix A
+    GrB_Matrix A,
+    GB_Context Context
 )
 {
 
@@ -32,16 +32,14 @@ GrB_Info GB_cast_matrix     // copy or typecast the values from A into C
     // determine the number of threads to use
     //--------------------------------------------------------------------------
 
-    GrB_Info info ;
     const int64_t anz = GB_nnz_held (A) ;
-    int nthreads_max = GB_Context_nthreads_max ( ) ;
-    double chunk = GB_Context_chunk ( ) ;
+    GB_GET_NTHREADS_MAX (nthreads_max, chunk, Context) ;
     int nthreads = GB_nthreads (anz, chunk, nthreads_max) ;
-    ASSERT (GB_IMPLIES (anz > 1, A->iso == C->iso)) ;
+    ASSERT (A->iso == C->iso) ;
     if (anz == 0)
     { 
         // nothing to do
-        return (GrB_SUCCESS) ;
+        return ;
     }
 
     //--------------------------------------------------------------------------
@@ -79,15 +77,15 @@ GrB_Info GB_cast_matrix     // copy or typecast the values from A into C
         if (A->iso)
         { 
             // Cx [0] = (ctype) Ax [0]
-            GB_unop_iso (Cx, C->type, GB_ISO_A, NULL, A, NULL) ;
+            GB_iso_unop (Cx, C->type, GB_ISO_A, NULL, A, NULL) ;
         }
         else
         { 
-            // typecast all the values from A to Cx
+            // typecast all the values from Ax to Cx
             ASSERT (GB_IMPLIES (anz > 0, Cx != NULL)) ;
-            GB_OK (GB_cast_array (Cx, C->type->code, A, nthreads)) ;
+            GB_cast_array (Cx, C->type->code, (GB_void *) Ax, A->type->code,
+                A->b, anz, nthreads) ;
         }
     }
-    return (GrB_SUCCESS) ;
 }
 

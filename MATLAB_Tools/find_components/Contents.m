@@ -11,5 +11,4 @@
 %   find_components_example         % prints and plots and small example
 %   find_components_example(2)      % a large example, just plotting
 
-% find_components, Copyright (c) 2008, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2008, Timothy A. Davis, http://www.suitesparse.com

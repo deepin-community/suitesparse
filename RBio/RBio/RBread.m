@@ -21,8 +21,7 @@ function [A, Z, title, key, mtype] = RBread (filename)			    %#ok
 %
 % See also RBwrite, RBreade, RBtype.
 
-% RBio, Copyright (c) 2009-2022, Timothy A. Davis.  All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2009, Timothy A. Davis
 
 error ('RBread mexFunction not found') ;
 

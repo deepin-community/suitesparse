@@ -2,7 +2,7 @@
 // GxB_Vector_subassign_[SCALAR]: assign scalar to vector, via scalar expansion
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ GrB_Info GB_EVAL2 (GXB (Vector_subassign_), T) /* w(I)<M> = accum (w(I),x)  */ \
     ASSERT (GB_IMPLIES (M != NULL, GB_VECTOR_OK (M))) ;                        \
     GrB_Info info = GB_subassign_scalar ((GrB_Matrix) w, (GrB_Matrix) M,       \
         accum, ampersand x, GB_## T ## _code, Rows, nRows, GrB_ALL, 1, desc,   \
-        Werk) ;                                                                \
+        Context) ;                                                             \
     GB_BURBLE_END ;                                                            \
     return (info) ;                                                            \
 }
@@ -75,6 +75,7 @@ GB_ASSIGN_SCALAR (void *    , UDT    ,  )
 #define GB_FREE_ALL GB_Matrix_free (&S) ;
 #include "GB_static_header.h"
 
+GB_PUBLIC
 GrB_Info GxB_Vector_subassign_Scalar   // w<Mask>(I) = accum (w(I),s)
 (
     GrB_Vector w,                   // input/output matrix for results
@@ -102,14 +103,6 @@ GrB_Info GxB_Vector_subassign_Scalar   // w<Mask>(I) = accum (w(I),s)
     ASSERT (GB_VECTOR_OK (w)) ;
     ASSERT (M_in == NULL || GB_VECTOR_OK (M_in)) ;
 
-    // if w has a user-defined type, its type must match the scalar type
-    if (w->type->code == GB_UDT_code && w->type != scalar->type)
-    { 
-        GB_ERROR (GrB_DOMAIN_MISMATCH, "Input of type [%s]\n"
-            "cannot be typecast to output of type [%s]",
-            scalar->type->name, w->type->name) ;
-    }
-
     // get the descriptor
     GB_GET_DESCRIPTOR (info, desc, C_replace, Mask_comp, Mask_struct,
         xx1, xx2, xx3, xx7) ;
@@ -122,7 +115,7 @@ GrB_Info GxB_Vector_subassign_Scalar   // w<Mask>(I) = accum (w(I),s)
     //--------------------------------------------------------------------------
 
     GrB_Index nvals ;
-    GB_OK (GB_nvals (&nvals, (GrB_Matrix) scalar, Werk)) ;
+    GB_OK (GB_nvals (&nvals, (GrB_Matrix) scalar, Context)) ;
 
     if (M == NULL && !Mask_comp && ni == 1 && !C_replace)
     {
@@ -136,12 +129,12 @@ GrB_Info GxB_Vector_subassign_Scalar   // w<Mask>(I) = accum (w(I),s)
         { 
             // set the element: w(row) += scalar or w(wrow) = scalar
             info = GB_setElement ((GrB_Matrix) w, accum, scalar->x, row, 0,
-                scalar->type->code, Werk) ;
+                scalar->type->code, Context) ;
         }
         else if (accum == NULL)
         { 
             // delete the w(row) element
-            info = GB_Vector_removeElement (w, row, Werk) ;
+            info = GB_Vector_removeElement (w, row, Context) ;
         }
 
     }
@@ -165,7 +158,7 @@ GrB_Info GxB_Vector_subassign_Scalar   // w<Mask>(I) = accum (w(I),s)
             true,                       // do scalar expansion
             scalar->x,                  // scalar to assign, expands to become u
             scalar->type->code,         // type code of scalar to expand
-            Werk) ;
+            Context) ;
 
     }
     else
@@ -185,7 +178,7 @@ GrB_Info GxB_Vector_subassign_Scalar   // w<Mask>(I) = accum (w(I),s)
         GB_CLEAR_STATIC_HEADER (S, &S_header) ;
         GB_OK (GB_new (&S,  // existing header
             scalar->type, nRows, 1, GB_Ap_calloc, true, GxB_AUTO_SPARSITY,
-            GB_HYPER_SWITCH_DEFAULT, 1)) ;
+            GB_HYPER_SWITCH_DEFAULT, 1, Context)) ;
         info = GB_subassign (
             (GrB_Matrix) w, C_replace,      // w vector and its descriptor
             M, Mask_comp, Mask_struct,      // mask matrix and its descriptor
@@ -195,7 +188,7 @@ GrB_Info GxB_Vector_subassign_Scalar   // w<Mask>(I) = accum (w(I),s)
             I, ni,                          // row indices
             GrB_ALL, 1,                     // column indices
             false, NULL, GB_ignore_code,    // no scalar expansion
-            Werk) ;
+            Context) ;
         GB_FREE_ALL ;
     }
 

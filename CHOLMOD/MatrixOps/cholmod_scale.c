@@ -1,12 +1,11 @@
-//------------------------------------------------------------------------------
-// CHOLMOD/MatrixOps/cholmod_scale: scale a sparse matrix
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === MatrixOps/cholmod_scale ============================================== */
+/* ========================================================================== */
 
-// CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2022, Timothy A. Davis.
-// All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
+ * CHOLMOD/MatrixOps Module.  Copyright (C) 2005-2006, Timothy A. Davis
+ * http://www.suitesparse.com
+ * -------------------------------------------------------------------------- */
 
 /* scale a matrix:  A = diag(s)*A, A*diag(s), s*A, or diag(s)*A*diag(s)
  *
@@ -49,10 +48,12 @@
  * Only real matrices are supported.
  */
 
-#include "cholmod_internal.h"
-
 #ifndef NGPL
 #ifndef NMATRIXOPS
+
+#include "cholmod_internal.h"
+#include "cholmod_matrixops.h"
+
 
 /* ========================================================================== */
 /* === cholmod_scale ======================================================== */

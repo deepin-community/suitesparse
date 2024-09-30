@@ -1,7 +1,8 @@
 function RBinstall (quiet)
 %RBINSTALL install the RBio toolbox for use in MATLAB
-% Compiles the mexFunctions RBread, RBwrite, RBtype, and RBraw, and adds the
-% current directory to the MATLAB path.
+% Compiles the Fortran mexFunctions RBread, RBwrite, RBtype, and RBraw, and
+% the C mexFunction UFfull_write, and adds the current directory to the MATLAB
+% path.
 %
 % Example:
 %
@@ -9,8 +10,7 @@ function RBinstall (quiet)
 %
 % See also RBread, RBwrite, RBtype, RBraw.
 %
-% RBio, Copyright (c) 2009-2022, Timothy A. Davis.  All Rights Reserved.
-% SPDX-License-Identifier: GPL-2.0+
+% Copyright 2009, Timothy A. Davis
 
 if (nargin < 1)
     quiet = 0 ;
@@ -27,7 +27,7 @@ addpath (s) ;
 
 cd private
 testRB1
-if (exist ('ssget') == 2) %#ok<EXIST>
+if (exist ('UFget') == 2) %#ok<EXIST>
     testRB2
 end
 cd (s)

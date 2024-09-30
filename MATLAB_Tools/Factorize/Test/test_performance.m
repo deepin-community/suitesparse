@@ -7,8 +7,7 @@ function err = test_performance
 %
 % See also test_all, factorize, inverse, mldivide
 
-% Factorize, Copyright (c) 2011-2012, Timothy A Davis. All Rights Reserved.
-% SPDX-License-Identifier: BSD-3-clause
+% Copyright 2011-2012, Timothy A. Davis, http://www.suitesparse.com
 
 fprintf ('\nPerformance comparisons of 4 methods:\n') ;
 fprintf ('    backslash:  A\\b, or L\\b (and related) for solve times.\n') ;

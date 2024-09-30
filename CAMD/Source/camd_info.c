@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------
-// CAMD/Source/camd_info: print output statistics for CAMD
-//------------------------------------------------------------------------------
+/* ========================================================================= */
+/* === CAMD_info =========================================================== */
+/* ========================================================================= */
 
-// CAMD, Copyright (c) 2007-2022, Timothy A. Davis, Yanqing Chen, Patrick R.
-// Amestoy, and Iain S. Duff.  All Rights Reserved.
-// SPDX-License-Identifier: BSD-3-clause
-
-//------------------------------------------------------------------------------
+/* ------------------------------------------------------------------------- */
+/* CAMD, Copyright (c) Timothy A. Davis, Yanqing Chen,			     */
+/* Patrick R. Amestoy, and Iain S. Duff.  See ../README.txt for License.     */
+/* email: DrTimothyAldenDavis@gmail.com                                      */
+/* ------------------------------------------------------------------------- */
 
 /* User-callable.  Prints the output statistics for CAMD.  See camd.h
  * for details.  If the Info array is not present, nothing is printed.
@@ -16,7 +16,7 @@
 
 #define PRI(format,x) { if (x >= 0) { SUITESPARSE_PRINTF ((format, x)) ; }}
 
-void CAMD_info
+GLOBAL void CAMD_info
 (
     double Info [ ]
 )

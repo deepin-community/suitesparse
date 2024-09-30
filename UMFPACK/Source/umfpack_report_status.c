@@ -1,23 +1,23 @@
-//------------------------------------------------------------------------------
-// UMFPACK/Source/umfpack_report_status: print the UMFPACK return status
-//------------------------------------------------------------------------------
+/* ========================================================================== */
+/* === UMFPACK_report_status ================================================ */
+/* ========================================================================== */
 
-// UMFPACK, Copyright (c) 2005-2023, Timothy A. Davis, All Rights Reserved.
-// SPDX-License-Identifier: GPL-2.0+
-
-//------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Copyright (c) 2005-2012 by Timothy A. Davis, http://www.suitesparse.com.   */
+/* All Rights Reserved.  See ../Doc/License.txt for License.                  */
+/* -------------------------------------------------------------------------- */
 
 /*
     User-callable.  Prints the return value from other UMFPACK_* routines.
-    See umfpack.h for details.
+    See umfpack_report_status.h for details.
 */
 
 #include "umf_internal.h"
 
-void UMFPACK_report_status
+GLOBAL void UMFPACK_report_status
 (
     const double Control [UMFPACK_CONTROL],
-    int status
+    Int status
 )
 {
     Int prl ;
@@ -103,10 +103,6 @@ void UMFPACK_report_status
 	    PRINTF (("ERROR: ordering failed\n")) ;
 	    break ;
 
-        case UMFPACK_ERROR_invalid_blob:
-	    PRINTF (("ERROR: blob has invalid contents or wrong size\n")) ;
-	    break ;
-
 	case UMFPACK_ERROR_internal_error:
 	    PRINTF (("INTERNAL ERROR!\n"
 	    "Input arguments might be corrupted or aliased, or an internal\n"
@@ -120,7 +116,7 @@ void UMFPACK_report_status
 	    break ;
 
 	default:
-	    PRINTF (("ERROR: Unrecognized error code: %d\n", status)) ;
+	    PRINTF (("ERROR: Unrecognized error code: "ID"\n", status)) ;
 
     }
     PRINTF  (("\n")) ;

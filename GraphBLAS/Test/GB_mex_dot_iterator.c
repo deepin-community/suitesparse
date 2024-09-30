@@ -2,7 +2,7 @@
 // GB_mex_dot_iterator: s = X'*Y, dot product of 2 vectors using iterators
 //------------------------------------------------------------------------------
 
-// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2023, All Rights Reserved.
+// SuiteSparse:GraphBLAS, Timothy A. Davis, (c) 2017-2022, All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ void mexFunction
     {
         // mangle the X vector where entries are not present
         double *Xx = (double *) X->x ;
-        int8_t *Xb = X->b ;
+        bool *Xb = X->b ;
         int64_t n = X->vlen ;
         for (int64_t k = 0 ; k < n ; k++)
         {
@@ -143,7 +143,7 @@ void mexFunction
     {
         // mangle the Y vector where entries are not present
         double *Yx = (double *) Y->x ;
-        int8_t *Yb = Y->b ;
+        bool *Yb = Y->b ;
         int64_t n = Y->vlen ;
         for (int64_t k = 0 ; k < n ; k++)
         {
